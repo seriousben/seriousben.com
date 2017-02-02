@@ -1,0 +1,16 @@
+<li class="post-item">
+    <span class="meta">{{ .Date.Format .Site.Params.dateform }}</span>
+    <a href="{{ .Permalink }}"><span>{{ .Title }}</span></a>
+    {{ if .Params.categories }}
+    <span class="taglist">
+      {{ range .Params.categories }}
+        <span class="separator"> &middot; </span>
+        <a href="{{ "/categories/" | relLangURL }}{{ . | urlize }}">{{ . }}</a>
+      {{ end }}
+    </span>
+    {{ end }}
+    {{ if .Params.featured }}
+      <span class="separator"> &middot; </span>
+      <i class="fa fa-star-o feature-star"></i>
+    {{ end }}
+</li>

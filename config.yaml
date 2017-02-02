@@ -1,0 +1,27 @@
+baseurl: https://seriousben.com
+languageCode: en-us
+title: Benjamin Boudreau
+theme: cocoa-eh
+
+pluralizeListTitles: false
+author: Benjamin Boudreau
+
+googleAnalytics: UA-91134611-1
+
+taxonomies:
+  category: "categories"
+
+permalinks:
+  blog: /blog/:year/:month/:day/:slug
+
+params:
+  dateform: "Jan 2, 2006"
+  dateformfull: "Mon Jan 2 2006 15:04:05 MST"
+  description: "Example blog"
+  logoFile: false
+  faviconFile: false
+  highlightjs: true
+  lang: en
+  github: seriousben
+  linkedin: boudreaubenjamin
+  twitter: "@seriousben"
