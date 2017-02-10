@@ -1,6 +1,5 @@
 dependencies:
   override:
-    - sudo apt-get install davfs2
     - go get -v github.com/spf13/hugo
 
 test:
