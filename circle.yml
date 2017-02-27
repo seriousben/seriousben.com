@@ -1,10 +1,10 @@
 dependencies:
   override:
-    - go get -v github.com/spf13/hugo
+    - ./setup.sh
 
 test:
   override:
-    - hugo
+    - ./hugo
 
 deployment:
   neocities:

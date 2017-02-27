@@ -3,10 +3,17 @@ weight = 4
 title = "About"
 +++
 
-_With this theme, it is possible to add small sections that only contains one page like this. It will automatically appears in the header, at the end._
+## About this blog
 
-Along with [Ford Prefect](https://en.wikipedia.org/wiki/Ford_Prefect_\(character\)), Dent barely escapes the Earth's destruction as it is demolished to make way for a *hyperspace bypass*. Arthur spends the next several years, still wearing his dressing gown, helplessly launched from crisis to crisis while trying to straighten out his lifestyle.
+This blog is about:
 
- > He rather enjoys tea, but seems to have trouble obtaining it in the far reaches of the galaxy.
+ * Random programming thoughts
+ * [Short](/short) and random news I find interesting
 
-  In time, he learns how to fly and carves a niche for himself as a sandwich-maker.
+## About me
+
+I Live in Ottawa.
+
+I am a very enthusiastic developer with a strong sense of ownership. I like beautiful code and elegant systems.
+
+
