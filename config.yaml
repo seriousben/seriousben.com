@@ -1,7 +1,7 @@
 baseurl: https://seriousben.com/
 languageCode: en-us
 title: Benjamin Boudreau
-theme: cocoa-eh
+theme: cocoa-eh-fork
 
 pluralizeListTitles: false
 author: Benjamin Boudreau
