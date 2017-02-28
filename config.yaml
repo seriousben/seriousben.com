@@ -3,9 +3,8 @@ languageCode: en-us
 title: Benjamin Boudreau
 theme: cocoa-eh-fork
 
-pluralizeListTitles: false
 author: Benjamin Boudreau
-
+pluralizeListTitles: true
 googleAnalytics: UA-91134611-1
 
 taxonomies:

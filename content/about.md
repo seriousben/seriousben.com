@@ -8,7 +8,7 @@ title = "About"
 This blog is about:
 
  * Random programming thoughts
- * [Short](/short) and random news I find interesting
+ * [Nano posts](/nano) and random news I find interesting
 
 ## About me
 
