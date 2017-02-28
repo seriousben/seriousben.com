@@ -1,5 +1,5 @@
 +++
-date = "28027-02-12T28:128:18-04:00"
+date = "2017-02-28T19:32:38-05:00"
 title = "LEDE v17.01.0-rc1 released"
 originalUrl = "https://lwn.net/Articles/713241/rss"
 comment = "Time to upgrade your routers. Also supposedly LEDE and OpenWRT are working the details of merging back. Exciting! "
