@@ -4,6 +4,7 @@ machine:
     CLUSTER_NAME: main
     CLOUDSDK_COMPUTE_ZONE: us-east1-d
     DEBIAN_FRONTEND: noninteractive
+    GOOGLE_APPLICATION_CREDENTIALS: ${HOME}/account-auth.json
   services:
     - docker
 
@@ -18,9 +19,11 @@ dependencies:
     # Reading the zone from the env var is not working so we set it here
     - sudo /opt/google-cloud-sdk/bin/gcloud config set compute/zone ${CLOUDSDK_COMPUTE_ZONE}
     - sudo /opt/google-cloud-sdk/bin/gcloud --quiet container clusters get-credentials $CLUSTER_NAME
+    - sudo chown -R ubuntu:ubuntu /home/ubuntu/.kube
     - docker build -t seriousben-builder -f Dockerfile.build .
     - docker run --rm -v "$PWD:/site" seriousben-builder
     - docker build -t seriousben/seriousben-com:$CIRCLE_SHA1 -f Dockerfile.serve .
+    - docker tag seriousben/seriousben-com:$CIRCLE_SHA1 seriousben/seriousben-com:latest
 
 test:
   post:
@@ -31,7 +34,6 @@ deployment:
   update-blog:
     branch: master
     commands:
-      - docker tag seriousben/seriousben-com:$CIRCLE_SHA1 seriousben/seriousben-com:latest
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
       - docker push seriousben/seriousben-com:$CIRCLE_SHA1
       - docker push seriousben/seriousben-com:latest
