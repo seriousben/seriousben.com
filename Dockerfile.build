@@ -1,0 +1,8 @@
+FROM svlentink/hugo
+
+RUN apk add py-pygments
+
+VOLUME /site
+WORKDIR /site
+
+ENTRYPOINT hugo

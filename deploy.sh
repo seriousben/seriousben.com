@@ -1,12 +1,14 @@
 #!/bin/bash
 
 set -e
-shopt -s globstar
 
-for f in public/**; do
-  [ -f "$f" ] || continue
-  remoteFileName=${f:6}
-  echo "Uploading $f"
-  curl -F "$remoteFileName=@$f" "https://$NEOCITIES_USER:$NEOCITIES_PASS@neocities.org/api/upload"
-  echo "Uploaded $f"
-done;
+echo "Build static docker image"
+docker build -f Dockerfile.build -t hugo-builder .
+
+echo "Build static files"
+docker run --rm -v "$PWD:/site" hugo-builder
+
+echo "Build serve docker image"
+docker build -f Dockerfile.serve -t seriousben-com .
+
+docker push seriousben/seriousben-com
