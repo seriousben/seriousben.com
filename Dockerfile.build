@@ -1,6 +1,8 @@
 FROM svlentink/hugo
 
-RUN apk add py-pygments
+USER root
+RUN apk add --no-cache --upgrade py-pygments
+USER hugo
 
 VOLUME /site
 WORKDIR /site
