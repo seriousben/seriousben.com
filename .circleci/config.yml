@@ -1,0 +1,68 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: docker:17.11.0-ce
+    steps:
+      - setup_remote_docker:
+          version: 17.11.0-ce
+      - checkout
+      - run:
+          name: Build
+          command: |
+            docker build -t seriousben/seriousben-com:$CIRCLE_SHA1 .
+      - run:
+          name: Test
+          command: |
+            apk add curl
+            docker run -d -p 3000:80 seriousben/seriousben-com:$CIRCLE_SHA1
+            curl --retry 12 --retry-delay 5 -v http://localhost:3000
+      - deploy:
+          name: Push Docker Images
+          command: |
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker push seriousben/seriousben-com:$CIRCLE_SHA1
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              docker tag seriousben/seriousben-com:$CIRCLE_SHA1 seriousben/seriousben-com:latest
+              docker push seriousben/seriousben-com:latest
+            fi
+
+  deploy:
+    environment:
+      PROJECT_NAME: projects-seriousben
+      CLUSTER_NAME: main
+      CLOUDSDK_COMPUTE_ZONE: us-east1-d
+      # DEBIAN_FRONTEND: noninteractive
+      GOOGLE_APPLICATION_CREDENTIALS: ${HOME}/account-auth.json
+    docker:
+      - image: google/cloud-sdk:latest
+    steps:
+      - setup_remote_docker:
+          version: 17.11.0-ce
+      - checkout
+      - deploy:
+          name: Deploy to k8s cluster
+          command: |
+            gcloud --quiet components update
+            gcloud --quiet components update kubectl
+            $GCP_ACCOUNT_FILE | base64 --decode -i > ${HOME}/account-auth.json
+            gcloud auth activate-service-account --key-file ${HOME}/account-auth.json
+            gcloud config set project $PROJECT_NAME
+            gcloud --quiet config set container/cluster $CLUSTER_NAME
+            # Reading the zone from the env var is not working so we set it here
+            gcloud config set compute/zone ${CLOUDSDK_COMPUTE_ZONE}
+            gcloud --quiet container clusters get-credentials $CLUSTER_NAME
+            kubectl set image deployment/blog blog=seriousben/seriousben-com:$CIRCLE_SHA1
+
+workflows:
+  version: 2
+  ci:
+    jobs:
+      - build
+      - deploy:
+          filters:
+            branches:
+              only: master
+        requires:
+          - build
