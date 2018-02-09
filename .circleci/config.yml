@@ -11,6 +11,8 @@ jobs:
       - run:
           name: Build
           command: |
+            docker version
+            docker info
             docker build -t seriousben/seriousben-com:$CIRCLE_SHA1 .
       - run:
           name: Test
