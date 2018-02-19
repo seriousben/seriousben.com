@@ -11,15 +11,12 @@ jobs:
       - run:
           name: Build
           command: |
-            docker version
-            docker info
             docker build -t seriousben/seriousben-com:$CIRCLE_SHA1 .
       - run:
           name: Test
           command: |
-            apk add curl
-            docker run -d -p 3000:80 seriousben/seriousben-com:$CIRCLE_SHA1
-            curl --retry 12 --retry-delay 5 -v http://localhost:3000
+            CID="$(docker run -d "seriousben/seriousben-com:$CIRCLE_SHA1")"
+            docker run --network="container:$CID" appropriate/curl --retry 12 --retry-delay 1 --retry-connrefused http://localhost
       - deploy:
           name: Push Docker Images
           command: |
@@ -48,7 +45,7 @@ jobs:
           command: |
             gcloud --quiet components update
             gcloud --quiet components update kubectl
-            $GCP_ACCOUNT_FILE | base64 --decode -i > ${HOME}/account-auth.json
+            echo "$GCP_ACCOUNT_FILE" | base64 --decode -i > ${HOME}/account-auth.json
             gcloud auth activate-service-account --key-file ${HOME}/account-auth.json
             gcloud config set project $PROJECT_NAME
             gcloud --quiet config set container/cluster $CLUSTER_NAME
@@ -66,5 +63,5 @@ workflows:
           filters:
             branches:
               only: master
-        requires:
-          - build
+          requires:
+            - build
