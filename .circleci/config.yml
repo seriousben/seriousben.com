@@ -43,8 +43,6 @@ jobs:
       - deploy:
           name: Deploy to k8s cluster
           command: |
-            gcloud --quiet components update
-            gcloud --quiet components update kubectl
             echo "$GCP_ACCOUNT_FILE" | base64 --decode -i > ${HOME}/account-auth.json
             gcloud auth activate-service-account --key-file ${HOME}/account-auth.json
             gcloud config set project $PROJECT_NAME
