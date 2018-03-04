@@ -8,6 +8,8 @@ jobs:
       - setup_remote_docker:
           version: 17.11.0-ce
       - checkout
+      - run: git submodule sync
+      - run: git submodule update --init
       - run:
           name: Build
           command: |

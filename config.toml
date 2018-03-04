@@ -1,0 +1,34 @@
+baseURL = "/"
+languageCode = "en-us"
+title = "seriousben"
+author = "Benjamin Boudreau"
+theme = "hugo-xmin"
+googleAnalytics = "UA-91134611-1"
+disqusShortname = ""
+
+[taxonomies]
+    category = "categories"
+
+[permalinks]
+    blog = "/blog/:year/:month/:day/:slug"
+
+[[menu.main]]
+    name = "Home"
+    url = "/"
+    weight = 1
+[[menu.main]]
+    name = "TLDRs"
+    url = "/tldr/"
+    weight = 2
+[[menu.main]]
+    name = "Projects"
+    url = "/project/"
+    weight = 3
+[[menu.main]]
+    name = "About"
+    url = "/about/"
+    weight = 4
+
+[params]
+  description = "a Serious blog"
+  footer = "&copy; Benjamin Boudreau 2017-2018 | [Github](https://github.com/seriousben) | [LinkedIn](https://www.linkedin.com/in/boudreaubenjamin) | [Twitter](https://twitter.com/seriousben) | [Subscribe](/index.xml)"

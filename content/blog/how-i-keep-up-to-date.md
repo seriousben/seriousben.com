@@ -1,5 +1,6 @@
 +++
 date = "2017-01-30T12:19:51-05:00"
+publishDate = "2017-01-30T12:19:51-05:00"
 title = "How I keep up to date" 
 
 categories = ["career"]
