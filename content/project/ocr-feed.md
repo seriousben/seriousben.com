@@ -1,6 +1,7 @@
 +++
-title = "ocr feed"
 date = "2017-01-31T14:44:39-05:00"
+publishDate = "2017-01-31T14:44:39-05:00"
+title = "ocr feed"
 
 +++
 
