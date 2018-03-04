@@ -8,6 +8,7 @@ jobs:
       - setup_remote_docker:
           version: 17.11.0-ce
       - checkout
+      - run: apk add --update git
       - run: git submodule sync
       - run: git submodule update --init
       - run:
