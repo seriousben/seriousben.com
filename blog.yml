@@ -38,9 +38,13 @@ kind: Ingress
 metadata:
   name: blog
   annotations:
-    kubernetes.io/ingress.class: traefik
-    traefik.frontend.rule.type: PathPrefixStrip
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
 spec:
+  tls:
+  - hosts:
+    - seriousben.com
+    secretName: seriousben-com-tls
   rules:
   - host: seriousben.com
     http:
