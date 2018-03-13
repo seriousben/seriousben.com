@@ -1,5 +1,4 @@
 +++
-weight = 4
 title = "About"
 +++
 
@@ -8,7 +7,7 @@ title = "About"
 This blog is about:
 
  * Random programming thoughts
- * [Nano posts](/nano) and random news I find interesting
+ * [TLDR posts](/tldr) and random news I find interesting
 
 ## About me
 

@@ -17,12 +17,12 @@ disqusShortname = ""
     url = "/"
     weight = 1
 [[menu.main]]
-    name = "TLDRs"
-    url = "/tldr/"
+    name = "Blog"
+    url = "/blog/"
     weight = 2
 [[menu.main]]
-    name = "Projects"
-    url = "/project/"
+    name = "TLDRs"
+    url = "/tldr/"
     weight = 3
 [[menu.main]]
     name = "About"
