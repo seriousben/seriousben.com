@@ -1,4 +1,4 @@
-baseURL = "/"
+baseURL = "https://seriousben.com/"
 languageCode = "en-us"
 title = "seriousben"
 author = "Benjamin Boudreau"
