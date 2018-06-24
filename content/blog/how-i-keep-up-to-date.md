@@ -20,7 +20,7 @@ But in the tech world, it means getting excited by everything and to get exposed
 
 This doesn't mean that your day job sucks. It just means that you should try to expand your horizon to not only help you during your day job but also in your career. Don't forget the fun in this as well, what brought you to be a software engineer. The fun of creating.
 
-This subject is pretty opiniated. But I think it is important. As a developer, I'll want to work with you if you are at the top of your game. If you want to learn from me and if I have something to learn from you. The saying work smarter not harder is important here. I believe the people you work with make a big difference in the speed at which you learn and at making your work environment dynamic. Making you as a team be more efficient and successful.
+This subject is pretty opinionated. But I think it is important. As a developer, I'll want to work with you if you are at the top of your game. If you want to learn from me and if I have something to learn from you. The saying work smarter not harder is important here. I believe the people you work with make a big difference in the speed at which you learn and at making your work environment dynamic. Making you as a team be more efficient and successful.
 
 ## How I do it
 
@@ -34,7 +34,7 @@ Now that you have your Feed reader ready, it is time to add some feeds to it. Th
 
  * Hacker News RSS - http://hnrss.org/ 
  
-This is a priceless tool, it allows you to create filters on top of the firehose that is hn.
+This is a priceless tool, it allows you to create filters on top of the fire hose that is HN.
 For example, I use it to filter posts that have 10 votes or higher.
 
  * Engineering Blogs - https://github.com/kilimchoi/engineering-blogs

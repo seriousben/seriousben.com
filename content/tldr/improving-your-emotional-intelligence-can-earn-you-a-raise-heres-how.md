@@ -13,6 +13,6 @@ Characteristics of emotional intelligence:
 1. Self-awareness
 2. Self-management
 3. Social awareness
-4.Social skills
+4. Social skills
 
 [Read more](http://feedproxy.google.com/~r/TheNextWeb/~3/uPFFq0SRIpA/)

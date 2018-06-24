@@ -4,7 +4,7 @@ publishDate = "2018-04-01 2:00:00.000 +0000 UTC"
 title = "Some golang gotchas"
 +++
 
-Go is such a simple and elegant language. There is no magic happening and reading go code is so straighforward. But like any language there are some gotchas.
+Go is such a simple and elegant language. There is no magic happening and reading go code is so straightforward. But like any language there are some gotchas.
 
 This post is about some general Golang gotchas (and neat tricks I have used or seen people use).
 
@@ -12,7 +12,7 @@ This post is about some general Golang gotchas (and neat tricks I have used or s
 
 This gotcha is a pretty important one that I see people do all the time. It is a very tricky one to track down as well.
 
-In one sentence: **iterations reuses adresses**.
+In one sentence: **iterations reuses addresses**.
 
 
 ### Simple example
@@ -42,7 +42,7 @@ func main() {
 
 **myVal will equal 5 and not 1.**
 
-This is because val is always the same adress in the iteration. There every iteration uses the same address resulting the address of val to contain different data.
+This is because val is always the same address in the iteration. There every iteration uses the same address resulting the address of val to contain different data.
 
 A way to fix this would be to copy values.
 
@@ -195,7 +195,7 @@ You can see that even though my `customError` implements the `Error` interface i
 
 This gotchas is the reason why you should always return a nil of type `error` and never of you custom type.
 
-## Fun with golang scopes and := assigment operator
+## Fun with golang scopes and := assignment operator
 
 Guess what this little program will print.
 
