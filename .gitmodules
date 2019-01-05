@@ -1,9 +1,3 @@
-[submodule "themes/cocoa-eh"]
-	path = themes/cocoa-eh
-	url = git@github.com:mtn/cocoa-eh-hugo-theme.git
-[submodule "themes/hugo-xmin"]
-	path = themes/hugo-xmin
-	url = git@github.com:yihui/hugo-xmin.git
 [submodule "themes/hermit"]
 	path = themes/hermit
 	url = https://github.com/Track3/hermit.git
