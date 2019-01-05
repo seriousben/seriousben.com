@@ -1,18 +1,18 @@
 +++
 title = "About"
+images= ["about-me.png"]
 +++
 
-## About this blog
+Hello, I am Benjamin Boudreau.
+
+I am a software engineer with 10+ years of experience going fast without compromising on quality.
+
+I am passionate about new technologies, beautiful code and elegant systems.
+
+I enjoy working on high-stakes projects with an outstanding team.
 
 This blog is about:
 
  * Random programming thoughts
- * [TLDR posts](/tldr) and random news I find interesting
-
-## About me
-
-I Live in Ottawa.
-
-I am a very enthusiastic developer with a strong sense of ownership. I like beautiful code and elegant systems.
-
+ * [Highlights](/tldr) and random news I find interesting
 

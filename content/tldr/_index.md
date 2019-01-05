@@ -1,5 +1,7 @@
 ---
-title: "TLDRs"
+title: Highlights
+date: 2012-01-01
+publishdate: 2012-01-01
 ---
 
-Here is my eclectic list of curated links and comments on subjects that interest me.
+Eclectic list of curated links.

@@ -1,7 +1,8 @@
 +++
-date = "2018-04-01 2:00:00.000 +0000 UTC"
+date = "2018-04-01"
 publishDate = "2018-04-01 2:00:00.000 +0000 UTC"
 title = "Some golang gotchas"
+author = "Me"
 +++
 
 Go is such a simple and elegant language. There is no magic happening and reading go code is so straightforward. But like any language there are some gotchas.
@@ -17,7 +18,7 @@ In one sentence: **iterations reuses addresses**.
 
 ### Simple example
 
-```
+```go
 package main
 
 import "fmt"
@@ -46,7 +47,7 @@ This is because val is always the same address in the iteration. There every ite
 
 A way to fix this would be to copy values.
 
-```
+```go
 package main
 
 import "fmt"
@@ -76,7 +77,7 @@ Here `val` is copied within `tmp` resulting in a new address.
 
 When using goroutines within a loop, you can end up in the same situation as well.
 
-```
+```go
 package main
 
 import (
@@ -115,7 +116,7 @@ This will print:
 To fix this problem, **only rely on the address of an iteration when doing work within the loop**. Both using the variable outside the loop or in a goroutine will result in unexpected behavior.
 
 You could do this instead:
-```
+```go
 package main
 
 import (
@@ -142,7 +143,7 @@ This means that `nil` for a pointer of a specific type is NOT `nil` for a pointe
 
 This example shows that pretty clearly:
 
-```
+```go
 package main
 
 import (
