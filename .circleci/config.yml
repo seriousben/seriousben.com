@@ -19,7 +19,7 @@ jobs:
           command: |
             set -x
             while true; do
-              docker build -t seriousben/seriousben-com:$CIRCLE_SHA1 .
+              docker build --no-cache -t seriousben/seriousben-com:$CIRCLE_SHA1 .
               CID="$(docker run -d "seriousben/seriousben-com:$CIRCLE_SHA1")"
               PAGE="$(docker run --network="container:$CID" appropriate/curl --retry 12 --retry-delay 1 --retry-connrefused http://localhost)"
               echo "$PAGE" > page
