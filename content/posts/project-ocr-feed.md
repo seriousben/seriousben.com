@@ -1,8 +1,9 @@
 +++
 date = "2017-01-31T14:44:39-05:00"
 publishDate = "2017-01-31T14:44:39-05:00"
-title = "ocr feed"
-
+title = "project: OCR feed"
+tags = [ "project", "kubernetes", "ocr", "aws", "nodejs", "emberjs"  ]
+draft = true
 +++
 
 This is a simple project made to play around with kubernetes with some fun extra stuff.
