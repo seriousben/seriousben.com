@@ -8,6 +8,6 @@ comment = "Nice set of checklists, I really like ggplot one. "
 
 ### TLDR
 
-Nice set of checklists, I really like ggplot one. 
+Nice set of checklists, I really like the ggplot one. 
 
 [Read more](https://medium.com/@kailashahirwar/essential-cheat-sheets-for-machine-learning-and-deep-learning-researchers-efb6a8ebd2e5)
