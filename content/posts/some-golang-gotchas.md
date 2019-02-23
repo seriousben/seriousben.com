@@ -43,7 +43,7 @@ func main() {
 
 **myVal will equal 5 and not 1.**
 
-This is because val is always the same address in the iteration. There every iteration uses the same address resulting the address of val to contain different data.
+This is because val is always pointing to the same address in the iteration. Every iteration use the same address resulting in val to contain different data.
 
 A way to fix this would be to copy values.
 
