@@ -8,6 +8,6 @@ comment = "Graphql is such a great way to represent an API. These tips are simpl
 
 ### TLDR
 
-Graphql is such a great way to represent an API. These tips are simple but also provide a good overview of the main questions I have when discovering what graphql is. 
+Graphql is such a great way to represent an API. These tips are simple but also provide a good overview of the main concerns I had when discovering graphql. 
 
 [Read more](http://nordicapis.com/best-practices-for-a-healthy-graphql-implementation/)
