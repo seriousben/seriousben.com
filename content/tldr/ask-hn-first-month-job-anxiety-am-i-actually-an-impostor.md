@@ -8,6 +8,6 @@ comment = "Lots good advice in the HN thread."
 
 ### TLDR
 
-Lots good advice in the HN thread.
+Lots of good advice in the HN thread.
 
 [Read more](https://news.ycombinator.com/item?id=18257767)
