@@ -25,7 +25,6 @@ googleAnalytics = "UA-91134611-1"
 
 [taxonomies]
   tag = "tags"
-  category = ""  # Categories are disabled by default.
 
 [params]
   dateform        = "Jan 2, 2006"
