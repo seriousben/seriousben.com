@@ -10,6 +10,8 @@ This post is just a little funny story to explain why you might need a worker pr
 
 There are more technical details at the end.
 
+<!--more-->
+
 # The story
 
 Once upon a time there was an API. It was a popular API. With popularity came responsibilities which meant that it had to do a lot of different things. For example, sending emails, looking at Reddit and other important API work.
