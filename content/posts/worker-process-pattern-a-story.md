@@ -18,7 +18,7 @@ Every day, it was serving so many requests and for each of those it had to do so
 
 One day, one of the many things the API worked on broke. It did not know what to do and just left most of its operations half done. It may have sent some or all emails, it may have posted some or all cat pictures on Reddit, it may have saved that piece of data in the database or not.
 
-Because of that, it's developers are not very happy. They think that the API is taking way too long to do its job and that most of the time they are half done. The API started to think about a way to become better and faster. To think about a way to be more efficient and make its developers happier. The API realized that to do so it had to handle more requests but by doing less work.
+Because of that, it's developers were not very happy. They think that the API is taking way too long to do its job and that most of the time they are half done. The API started to think about a way to become better and faster. To think about a way to be more efficient and make its developers happier. The API realized that to do so it had to handle more requests but by doing less work.
 
 Because of that, the API decided to reach out for help in it's professional network. The API was so lucky. A good hard-working friend was looking for work. That friend was the perfect fit since he liked doing stuff asynchronously and working very hard.
 
@@ -47,6 +47,7 @@ Normally, people have these choices:
 * **A dedicated data source** to store the queue of work. This is definitely a popular choice. This allows you to scale to lots of workers and lots of jobs while giving you advanced capabilities like priorities and some quality of service like at-least-once or exactly-once processing of a message. In most cases it also makes it easy to have a polyglot architecture where multiple frameworks and languages might consume and do work from queue. Kafka, Rabbitmq, Redis are examples of backing stores that can be used for this.
 
 In go, you can leverage some existing libraries to tackle this problem:
+
 * https://github.com/gocraft/work leverages Redis.
 * https://github.com/RichardKnop/machinery supports multiple backing stores like Redis, AWS Simple Queue Service (SQS) and AMQP.
 * https://github.com/Shopify/sarama can be leveraged to use kafka as a work queue.
