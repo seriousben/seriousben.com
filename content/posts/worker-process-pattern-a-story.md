@@ -18,9 +18,9 @@ Once upon a time there was an API. It was a popular API. With popularity came re
 
 Every day, it was serving so many requests and for each of those it had to do so much work. To complete these requests, it had to go through different types of tasks. But the more it did, the longer it started to take for requests to be fully complete.
 
-One day, one of the many things the API worked on broke. It did not know what to do and just left most of its operations half done. It may have sent some or all emails, it may have posted some or all cat pictures on Reddit, it may have saved that piece of data in the database or not.
+One day, one of the many things the API worked on broke. It did not know what to do and just left most of its operations in an incomplete state. It may have sent some or all emails, it may have posted some or all cat pictures on Reddit, it may have saved that piece of data in the database or not.
 
-Because of that, it's developers were not very happy. They think that the API is taking way too long to do its job and that most of the time they are half done. The API started to think about a way to become better and faster. To think about a way to be more efficient and make its developers happier. The API realized that to do so it had to handle more requests but by doing less work.
+Because of that, it's developers were not very happy. They were seeing how slow the API was at doing its job and how most of the time the jobs were half done. The API started to think about a way to become better and faster. The API realized that to do so it had to handle more requests and also do less work.
 
 Because of that, the API decided to reach out for help in it's professional network. The API was so lucky. A good hard-working friend was looking for work. That friend was the perfect fit since he liked doing stuff asynchronously and working very hard.
 
@@ -28,7 +28,7 @@ A friend that would allow the API to take it easy at last.
 
 Until finally, the API asks its friend for help. The API started handling requests and its friend worked through all the queued jobs one by one.
 
-They gave observability, reliability and most importantly peace of mind to their dear developers.
+They gave scalability, observability, reliability and most importantly peace of mind to their dear developers.
 
 Never again would the API make its developers sad.
 
