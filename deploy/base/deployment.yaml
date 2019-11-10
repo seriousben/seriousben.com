@@ -1,0 +1,35 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: blog
+  labels:
+    app: blog
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: blog
+  template:
+    metadata:
+      labels:
+        app: blog
+    spec:
+      containers:
+      - name: blog
+        image: seriousben/seriousben-com:84487899358f0442ed6f82ad2c58ff0aa56b54b6
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blog
+spec:
+  ports:
+  - targetPort: 80
+    port: 80
+  selector:
+    app: blog
+---
