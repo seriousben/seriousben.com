@@ -1,4 +1,4 @@
-FROM jojomi/hugo:0.58 AS builder
+FROM jojomi/hugo:0.59 AS builder
 
 RUN apk add --no-cache --upgrade py-pygments
 
