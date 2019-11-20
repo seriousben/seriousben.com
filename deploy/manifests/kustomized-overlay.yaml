@@ -9,6 +9,83 @@ metadata:
     env: prod
   name: seriousben-com
 ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+    seriousben.com/repo: https://github.com/seriousben/seriousben.com
+  labels:
+    app.kubernetes.io/name: seriousben.com
+    app.kubernetes.io/part-of: seriousben.com
+    env: prod
+  name: continuous-deployment
+  namespace: seriousben-com
+rules:
+- apiGroups:
+  - extensions
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+- apiGroups:
+  - batch
+  - extensions
+  resources:
+  - jobs
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+- apiGroups:
+  - extensions
+  resources:
+  - ingress
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - services
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+    seriousben.com/repo: https://github.com/seriousben/seriousben.com
+  labels:
+    app.kubernetes.io/name: seriousben.com
+    app.kubernetes.io/part-of: seriousben.com
+    env: prod
+  name: continuous-deployment
+  namespace: seriousben-com
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: continuous-deployment
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: seriousben-com-deployer@projects-seriousben.iam.gserviceaccount.com
+---
 apiVersion: v1
 kind: Service
 metadata:

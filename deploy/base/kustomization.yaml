@@ -9,3 +9,4 @@ resources:
 - deployment.yaml
 - ingress.yaml
 - namespace.yaml
+- role.yaml
