@@ -23,7 +23,7 @@ metadata:
   name: continuous-deployment
 subjects:
 - kind: User
-  name: seriousben-com-deployer@projects-seriousben.iam.gserviceaccount.com 
+  name: seriousben-com-deployer@projects-seriousben.iam.gserviceaccount.com
   apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: Role
