@@ -18,7 +18,9 @@ Salesperson: "Wow, you don't need an alarm system with this dog around."
 
 _I arrive at the front door to take care of excited dog_
 
-Salesperson: "Hi, I am with &lt;xyz&gt;energy. We are here to lower your electricity bill because there has been a can I go see your electricity counter?"
+Salesperson: "Hi, I am with &lt;xyz&gt;energy. We are here to check why you are using so much electricity and to lower your electricity bill. Can I go see your electricity counter?"
+
+(Commentary: Very official tone. It is making us think it might be a government agency or that we might be in trouble.)
 
 My partner: "hmmm, well, it is outside, so yeah ... I guess"
 
