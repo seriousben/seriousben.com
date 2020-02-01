@@ -1,0 +1,18 @@
+<div class="my-4 footer">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-sm-12 col-md-5">
+                <div class="mx-0 mx-md-4 mb-2 text-center text-md-left">
+                    {{ range .Site.Menus.footer.ByWeight }}
+                        <div>
+                            <a class="mx-1 mr-md-2 ml-md-0 {{ if .Identifier }} text-{{ .Identifier }}{{ end }}" href="{{ .URL }}">
+                                {{ .Pre }}
+                                {{ .Name }}
+                            </a>
+                        </div>
+                    {{ end }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

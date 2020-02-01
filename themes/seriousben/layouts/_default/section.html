@@ -1,0 +1,24 @@
+{{ define "main" }}
+    {{ partial "header" . }}
+
+    <div class="content">
+        <div>
+            {{ partial "content" . }}
+        </div>
+
+        <div>
+            <h1>{{ .Title }}</h1>
+
+            <ul class="list-unstyled">
+                {{ range (.Pages.GroupByDate "Jan, 2006" "desc") }}
+                    <li class="groupby">{{ .Key }}</li>
+                    {{ range sort .Pages "Date" "desc" }}
+                        {{ partial "list" . }}
+                    {{ end }}
+                {{ end }}
+            </ul>
+        </div>
+    </div>
+
+    {{ partial "footer" . }}
+{{ end }}

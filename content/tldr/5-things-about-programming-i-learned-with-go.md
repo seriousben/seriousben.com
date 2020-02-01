@@ -8,6 +8,6 @@ comment = "Simple but powerful "
 
 ### TLDR
 
-Simple but powerful 
+Simple but powerful
 
 [Read more](http://mjk.space/5-things-about-programming-learned-with-go/)

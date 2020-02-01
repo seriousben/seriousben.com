@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>{{ block "title" . }}{{ .Title }} - {{ .Site.Title }}{{ end }}</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="referrer" content="no-referrer">
+    <meta name="description" content="{{ .Description | default .Site.Params.description }}">
+
+    <meta property="og:site_name" content="{{ .Site.Title }}" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="{{ .Permalink }}" />
+    <meta property="og:title" content="{{ if .Title }}{{ .Title }}{{ else }}{{ .Site.Title }}{{ end }}" />
+    <meta property="og:image" content="{{ .Site.BaseURL }}{{ .Params.meta_img | default .Site.Params.logofile }}" />
+    <meta property="og:description" content="{{ .Description | default .Site.Params.description }}" />
+
+    {{ if .Site.Params.twitter }}
+    <meta property="twitter:site" content="@{{ .Site.Params.twitter }}">
+    {{ end }}
+
+    <meta property="twitter:title" content="{{ .Title | default .Site.Title }}" />
+    <meta property="twitter:image" content="{{ .Site.BaseURL }}{{ .Params.meta_img | default .Site.Params.logofile }}" />
+    <meta property="twitter:card" content="summary" />
+    <meta property="twitter:description" content="{{ .Description | default .Site.Params.description }}" />
+
+    <link rel="canonical" href="{{ .Permalink }}">
+
+    {{ $options := (dict "TargetPath" "style.css" "OutputStyle" "compressed" "EnableSourceMap" true) -}}
+    {{ $style := resources.Get "scss/style.scss" | resources.ToCSS $options | fingerprint -}}
+	<link rel="stylesheet" href="{{ $style.Permalink }}" {{ printf "integrity=%q" $style.Data.Integrity | safeHTMLAttr }} crossorigin="anonymous">
+
+    {{ if .Site.Params.highlightjs }}
+        <link rel="stylesheet" href="{{ .Site.BaseURL }}css/highlight.css" />
+    {{ end }}
+
+    <link rel="apple-touch-icon" sizes="180x180" href="{{"apple-touch-icon.png" | relURL}}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{"favicon-32x32.png" | relURL}}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{"favicon-16x16.png" | relURL}}">
+    <link rel="manifest" href="{{"site.webmanifest" | relURL}}">
+    <link rel="mask-icon" href="{{"safari-pinned-tab.svg" | relURL}}" color="#000">
+    <link rel="shortcut icon" href="{{"favicon.ico" | relURL}}">
+
+    <link href='{{ with .OutputFormats.Get "RSS" }}{{ .RelPermalink }}{{ end }}' rel="alternate" type="application/rss+xml" title="{{ .Site.Title }}" />
+</head>
+
+<body>
+    {{ block "main" . }}{{ end }}
+
+    {{ if .Site.Params.highlightjs }}
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js" integrity="sha256-1zu+3BnLYV9LdiY85uXMzii3bdrkelyp37e0ZyTAQh0=" crossorigin="anonymous"></script>
+        {{ range .Site.Params.highlightjslanguages }}
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/languages/{{.}}.min.js" defer></script>
+        {{ end }}
+        <script>
+            window.addEventListener('load', function() {
+                hljs.initHighlighting();
+            }, true);
+        </script>
+    {{ end }}
+
+    {{ template "_internal/google_analytics_async.html" . }}
+    {{ partial "footer_extra"  . }}
+</body>
+
+</html>

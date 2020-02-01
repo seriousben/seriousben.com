@@ -1,0 +1,150 @@
+@import "./vendor/sanitize-10.0.0.css";
+@import "./vendor/shevy-core-may-2017/shevy";
+
+
+$shevy: (
+    base-font-size: 1em,
+    base-line-height: 1.5,
+    base-font-scale: (5, 2.5, 1.85, 1.5, 1.25, 1),
+    margin-bottom: true,
+    proximity: false,
+    proximity-factor: .85
+);
+
+@include headings;
+@include body;
+@include content;
+
+$font-stack:    cardo, georgia, serif;
+$primary-color: #222;
+
+body {
+    color: $primary-color;
+    font-family: $font-stack;
+    line-height: 1.7em;
+    font-size: 1.04rem;
+    text-rendering: optimizeLegibility;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+    border-bottom: 1px dashed #222;
+    color: #222;
+    text-decoration: none;
+
+    &:hover {
+        border-bottom: none;
+    }
+}
+
+nav#TableOfContents {
+    font-size: 0.95em;
+    > ul {
+        list-style-type: decimal;
+
+        li {
+            margin-bottom: 6px;
+            margin-top: 6px;
+            margin-left: 10px;
+            padding-left: 8px;
+        }
+    }
+
+    ul {
+        margin-bottom: 0;
+    }
+
+    ul ul {
+        list-style-type: lower-alpha;
+        li {
+            margin-bottom: 7px;
+            margin-top: 7px;
+        }
+
+        a {
+            border-bottom: 1px solid #dedede;
+
+            &:hover {
+                border-bottom: none;
+            }
+        }
+
+        ul {
+            font-size: 0.7em;
+            list-style-type: lower-roman;
+        }
+    }
+}
+
+.content {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+article {
+    h1 {
+        max-width: 860px;
+        border-bottom: 8px solid #000;
+        margin-bottom: 10px;
+        padding-bottom: 50px;
+        font-family: helvetica, arial, geneva, sans-serif;
+        color: #000;
+        font-weight: 400;
+    }
+
+    .meta {
+        margin-bottom: 20px;
+    }
+
+    .toc {
+        max-width: 550px;
+        margin: 0 auto;
+    }
+
+    .article-content {
+        max-width: 550px;
+        margin: 0 auto;
+
+        figure {
+            width: 800px;
+            margin-left: -125px;
+            overflow: visible;
+            display: flex;
+            flex-flow: column;
+            align-items: center;
+            img {
+                max-width: 750px;
+            }
+            figcaption {
+            }
+        }
+    }
+}
+
+.highlight {
+    min-width: 600px;
+    pre {
+        font-size: 0.9em;
+        line-height: 1.5em;
+    }
+}
+
+li code, p code {
+    background-color: #f6f6f6;
+    font-family: Monaco, "Lucida Console", "Bitstream Vera Sans Mono", Courier, monospace;
+    font-size: 0.80rem;
+    padding: 2px 4px;
+}
+
+.social a {
+	// font-size: 18px;
+	display: inline-block;
+	text-decoration: none;
+    border: none;
+}
+
+.social a.icon {
+	fill: currentColor;
+	width: 25px;
+	height: 25px;
+}
