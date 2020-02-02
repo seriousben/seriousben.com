@@ -38,7 +38,7 @@ All the visualizations I wanted to have required the joined date of each member.
 
 Metadata of the first member:
 
-{{< figure src="./first-member-meta.png" caption="Metadata of the first memeber" alt="Metadata of the first member. (title, address, type, Modified date, ...)" width="800px" >}}
+{{< figure src="./first-member-meta.png" caption="Metadata of the first member" alt="Metadata of the first member. (title, address, type, Modified date, ...)" width="800px" >}}
 
 Overview of the modified date of some images:
 * First page:

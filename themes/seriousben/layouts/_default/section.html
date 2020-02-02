@@ -2,22 +2,27 @@
     {{ partial "header" . }}
 
     <div class="content">
+        <h1>{{ .Title }}</h1>
+
         <div>
             {{ partial "content" . }}
         </div>
 
-        <div>
-            <h1>{{ .Title }}</h1>
-
-            <ul class="list-unstyled">
-                {{ range (.Pages.GroupByDate "Jan, 2006" "desc") }}
-                    <li class="groupby">{{ .Key }}</li>
-                    {{ range sort .Pages "Date" "desc" }}
-                        {{ partial "list" . }}
-                    {{ end }}
-                {{ end }}
-            </ul>
-        </div>
+        {{- range .Data.Pages.GroupByDate "2006" }}
+		<div class="posts-group">
+			<div class="post-year" id="{{ .Key }}">{{ .Key }}</div>
+			<ul class="posts-list">
+				{{- range .Pages }}
+				<li class="post-item">
+					<a href="{{.Permalink}}">
+						<span class="post-title">{{.Title}}</span>
+						<span class="post-day">{{ .Date.Format "Jan 02" }}</span>
+					</a>
+				</li>
+				{{- end }}
+			</ul>
+		</div>
+		{{- end }}
     </div>
 
     {{ partial "footer" . }}

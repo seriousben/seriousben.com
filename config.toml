@@ -27,16 +27,11 @@ linkedin = "boudreaubenjamin"
 highlightjs = true
 
   [[menu.primary]]
-    name = "Home"
-    url = "/"
+    name = "Posts"
+    url = "/posts/"
     weight = 10
 
   [[menu.primary]]
-    name = "Fragments"
+    name = "Curated Links"
     url = "/tldr/"
     weight = 20
-
-  [[menu.primary]]
-    name = "About"
-    url = "/about/"
-    weight = 30

@@ -49,7 +49,9 @@
 </head>
 
 <body>
-    {{ block "main" . }}{{ end }}
+    <div class="container">
+        {{ block "main" . }}{{ end }}
+    </div>
 
     {{ if .Site.Params.highlightjs }}
         <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js" integrity="sha256-1zu+3BnLYV9LdiY85uXMzii3bdrkelyp37e0ZyTAQh0=" crossorigin="anonymous"></script>

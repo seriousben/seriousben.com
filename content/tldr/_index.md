@@ -1,7 +1,5 @@
 ---
-title: Highlights
-date: 2012-01-01
-publishdate: 2012-01-01
+title: Curated Links
 ---
 
-Eclectic list of curated links.
+Eclectic list of curated links on various subjects like tech, food, finance, having kids, and startups.
