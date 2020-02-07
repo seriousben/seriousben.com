@@ -1,0 +1,2 @@
+{{ $file := (path.Join "content" .Page.File.Dir (.Get "src") | readFile ) }}
+{{ highlight $file (.Get "lang") (.Get "opts") }}

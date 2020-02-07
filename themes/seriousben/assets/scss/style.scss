@@ -171,8 +171,8 @@ header {
     }
 
     .article-content {
-        p, ul, ol {
-            max-width: 550px;
+        p, ul, ol, dl {
+            max-width: 650px;
         }
 
         pre {
@@ -180,17 +180,39 @@ header {
         }
 
         figure {
-            width: 800px;
+            max-width: 800px;
             margin-left: 0;
             margin-right: 0;
-            display: flex;
-            flex-flow: column;
             img {
+                max-width: 800px;
             }
 
             figcaption, figcaption p {
                 max-width: 100%;
                 text-align: center;
+                margin: 0;
+            }
+
+            &.large-figure {
+                img {
+                    width: 100%;
+                }
+            }
+        }
+
+        blockquote {
+            border-left: .25em solid;
+            margin: 1em;
+            padding: 0 1em;
+            font-style: italic;
+
+            cite {
+                font-weight: bold;
+                font-style: normal;
+
+                &::before {
+                    content: "—— ";
+                }
             }
         }
     }
@@ -238,16 +260,16 @@ header {
 }
 
 .highlight {
-    min-width: 600px;
+    max-width: 600px;
 
     pre {
         font-size: 0.9em;
         line-height: 1.5em;
+        overflow-x: scroll;
     }
 
     .language-docker {
         display: block;
-        overflow-x: auto;
         background: black;
         color: #eaeaea;
         padding: .5em;
