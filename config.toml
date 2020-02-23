@@ -33,5 +33,5 @@ highlightjs = true
 
   [[menu.primary]]
     name = "Curated Links"
-    url = "/tldr/"
+    url = "/links/"
     weight = 20

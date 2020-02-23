@@ -23,7 +23,7 @@ jobs:
               CID="$(docker run -d "seriousben/seriousben-com:$CIRCLE_SHA1")"
               PAGE="$(docker run --network="container:$CID" appropriate/curl --retry 12 --retry-delay 1 --retry-connrefused http://localhost)"
               echo "$PAGE" > page
-              if grep '<h1 id="home-title">Benjamin Boudreau</h1>' page; then exit 0; fi
+              if grep '<a href="https://seriousben.com/">' page; then exit 0; fi
             done
       - deploy:
           name: Push Docker Images
