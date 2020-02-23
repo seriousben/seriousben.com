@@ -42,9 +42,14 @@ a {
 .index {
     margin-top: 100px;
     p {
-        font-size: 70px;
+        font-size: 4em;
         margin: 0;
-        line-height: 1.0em;
+        line-height: 1em;
+
+        @include breakpoint($medium) {
+            font-size: 2em;
+            line-height: 1;
+        }
     }
 
     ol {
@@ -63,6 +68,7 @@ header {
     flex-direction: row;
     border-bottom: 1px solid #222;
     justify-content: space-between;
+    align-items: center;
 
     .title-wrapper {
         font-size: 2.5em;
@@ -72,9 +78,6 @@ header {
         color: #000;
         font-weight: 400;
         margin: 0;
-
-        @include breakpoint($medium) {
-        }
     }
 
     .menu {
@@ -84,13 +87,18 @@ header {
         ol {
             display: flex;
             flex-direction: row;
+            margin: 0;
+            padding: 0;
         }
 
         li {
             list-style: none;
-            margin: 0 20px;
 
             font-size: 1.3rem;
+
+            &:not(:first-child) {
+                margin-left: 20px;
+            }
         }
     }
 
@@ -114,18 +122,19 @@ header {
         font-weight: 400;
         margin-top: 25px;
         margin-bottom: 10px;
-        padding-bottom: 50px;
+        padding-bottom: 25px;
     }
 
     .meta {
-        margin-bottom: 50px;
+        margin-bottom: 25px;
     }
 
     .toc {
         max-width: 550px;
         font-size: 0.95em;
-        > ul {
+        ul {
             list-style-type: decimal;
+            margin-top: 0;
 
             li {
                 margin-bottom: 6px;
@@ -161,13 +170,6 @@ header {
         }
     }
 
-    .posts-group .posts-list {
-        flex-grow: 1;
-        margin: 0;
-        padding: 0;
-        list-style: none;
-    }
-
     .article-content {
         p, ul, ol {
             max-width: 550px;
@@ -191,6 +193,47 @@ header {
                 text-align: center;
             }
         }
+    }
+}
+
+.posts-group {
+    max-width: 1000px;
+    display: flex;
+    margin-bottom: 1.9em;
+    line-height: normal;
+
+    .post-year {
+        padding-top: 6px;
+        margin-right: 1.8em;
+        font-size: 1.6em;
+
+        &:hover {
+            text-decoration: underline;
+            cursor: pointer;
+        }
+    }
+
+    .posts-list {
+        flex-grow: 1;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .post-item {
+        border-bottom: 1px lightgrey dashed;
+
+        a {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 12px 0;
+        }
+    }
+
+    .post-day {
+        flex-shrink: 0;
+        margin-left: 1em;
     }
 }
 
