@@ -1,6 +1,7 @@
 ---
 title: "Project: Aylmer Canine Club Membership Visualization"
 date: 2020-01-12T12:00:00-05:00
+toc: true
 ---
 
 Recently, my dog Bhumie joined our [local canine club](https://www.clubcaninaylmer.com/). The club protects dog owner rights in our small neighborhood like ensuring the existence and maintenance of our dog parks. Signing up meant that Bhumie's picture would show up on the club's website which made me browse the existing members/dogs. Looking at the different pages is painful. The site navigation was quickly put and added on without thinking about the user experience.
@@ -24,7 +25,7 @@ I will be using different technologies to come up with a functioning result:
 
 If you want to skip ahead, the code is available at https://github.com/seriousben/club-canin-aylmer-members and the result is at https://club-canin-aylmer.seriousben.com/.
 
-![Result of the project](./result.gif "Result of the project")
+{{< figure src="./result.gif" caption="Result of the project" alt="Picture showing the timeline of members as pictures of dogs." width="800px" >}}
 
 ## Getting the data
 
@@ -37,7 +38,7 @@ All the visualizations I wanted to have required the joined date of each member.
 
 Metadata of the first member:
 
-![Metadata of the first member](./first-member-meta.png "Metadata of the first member")
+{{< figure src="./first-member-meta.png" caption="Metadata of the first member" alt="Metadata of the first member. (title, address, type, Modified date, ...)" width="800px" >}}
 
 Overview of the modified date of some images:
 * First page:
@@ -48,12 +49,12 @@ Overview of the modified date of some images:
   * `December 10, 2013`
 * Second page
   * `April 12, 2015`
-  * `April 12, 2015` 
-  * `April 12, 2015` 
-  * `April 12, 2015` 
+  * `April 12, 2015`
+  * `April 12, 2015`
+  * `April 12, 2015`
   * `April 16, 2015`
-* Last page: (last members) 
-  * `December 10, 2019` 
+* Last page: (last members)
+  * `December 10, 2019`
   * `December 3, 2019`
   * `November 29, 2019`
 
@@ -63,7 +64,7 @@ Looking at this, I could see that there were some outliers in terms of ordering.
 
 After knowing that using the pictures metadata was going to be possible, I had to extract that data from the website. This meant being able to list all member list pages, list all members from a given page, and extract the date and URL of the member image.
 
-```
+```sh
 # get the list of HTML member pages
 memberPages = getMemberPages()
 
@@ -85,7 +86,8 @@ printToJSON(members)
 ### Getting the list of member pages
 
 This is how the current website is setup for browsing members (dogs):
-![Screenshot of the members menu](./menu-screenshot.png "Screenshot of the members menu on the website of the Aylmer Canine Club")
+
+{{< figure src="./menu-screenshot.png" caption="Members menu" alt="Screenshot of the members menu on the website of the Aylmer Canine Club" width="800px" >}}
 
 Which is basically setup like this:
 
@@ -124,7 +126,7 @@ Excerpt of the `sitemap.xml`:
 
 Here is the algorithm of how to get the list of pages:
 
-```
+```sh
 # fetch the sitemap
 body = fetchSitemap()
 
@@ -155,7 +157,7 @@ The data to extract is:
 
 Here is the algorithm allowing the fetching of member data from all the member pages: 
 
-```
+```sh
 # variable to store the list of members for all pages
 members = []
 
@@ -536,8 +538,7 @@ The code is available at https://github.com/seriousben/club-canin-aylmer-members
 
 The result is at https://club-canin-aylmer.seriousben.com/.
 
-![Result of the project](./result.gif "Result of the project")
-
+{{< figure src="./result.gif" caption="Result of the project" alt="Picture showing the timeline of members as pictures of dogs." width="800px" >}}
 
 ## References
 

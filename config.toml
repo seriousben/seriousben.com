@@ -1,21 +1,13 @@
 #baseURL = "http://localhost:8080/"
 baseURL = "https://seriousben.com/"
-#debug = true
-#verbose = true
-languageCode = "en-us"
-defaultContentLanguage = "en"
+debug = true
+verbose = true
 title = "Benjamin Boudreau"
-theme = "hermit"
-enableGitInfo = true
-# enableGitInfo = true
-pygmentsCodefences  = true
-pygmentsUseClasses  = true
-# hasCJKLanguage = true  # If Chinese/Japanese/Korean is your main content language, enable this to make wordCount works right.
-rssLimit = 10  # Maximum number of items in the RSS feed.
-copyright = "&copy; Benjamin Boudreau 2017-2019"
-enableEmoji = true  # Shorthand emojis in content files - https://gohugo.io/functions/emojify/
+copyright = "Copyright © Benjamin Boudreau 2017-2020"
+theme = "seriousben"
+rssLimit = 100
+enableEmoji = true
 googleAnalytics = "UA-91134611-1"
-# disqusShortname = "yourdiscussshortname"
 
 [author]
   name = "Benjamin Boudreau"
@@ -27,56 +19,19 @@ googleAnalytics = "UA-91134611-1"
   tag = "tags"
 
 [params]
-  dateform        = "Jan 2, 2006"
-  dateformShort   = "Jan 2"
-  dateformNum     = "2006-01-02"
-  dateformNumTime = "2006-01-02 15:04 -0700"
+copyright = "Copyright © Benjamin Boudreau 2017-2020"
+copyrightUrl = "https://seriousben.com/"
+twitter = "seriousben"
+github = "seriousben"
+linkedin = "boudreaubenjamin"
+highlightjs = true
 
-  # Metadata mostly used in document's head
-  # description = ""
-  # images = [""]
-  themeColor = "#494f5c"
-
-  homeSubtitle = "a Serious blog"
-  # footerCopyright = ' '
-  # bgImg = ""  # Homepage background-image URL
-
-  # Prefix of link to the git commit detail page. GitInfo must be enabled.
-  gitUrl = "https://github.com/seriousben/seriousben.com/commit/"
-
-  # Toggle this option need to rebuild SCSS, requires extended version of Hugo
-  justifyContent = false  # Set "text-align: justify" to .content.
-
-  # Add custom css
-  # customCSS = ["css/foo.css", "css/bar.css"]
-
-  # Social Icons
-  # Check https://github.com/Track3/hermit#social-icons for more info.
-  [[params.social]]
-    name = "github"
-    url = "https://github.com/seriousben"
-
-  [[params.social]]
-    name = "linkedin"
-    url = "https://www.linkedin.com/in/boudreaubenjamin"
-
-  [[params.social]]
-    name = "twitter"
-    url = "https://twitter.com/seriousben"
-
-[menu]
-
-  [[menu.main]]
+  [[menu.primary]]
     name = "Posts"
-    url = "posts/"
+    url = "/posts/"
     weight = 10
 
-  [[menu.main]]
-    name = "Highlights"
-    url = "tldr/"
+  [[menu.primary]]
+    name = "Curated Links"
+    url = "/links/"
     weight = 20
-
-  [[menu.main]]
-    name = "About"
-    url = "about/"
-    weight = 30

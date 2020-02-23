@@ -1,0 +1,23 @@
+{{ $isTocEnabled := .Scratch.Get "isTocEnabled" }}
+
+<header>
+    <div class="title-wrapper">
+        <a href="{{ .Site.Home.Permalink }}">
+            Serious Ben
+        </a>
+    </div>
+
+    <div class="menu">
+        <ol>
+            {{ range .Site.Menus.primary.ByWeight }}
+            <li>
+                <a class="text-uppercase nav-link{{ if .Identifier }} text-{{ .Identifier }}{{ end }}" href="{{ .URL }}">
+                    {{ .Pre }}
+                    {{ .Name }}
+                </a>
+            </li>
+            {{ end }}
+        </ol>
+    </div>
+
+</header>

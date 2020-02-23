@@ -1,0 +1,30 @@
+{{ define "title" }}
+    {{ .Site.Title }}
+{{ end }}
+
+{{ define "main" }}
+{{ partial "header" . }}
+
+<div class="content">
+    <div class="index">
+        <p>
+            I am Benjamin Boudreau. I enjoy working on high-stakes projects with an outstanding team.
+            I am passionate about technology, beautiful code, and elegant systems.
+            <span class="social">
+                {{ partial "footer_github" . }}
+            </span>
+            <span class="social">
+                {{ partial "footer_linkedin" . }}
+            </span>
+            <span class="social">
+                {{ partial "footer_twitter" . }}
+            </span>
+            <span class="social">
+                {{ partial "footer_rss" . }}
+            </span>
+        </p>
+    </div>
+ </div>
+
+{{ partial "footer" . }}
+{{ end }}

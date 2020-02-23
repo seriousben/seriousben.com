@@ -1,0 +1,10 @@
+<div>
+    {{ range .Site.Menus.footer.ByWeight }}
+    <div>
+        <a href="{{ .URL }}">
+            {{ .Pre }}
+            {{ .Name }}
+        </a>
+    </div>
+    {{ end }}
+</div>
