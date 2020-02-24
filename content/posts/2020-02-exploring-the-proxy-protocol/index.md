@@ -1,6 +1,6 @@
 ---
 title: "Exploring the PROXY Protocol"
-date: 2020-02-05T20:07:05-05:00
+date: 2020-02-23T20:00:00-05:00
 toc: true
 ---
 
@@ -10,7 +10,7 @@ This problem is exactly what the PROXY protocol has been created to solve. It al
 
 Let's look at how this PROXY protocol works.
 
-## Why do we need PROXY protocol?
+## Why do we need the PROXY protocol?
 
 First, let's go through the [PROXY protocol specification][poxy-protocol-spec]. It was created by HAProxy in 2010 and since then as gone through 6 different updates. The last update to the specification was introduced in 2017. It has evolved since its creation into two versions which I explain in more details later.
 
@@ -22,7 +22,7 @@ The abstract of the protocol does a good job of explaining the why of it:
 > to limit the performance impact caused by the processing of the transported
 > information.
 
-To explain it in my own words. The goal of the PROXY protocol is to allow TCP "dumb proxies", proxies operating at the transport layer (layer 4 of the [OSI model][osi]), to inject data about the original source and destination addresses to their upstream servers without knowledge of the underlying protocol. The PROXY protocol is designed to support any application layer protocol like FTP, SMTP, IMAP, MySQL Protocol, and other protocols built on top of TCP or UDP. As can be seen with this extensive list of protocols, it enables a given proxy implementing adding the PROXY protocol header to a request to expose data on the original client without knowing anything about the the protocol being proxied and therefore being more lightweight and not having to evolve to follow additions to higher level protocols like having to know about [`X-Forwarded-For`][x-forwarded-for] and its replacement [the `Forwarded` header][forwarded] for HTTP.
+To explain it in my own words. The goal of the PROXY protocol is to allow TCP "dumb proxies", proxies operating at the transport layer (layer 4 of the [OSI model][osi]), to inject data about the original source and destination addresses to their upstream servers without knowledge of the underlying protocol. The PROXY protocol is designed to support any application layer protocol like FTP, SMTP, IMAP, MySQL Protocol, and other protocols built on top of TCP or UDP. As can be seen with this extensive list of protocols, it enables a given proxy implementing adding the PROXY protocol header to a request to expose data on the original client without knowing anything about the protocol being proxied and therefore being more lightweight and not having to evolve to follow additions to higher level protocols like having to know about [`X-Forwarded-For`][x-forwarded-for] and its replacement [the `Forwarded` header][forwarded] for HTTP.
 
 {{< figure src="before-after.svg" alt="With vs Without PROXY protocol" class="large-figure" >}}
 
@@ -70,7 +70,7 @@ The version 2 of the protocol is binary based which means that bits and bytes po
 
 The [Cloudflare PROXY protocol documentation][cloudflare-pp] does a very good job of explaining the protocol. Specifically, it provides a protocol header diagram giving a very good high level view of the binary representation of the PROXY protocol version 2:
 
-```
+```plaintext
      0                   1                   2                   3
 Bits 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -101,7 +101,7 @@ Reading this diagram:
 
 Here is an hexadecimal representation of an HTTP request containing the PROXY protocol version 2 header:
 
-```
+```plaintext
 0d 0a 0d 0a 00 0d 0a 51  55 49 54 0a 21 11 00 0c  |.......QUIT.!...|
 ac 13 00 01 ac 13 00 03  a6 52 00 50 47 45 54 20  |.........R.PGET |
 2f 20 48 54 54 50 2f 31  2e 31 0d 0a 48 6f 73 74  |/ HTTP/1.1..Host|
@@ -201,7 +201,7 @@ Here are all the components together:
 
 {{< figure src="./experiment-scenario1.svg" alt="Scenario 1" >}}
 
-```
+```plaintext
 > curl -v http://localhost/
 
 netcat_1  | PROXY TCP4 172.19.0.1 172.19.0.3 42272 80
@@ -215,7 +215,7 @@ netcat_1  | Accept: */*
 
 {{< figure src="./experiment-scenario2.svg" alt="Scenario 2" >}}
 
-```
+```plaintext
 > curl -v http://localhost/
 
 netcat_1  | GET / HTTP/1.0
@@ -231,7 +231,7 @@ netcat_1  | Accept: */*
 
 {{< figure src="./experiment-scenario3.svg" alt="Scenario 3" >}}
 
-```
+```plaintext
 > curl -v http://localhost/
 
 netcat_1        | 00000000  0d 0a 0d 0a 00 0d 0a 51  55 49 54 0a 21 11 00 0c  |.......QUIT.!...|
@@ -250,7 +250,7 @@ netcat_1        | 0000006a
 
 Notice the two PROXY protocol headers prepended to the request. First a version 1 and then a version 2.
 
-```
+```plaintext
 netcat_1          | 00000000  0d 0a 0d 0a 00 0d 0a 51  55 49 54 0a 21 11 00 0c  |.......QUIT.!...|
 netcat_1          | 00000010  ac 14 00 06 ac 14 00 03  cb 50 00 50 50 52 4f 58  |.........P.PPROX|
 netcat_1          | 00000020  59 20 54 43 50 34 20 31  37 32 2e 32 30 2e 30 2e  |Y TCP4 172.20.0.|
