@@ -325,12 +325,12 @@ The Kubernetes cluster has a set of core services deployed to be leveraged by ap
 
 - [nginx ingress controller](https://github.com/kubernetes/ingress-nginx)
 
-    Allows watching ingress definitions for TLS certificate to same Google Cloud Load Balancer.
+    Allows centralizing all traffic going to our cluster to the same Google Cloud Load Balancer talking to one endpoint on the cluster: nginx.
 
 - [External DNS](https://github.com/kubernetes-sigs/external-dns) - Managing DNS records from Kubernetes.
 
     Allows watching ingress definitions for managed sub-domains to automatically create DNS record on DNS provider.
-    
+
 - Jetstack's [cert-manager](https://github.com/jetstack/cert-manager) - Certificate manager to automate let's encrypt usage.
 
     Allows watching ingress definitions for TLS certificate to automatically create and manage Let's Encrypt certificate.
@@ -518,7 +518,7 @@ In a production environment, I would not expose tokens, API keys or any types of
 
 Since this project is in fact using GitHub Actions and exposing sensitive secrets through it, the [principal of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege) is very important. It consists in only allowing a given module to perform actions that are necessary for its legitimate purpose. For the project, it means limiting the possible blast area that would be impacted if the secret was leaked. The secret for this project is used for deployment. It allows calling Google Cloud APIs and also Kubernetes APIs. Restricting the privileges that this secret has is very important to prevent malicious users from taking over my Google Cloud account.
 
-Those restrictions are done in two different layers: Google Cloud Platform and the Kubernetes.
+Those restrictions are done in two different layers: in Google Cloud Platform and in the Kubernetes cluster.
 
 That secret used in GitHub Actions is a Google Cloud Platform [service account](https://cloud.google.com/iam/docs/service-accounts) key. It is used to call Google Cloud APIs to retrieve the authentication data to run `kubectl`/Kubernetes commands against the cluster. To limit its privileges within the Google Cloud Platform project, a service account is created and assigned a role restricting its permissions. The role it has makes it so that it can only get authentication data and call Kubernetes APIs. The details can be seen in this file: https://github.com/seriousben/serious-infra/blob/master/iam.tf
 
