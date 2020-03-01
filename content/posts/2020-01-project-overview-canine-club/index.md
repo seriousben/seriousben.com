@@ -246,7 +246,7 @@ function App() {
 }
 ```
 
-### Future Ideas
+### Future
 
 Displaying the data in charts would allow people to visualize the trends of memberships. Also, mobile support is not perfect. The use of a tool-tip does not work well on mobile. It could easily be fixed by using a popover opening on click with details on each member. Another possible improvement would be to gracefully fall back to an error image when the image of a member doesn't load.
 
@@ -256,6 +256,8 @@ Some general guidelines / constraints:
 - the project is to be deployed to Kubernetes
 - the project should be contained in one docker image
 - the site should have a static list of members
+
+### Docker
 
 To perform this, I used [docker multi-stage builds](https://docs.docker.com/develop/develop-images/multistage-build/).
 

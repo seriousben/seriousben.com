@@ -12,7 +12,7 @@ Let's look at how this PROXY protocol works.
 
 ## Why do we need the PROXY protocol?
 
-First, let's go through the [PROXY protocol specification][poxy-protocol-spec]. It was created by HAProxy in 2010 and since then as gone through 6 different updates. The last update to the specification was introduced in 2017. It has evolved since its creation into two versions which I explain in more details later.
+First, let's go through the [PROXY protocol specification][proxy-protocol-spec]. It was created by HAProxy in 2010 and since then as gone through 6 different updates. The last update to the specification was introduced in 2017. It has evolved since its creation into two versions which I explain in more details later.
 
 The abstract of the protocol does a good job of explaining the why of it:
 
@@ -26,8 +26,7 @@ To explain it in my own words. The goal of the PROXY protocol is to allow TCP "d
 
 {{< figure src="before-after.svg" alt="With vs Without PROXY protocol" class="large-figure" >}}
 
-
-## Quick Look at Version 1
+## Version 1 Specification
 
 The version 1 of the protocol is text based. It is human readable and therefore faciliates adoption and implementations.
 
@@ -64,7 +63,7 @@ Source Port
 Destination Port
 : Number between 0..65535
 
-## Quick Look at Version 2
+## Version 2 Specification
 
 The version 2 of the protocol is binary based which means that bits and bytes positioning are defined as part of the protocol.
 
@@ -182,6 +181,16 @@ Destination Port
 : The destination port of the request. The bytes are in [Network Order (Big Endian)](https://en.wikipedia.org/wiki/Endianness). Which means the most significant byte is at the lowest address.
 : __Length__: 2 bytes (IPv4)
 : __Position__: 27th and 28th bytes (IPv4)
+
+## Security Considerations
+
+The PROXY protocol specification raises important security considerations. Here are the main concerns. Please consul the specification for the full list.
+
+- Receivers MUST only accept the PROXY protocol if configured to do so.
+- Receivers MUST only accept the PROXY protocol header from a trusted downstream proxies.
+- Receivers MUST not try to guess whether the PROXY protocol header is present or not.
+
+These considerations are there to make sure that a downstream client cannot inject a PROXY protocol header without the receiver trusting the downstream client. Not enforcing this would allow any client to override the client IP and obfuscate itself.
 
 ## Deep Dive
 

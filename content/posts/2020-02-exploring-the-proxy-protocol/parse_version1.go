@@ -3,12 +3,7 @@ package version1
 import (
 	"bufio"
 	"bytes"
-	"encoding/binary"
-	"errors"
 	"fmt"
-	"io"
-	"net"
-	"strconv"
 )
 
 // ProxyInfo represents the PROXY protocol information.
@@ -38,13 +33,13 @@ func MaybeParseVersion1(bufReader *bufio.Reader) (*ProxyInfo, error) {
 	}
 
 	// Is the request data starting with `PROXY`?
-	isV1 := len(sigBytes) >= 5 && bytes.Equal(sigBytes[:len(5)], []byte("PROXY"))
+	isV1 := len(sigBytes) >= 5 && bytes.Equal(sigBytes[:5], []byte("PROXY"))
 
 	if !isV1 {
 		return nil, nil
 	}
 
-	// read until \r\n
+	// read until CRLF \r\n
 	line, isPrefix, err := bufReader.ReadLine()
 	if err != nil {
 		return nil, fmt.Errorf("version 1 readLine error: %w", err)
