@@ -1,6 +1,6 @@
 ---
 title: "Changing Code Empathically"
-date: 2020-04-14T19:18:03-04:00
+date: 2020-05-17T11:40:00-04:00
 draft: false
 toc: true
 ---
