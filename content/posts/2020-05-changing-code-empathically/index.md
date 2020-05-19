@@ -25,13 +25,13 @@ One of the most important ways of changing code empathically is by explaining th
 
 What makes you the most confident to be able to review a pull request?
 
-{{< figure src="why-pr-title-only.png" alt="Title only" caption="Figure 1: Title only" class="large-figure" >}}
+{{< figure src="/posts/2020-05-changing-code-empathically/why-pr-title-only.png" alt="Title only" caption="Figure 1: Title only" class="large-figure" >}}
 
 
-{{< figure src="why-pr-no-why.png" alt="Description, but no Why" caption="Figure 2: Description, but no why" class="large-figure" >}}
+{{< figure src="/posts/2020-05-changing-code-empathically/why-pr-no-why.png" alt="Description, but no Why" caption="Figure 2: Description, but no why" class="large-figure" >}}
 
 
-{{< figure src="why-pr-why.png" alt="Description explaining the why" caption="Figure 3: Description explaining the why" class="large-figure" >}}
+{{< figure src="/posts/2020-05-changing-code-empathically/why-pr-why.png" alt="Description explaining the why" caption="Figure 3: Description explaining the why" class="large-figure" >}}
 
 
 Having a little window into the author's mind by having an explanation of why a given change is needed goes a long way. It always makes me feel great when the author has taken the time to explain the reasoning and the high level goal of what they did.
@@ -47,11 +47,11 @@ I have recently started to look at commits as a way to tell a story. Where every
 
 Example: Commits of a Pull Request, What makes you the most happy?
 
-{{< figure src="commit-single.png" alt="One commit for lots of changes" caption="Figure 4: One commit for lots of changes" class="large-figure" >}}
+{{< figure src="/posts/2020-05-changing-code-empathically/commit-single.png" alt="One commit for lots of changes" caption="Figure 4: One commit for lots of changes" class="large-figure" >}}
 
-{{< figure src="commit-no-story.png" alt="Multiple commits, but of no value to reviewers" caption="Figure 5: Multiple commits, but of no value to reviewers" class="large-figure" >}}
+{{< figure src="/posts/2020-05-changing-code-empathically/commit-no-story.png" alt="Multiple commits, but of no value to reviewers" caption="Figure 5: Multiple commits, but of no value to reviewers" class="large-figure" >}}
 
-{{< figure src="commit-story.png" alt="Multiple commits telling a story" caption="Figure 6: Multiple commits telling a story" class="large-figure" >}}
+{{< figure src="/posts/2020-05-changing-code-empathically/commit-story.png" alt="Multiple commits telling a story" caption="Figure 6: Multiple commits telling a story" class="large-figure" >}}
 
 The main reason behind telling a story by using commits is that having a nice narrative allows you to share some of your mental model with your reviewers. It splits your change into self-contained and self-reviewable units. It also empowers your reviewers to focus on specific changes that were introduced instead of letting them figure out what is important within big pull requests. It can be costly for reviewers to context switch from their task to reviewing somebody else's code. Making it tougher to really figure out what is important in a timely way. Guiding them by splitting main work items in commits is a way to tell them that you value their opinion by structuring your changes.
 
@@ -103,7 +103,7 @@ Do not be a “tactical tornado”, “the prolific programmer who pumps code fa
 
 I recognize that this article is pretty opinionated. But keep in mind that all the points discussed might or might not apply to you or your team. There are trade-offs to everything. But I am hoping that it can make yourself question how to be friendly, empathic, and inclusive to your coworkers.
 
-A lot of this article is based on behaviors that my team has in our day to day work. A lot of the ideas and formulations of this article have been taken from the discussions and pull request reviews. This attention to other people's feelings and while tending towards excellence is why I am so proud to be part of this awesome team.
+A lot of this article is based on behaviors that my team has in our day to day work. A lot of the ideas and formulations of this article have been taken from the discussions and pull request reviews. This attention to other people's feelings while tending towards excellence is why I am so proud to be part of this awesome team.
 
 There are multiple areas that I did not talk about in this article. Being a good reviewer, Accepting critique of your code, Attributing code changes to the reviewers, … These could be different articles by themselves. But for now, make sure to always assume the best out of people!
 
