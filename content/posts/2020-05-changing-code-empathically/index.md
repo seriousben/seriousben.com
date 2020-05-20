@@ -59,7 +59,7 @@ On top of that, if I find myself telling more than one story, I often decide to 
 
 ## Don’t forget the code
 
-Another important factor to change code emphatically is the way you approach changing and writing it.
+Another important factor to change code empatically is the way you approach changing and writing it.
 
 As part of writing code, I believe we should keep in a mind two key ideas: the “Principle of least astonishment” and the idea that “Code is read more often than written”.
 The [Principle of least astonishment](https://en.m.wikipedia.org/wiki/Principle_of_least_astonishment) pushes us towards simple and comprehensible systems. Code that behaves in a surprising way is code that can be fragile and scary to change. Think about the next person that will change this code and make it easy to understand and modify the code you wrote.
