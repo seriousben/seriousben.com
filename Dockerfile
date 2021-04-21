@@ -7,7 +7,7 @@ COPY . /site
 
 RUN hugo
 
-FROM nginx:1.19-alpine
+FROM nginx:1.20-alpine
 
 COPY nginx-conf/default.conf /etc/nginx/conf.d/.
 COPY --from=builder /site/public/ /usr/share/nginx/html
