@@ -184,7 +184,7 @@ Destination Port
 
 ## Security Considerations
 
-The PROXY protocol specification raises important security considerations. Here are the main concerns. Please consul the specification for the full list.
+The PROXY protocol specification raises important security considerations. Here are the main concerns. Please consult the specification for the full list.
 
 - Receivers MUST only accept the PROXY protocol if configured to do so.
 - Receivers MUST only accept the PROXY protocol header from a trusted downstream proxies.
