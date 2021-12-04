@@ -16,6 +16,7 @@ $shevy: (
 @include content;
 
 $medium: 0 800px;
+$large: 0 1100px;
 
 $font-stack:    cardo, georgia, serif;
 $primary-color: #222;
@@ -129,6 +130,13 @@ header {
         margin-bottom: 25px;
     }
 
+    .article-body {
+        display: flex;
+        @include breakpoint($large) {
+            flex-direction: column;
+        }
+    }
+
     .toc {
         max-width: 550px;
         font-size: 0.95em;
@@ -175,8 +183,9 @@ header {
             max-width: 650px;
         }
 
-        pre {
+        pre, code {
             width: 800px;
+            overflow-y: scroll;
         }
 
         figure {

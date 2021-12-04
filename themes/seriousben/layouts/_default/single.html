@@ -31,15 +31,17 @@
         {{ end }}
     </div>
 
-    {{ if $isTocEnabled }}
-    <div class="toc">
-        <strong>Contents</strong>
-        {{ .TableOfContents }}
-    </div>
-    {{ end }}
+    <div class="article-body">
+        {{ if $isTocEnabled }}
+        <div class="toc">
+            <strong>Contents</strong>
+            {{ .TableOfContents }}
+        </div>
+        {{ end }}
 
-    <div class="article-content">
-        {{ partial "content" . }}
+        <div class="article-content">
+            {{ partial "content" . }}
+        </div>
     </div>
 </div>
 

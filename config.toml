@@ -6,7 +6,8 @@ title = "Benjamin Boudreau"
 copyright = "Copyright © Benjamin Boudreau 2017-2020"
 theme = "seriousben"
 rssLimit = 100
-enableEmoji = true
+# disabling emoji since they were showing in code.
+enableEmoji = false
 googleAnalytics = "UA-91134611-1"
 
 [author]
