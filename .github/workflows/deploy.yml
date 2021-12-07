@@ -33,4 +33,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
           publish_branch: website
-          cname: seriousben.com
+          cname: |
+            seriousben.com
+            www.seriousben.com
