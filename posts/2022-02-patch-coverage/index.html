@@ -1,6 +1,6 @@
 <!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><title>Patch Coverage - Benjamin Boudreau</title><meta name=HandheldFriendly content="True"><meta name=MobileOptimized content="320"><meta name=referrer content="no-referrer"><meta name=description content><meta property="og:site_name" content="Benjamin Boudreau"><meta property="og:locale" content="en_US"><meta property="og:type" content="article"><meta property="og:url" content="https://seriousben.com/posts/2022-02-patch-coverage/"><meta property="og:title" content="Patch Coverage"><meta property="og:image" content="https://seriousben.com/"><meta property="og:description" content><meta property="twitter:site" content="@seriousben"><meta property="twitter:title" content="Patch Coverage"><meta property="twitter:image" content="https://seriousben.com/"><meta property="twitter:card" content="summary"><meta property="twitter:description" content><link rel=canonical href=https://seriousben.com/posts/2022-02-patch-coverage/><link rel=stylesheet href=https://seriousben.com/style.d44234584139078e87c89dd53eda56c2d1f231c980bdd5bfb6b2e6b4f6bc6f43.css integrity="sha256-1EI0WEE5B46HyJ3VPtpWwtHyMcmAvdW/trLmtPa8b0M=" crossorigin=anonymous><link rel=stylesheet href=https://seriousben.com/css/highlight.css><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/site.webmanifest><link rel=mask-icon href=/safari-pinned-tab.svg color=#000><link rel="shortcut icon" href=/favicon.ico><link href rel=alternate type=application/rss+xml title="Benjamin Boudreau"></head><body><div class=container><header><div class=title-wrapper><a href=https://seriousben.com/>Serious Ben</a></div><div class=menu><ol><li><a class="text-uppercase nav-link" href=/posts/>Posts</a></li><li><a class="text-uppercase nav-link" href=/links/>Curated Links</a></li></ol></div></header><div class=content><h1>Patch Coverage</h1><div class=meta><span class=date title="Sat Feb 12 2022 00:00:00 UTC">February 12, 2022</span>
 &bull;
-<span class="reading-time middot">10 minutes</span></div><div class=article-content><p>Code Coverage as a way to track code quality has existed for as long as code
+<span class="reading-time middot">11 minutes</span></div><div class=article-content><p>Code Coverage as a way to track code quality has existed for as long as code
 exists. For that same amount of time, different schools of thought have debated
 on how best to leverage coverage to help drive quality. For example, the
 concept of <a href=https://en.wikipedia.org/wiki/Modified_condition/decision_coverage>Modified condition/decision
@@ -9,31 +9,35 @@ which defines a criterion used in avionics, in automotive, and in lots of
 safety-critical systems has been referred to in standards <a href=https://en.wikipedia.org/wiki/DO-178B>created in
 1992</a>.</p><p>But this post is not exploring the philosophical aspects of code coverage. It
 is about one metric we get with coverage: patch code coverage.
-We’ll explore what it is and how it can be used to write better code, how it
-can be determined, and we’ll have an extensive example of how it can be
+We&rsquo;ll explore what it is and how it can be used to write better code, how it
+can be determined, and we&rsquo;ll have an extensive example of how it can be
 implemented for go programs and integrated with Github Actions.</p><p>When changing code, you typically have two coverage data points: the project
 coverage before and the one after a change. There is another datapoint that is
 often forgotten, the coverage of the changed code. The patch coverage.</p><p>Patch coverage makes it easy to understand whether you&rsquo;ve merely improved
 coverage of existing code or have added coverage for the new code. Afterall, It
 is possible to increase coverage of a project without adding any tests to new
-or changed files in one patch.</p><p>Patch coverage is about the change itself and helps answer &ldquo;How much of the new
-code I am introducing is covered by tests?&rdquo;.</p><h2 id=everyday-usage>Everyday usage</h2><p>A lot of code editors allow you to look at the code coverage as you work on
-code and tests.</p><p>For example:</p><ul><li>Goland <a href=https://www.jetbrains.com/help/go/code-coverage.html>https://www.jetbrains.com/help/go/code-coverage.html</a></li><li>Vim-go <a href=https://github.com/fatih/vim-go/wiki/Tutorial#cover-it>https://github.com/fatih/vim-go/wiki/Tutorial#cover-it</a></li><li>VS Code <a href=https://github.com/golang/vscode-go/blob/master/docs/features.md#code-coverage>https://github.com/golang/vscode-go/blob/master/docs/features.md#code-coverage</a></li></ul><figure class=large-figure><img src=/posts/2022-02-patch-coverage/vscode-coverage.png alt="VS Code Golang Coverage"><figcaption><p>Figure 1: VS Code Patch Coverage</p></figcaption></figure><p>These tools are amazing at providing you coverage data as you write tests to
-let you know what needs more coverage.</p><p>But what about getting the actual coverage numbers for the new and changed
-lines of your patch? Those numbers are super useful to convey changed file
+or changed files in one patch.</p><p>Let&rsquo;s dig deeper in figuring out how to answer: &ldquo;How much of the new
+code I am introducing is covered by tests?&rdquo;.</p><h2 id=everyday-usage>Everyday Usage</h2><p>Patch Coverage is already part of our day to day life. Your code editor is most
+likely allowing you to look at code coverage as you work on new code and tests.</p><p>For example:</p><ul><li>Goland <a href=https://www.jetbrains.com/help/go/code-coverage.html>https://www.jetbrains.com/help/go/code-coverage.html</a></li><li>Vim-go <a href=https://github.com/fatih/vim-go/wiki/Tutorial#cover-it>https://github.com/fatih/vim-go/wiki/Tutorial#cover-it</a></li><li>VS Code <a href=https://github.com/golang/vscode-go/blob/master/docs/features.md#code-coverage>https://github.com/golang/vscode-go/blob/master/docs/features.md#code-coverage</a></li></ul><figure class=large-figure><img src=/posts/2022-02-patch-coverage/vscode-coverage.png alt="VS Code Golang Coverage"><figcaption><p>Figure 1: VS Code Patch Coverage</p></figcaption></figure><p>These tools are amazing at providing you quick coverage data feedback as you write tests to
+let you know what needs more coverage.</p><p>If you are not that capability in all features you are working on, I highly
+suggest turning it on to accelerate writing meaningful tests.</p><p>But what about getting the actual coverage number for the new and changed
+lines of your patch? That number is super useful to convey changed file
 coverage on pull-request or, depending on your testing philosophy, as a policy
 enforcement check (for example: All code changes require at least 90%
-coverage). Those numbers are also very actionable for engineers working on that
-code. it is numbers about the code they changed or added after all. So making
-those numbers visual automatically provides the team with a feedback loop
-making them consider the test coverage of their new code.</p><p>The idea is quite simple. It requires mapping coverage data to the patch diff
-so that we filter out any coverage data for lines that have not changed.</p><figure class=large-figure><img src=/posts/2022-02-patch-coverage/patch-coverage-formula.png alt="Patch Coverage Formula: Coverage Data + Patch = Patch Coverage"><figcaption><p>Figure 1: Patch Coverage Formula</p></figcaption></figure><h2 id=implementation>Implementation</h2><p>Since coverage data can be different depending on the programming language
-being used, we will be focusing on the Go Programming Language to look at
-implementing patch coverage. I’ll be going through the details behind
-go-patch-cover. I created go-patch-cover to provide code authors and reviewers
+coverage). That number is also very actionable for engineers working in that
+area of the code. It is numbers about the code they changed or added after all.
+So making those numbers visible automatically provides the team with a feedback loop
+making them consider the test coverage of their new code.</p><h2 id=implementation>Implementation</h2><p>The implementation of patch coverage is relatively simple. It requires mapping
+coverage data to the patch diff in order to only keep any coverage data for lines
+that have changed.</p><figure class=large-figure><img src=/posts/2022-02-patch-coverage/patch-coverage-formula.png alt="Patch Coverage Formula: Coverage Data + Patch = Patch Coverage"><figcaption><p>Figure 1: Patch Coverage Formula</p></figcaption></figure><p>Since coverage data is different for each programming language
+, we will be focusing on the <a href=https://golang.org/>Go Programming Language</a> to look at
+implementing patch coverage. We&rsquo;ll be going through the details behind
+<a href=https://github.com/seriousben/go-patch-cover>go-patch-cover</a>. I created
+<a href=https://github.com/seriousben/go-patch-cover>go-patch-cover</a> to provide code authors and reviewers
 the tool necessary to understand the coverage of changed code without the use
-of a third party coverage tool.</p><p>To implement go-patch-coverage we need two input:</p><ol><li>the coverage data of the whole project including the code change</li><li>the patch data itself to identify what lines are new or changed.</li></ol><h3 id=go-coverage-profile>Go Coverage Profile</h3><p>Now, let’s look at the go coverage data format or coverage profile.</p><p>First line is &ldquo;mode: foo&rdquo;, where foo is &ldquo;set&rdquo;, &ldquo;count&rdquo;, or &ldquo;atomic&rdquo;.</p><p>Rest of file is in the format</p><pre><code>encoding/base64/base64.go:34.44,37.40 3 1
-</code></pre><p>Where the fields are:</p><pre><code>name.go:line.column,line.column numberOfStatements count
+of a third party coverage tool.</p><p>To implement go patch coverage we need two input files:</p><ol><li>The coverage data of the whole code base.</li><li>The patch data itself to identify what lines were added or changed.</li></ol><h3 id=coverage-data-go-coverage-profile>Coverage Data: Go Coverage Profile</h3><p>Let&rsquo;s understand the go coverage data format. Commonly named coverage profile.</p><p>The first line of a coverage profile contains the mode:</p><pre><code>mode: &lt;type&gt;
+</code></pre><p>Where type can be &ldquo;set&rdquo;, &ldquo;count&rdquo;, or &ldquo;atomic&rdquo;.</p><p>The rest of the file looks like this:</p><pre><code>encoding/base64/base64.go:34.44,37.40 3 1
+</code></pre><p>Which follows a specific format:</p><pre><code>name.go:line.column,line.column numberOfStatements count
 </code></pre><p>Full example:</p><pre><code>mode: set
 github.com/seriousben/go-patch-cover/cover.go:11.72,13.16 2 1
 github.com/seriousben/go-patch-cover/cover.go:19.2,20.16 2 1
@@ -61,11 +65,11 @@ github.com/seriousben/go-patch-cover/cover.go:77.34,78.30 1 1
 github.com/seriousben/go-patch-cover/cover.go:78.30,81.4 2 1
 github.com/seriousben/go-patch-cover/cover.go:86.23,88.3 1 1
 github.com/seriousben/go-patch-cover/cover.go:89.28,91.3 1 1
-</code></pre><p>Getting coverage information from a profile is straightforward.</p><p>First, we need to understand the difference in modes:</p><ul><li>Set: set to 1 when the the statements are covered</li><li>Count: count the number of times the statements ran</li><li>Atomic: Like count but accurately when dealing with parallelism / goroutine</li></ul><p>Second, we maintain two counters: a total number of statements, and number of covered
+</code></pre><h4 id=interpretation>Interpretation</h4><p>Getting coverage information from a profile is straightforward.</p><p>First, we need to understand the difference in modes:</p><ul><li>Set: set to 1 when the the statements are covered</li><li>Count: count the number of times the statements ran</li><li>Atomic: Like count but accurately when dealing with parallelism / goroutine</li></ul><p>Second, we maintain two counters: a total number of statements, and number of covered
 statements. For each profile block, add the number of the statement blocks to
 the number of total statements. If the block has a count greater than zero
 (zero being not covered and greater means covered) add the number of the
-statement blocks to the number of covered statements.</p><p>And lastly, Coverage will be the number of covered statements divided by the
+statement blocks to the number of covered statements.</p><p>And lastly, we compute the coverage by taking the number of covered statements divided by the
 total number of statements.</p><p>This could be summarized with this pseudocode:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#a6e22e>total_num_statements</span> = <span style=color:#ae81ff>0</span>
 <span style=color:#a6e22e>num_covered_statements</span> = <span style=color:#ae81ff>0</span>
 
@@ -80,7 +84,9 @@ total number of statements.</p><p>This could be summarized with this pseudocode:
     <span style=color:#a6e22e>total_num_statements</span> = <span style=color:#ae81ff>1</span>
 
 <span style=color:#a6e22e>coverage</span> = <span style=color:#a6e22e>num_covered_statements</span> <span style=color:#f92672>/</span> <span style=color:#a6e22e>total_num_statements</span> <span style=color:#f92672>*</span> <span style=color:#ae81ff>100</span>
-</code></pre></div><h3 id=unified-diff-format>Unified Diff Format</h3><p><a href=https://www.gnu.org/software/diffutils/manual/diffutils.html#Detailed-Unified>https://www.gnu.org/software/diffutils/manual/diffutils.html#Detailed-Unified</a></p><p><a href=https://www.gnu.org/software/diffutils/manual/html_node/Detailed-Unified.html>https://www.gnu.org/software/diffutils/manual/html_node/Detailed-Unified.html</a></p><p><a href=https://www.gnu.org/software/diffutils/manual/html_node/Example-Unified.html>https://www.gnu.org/software/diffutils/manual/html_node/Example-Unified.html</a></p><p>Each file included in a diff has its own section which is composed of:</p><ul><li>Header for the file<ul><li><pre><code>diff --git a/cmd/main.go b/cmd/main.go
+</code></pre></div><h3 id=the-patch-unified-diff>The Patch: Unified Diff</h3><p>The patch itself will be a <a href=https://www.gnu.org/software/diffutils/manual/diffutils.html#Detailed-Unified>unified diff</a>
+file.</p><p>Each file changed in the patch has its own section in the
+unified diff file which is composed of:</p><ul><li>Header for the file<ul><li><pre><code>diff --git a/cmd/main.go b/cmd/main.go
 new file mode 100644
 index 0000000..e6deb13
 --- /dev/null
@@ -92,7 +98,7 @@ index 0000000..e6deb13
 @@ -4,2 +3,0 @@ import (
 -	&quot;fmt&quot;
 -	&quot;log&quot;
-</code></pre></li></ul></li></ul><p><strong>Complete Example (without context lines):</strong></p><p>Generated usimg <code>git diff -U0</code>.</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-diff data-lang=diff>diff --git a/cmd/main.go b/cmd/main.go
+</code></pre></li></ul></li></ul><p><strong>Complete Example (without context lines):</strong></p><p>Generated using <code>git diff -U0</code>.</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-diff data-lang=diff>diff --git a/cmd/main.go b/cmd/main.go
 new file mode 100644
 index 0000000..e6deb13
 <span style=color:#f92672>--- /dev/null
@@ -203,9 +209,9 @@ index 9a53c79..c07aadb 100644
 </span><span style=color:#a6e22e></span><span style=color:#75715e>@@ -90,0 +92,2 @@ func main() {
 </span><span style=color:#75715e></span><span style=color:#a6e22e>+
 </span><span style=color:#a6e22e>+	return data, nil
-</span></code></pre></div><p>go-patch-cover uses <a href=https://github.com/bluekeyes/go-gitdiff>https://github.com/bluekeyes/go-gitdiff</a> to parse diff files.</p><h3 id=mapping-coverage-to-diff>Mapping Coverage to Diff</h3><p>From these two types of file, we can get the patch coverage number.</p><p>Patch coverage is simply finding the covered and total number of statements that
+</span></code></pre></div><p>go-patch-cover uses <a href=https://github.com/bluekeyes/go-gitdiff>https://github.com/bluekeyes/go-gitdiff</a> to parse diff files.</p><h3 id=mapping-coverage-profile-to-unified-diff>Mapping Coverage Profile to Unified Diff</h3><p>From these two types of file, we can get the patch coverage number.</p><p>Patch coverage is simply finding the covered and total number of statements that
 are contained within a changed section of a file.</p><p>This pseudocode explains some of the intricacies needed to do so:</p><pre><code># coverageOfBlock computes the num of covered and total statements of a coverage block
-# if contained added as part of the patched file.
+# if contained as an added line of the patched file.
 func coverageOfBlock(coverage_block, file_patch) cover_count, total_count:
     for each hunks in file_patch.hunks:
         for each hunk_num, hunk_line in hunks:
@@ -247,7 +253,7 @@ patch_coverage = num_covered_statements / total_num_statements * 100
 new coverage: 91.7% of statements
 patch coverage: 96% of changed statements (48/50)
 
-</code></pre><p>More advanced usage:</p><pre><code>Usage: go-patch-cover [--version] [--help] [flags...] coverage_file diff_file [previous_coverage_file]
+</code></pre><p><a href=https://github.com/seriousben/go-patch-cover>go-patch-cover</a> usage:</p><pre><code>Usage: go-patch-cover [--version] [--help] [flags...] coverage_file diff_file [previous_coverage_file]
 
 Arguments:
 
@@ -316,6 +322,10 @@ to keep track of the patch coverage or a pull request.</p><div class=highlight><
     - <span style=color:#f92672>uses</span>: <span style=color:#ae81ff>seriousben/go-patch-cover-action@v1.0.0</span>
       <span style=color:#f92672>with</span>:
         <span style=color:#f92672>version</span>: <span style=color:#ae81ff>main</span>
-</code></pre></div><figure class=large-figure><img src=/posts/2022-02-patch-coverage/go-patch-cover-action-example.png alt="Github Action Example"><figcaption><p>Figure 1: go-patch-cover-action example</p></figcaption></figure><h2 id=patch-coverage-in-third-party-tools>Patch Coverage in third party tools</h2><p>Patch Coverage is not new. Various third party tools expose it and might allow you to create various types of policies around it,</p><p>For example:</p><ul><li><a href=https://docs.codecov.com/docs/commit-status#patch-status>CodeCov&rsquo;s Patch coverage</a></li><li><a href=https://docs.codeclimate.com/docs/configuring-your-analysis#test-coverage>Code climate&rsquo;s Diff Coverage</a></li></ul><h2 id=closing-words>Closing words</h2><p>Code Coverage is a tool in the software engineer&rsquo;s toolbox that should not be disregarded.
-When used well, it can allow you to get quick feedback on your code changes. Patch Coverage allows
-team to make local changes that slowly impact the quality of the project as a whole.</p><p>Remember to approach testing with pragmatism. 100% coverage is rarely a good idea.</p></div></div><div></div></div><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js integrity="sha512-Pbb8o120v5/hN/a6LjF4N4Lxou+xYZ0QcVF8J6TWhBbHmctQWd8O6xTDmHpE/91OjPzCk4JRoiJsexHYg4SotQ==" crossorigin=anonymous></script><script>window.addEventListener('load',function(){hljs.initHighlighting()},!0)</script><script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-91134611-1','auto'),ga('send','pageview'))</script><script async src=https://www.google-analytics.com/analytics.js></script></body></html>
+</code></pre></div><figure class=large-figure><img src=/posts/2022-02-patch-coverage/go-patch-cover-action-example.png alt="Github Action Example"><figcaption><p>Figure 1: go-patch-cover-action example</p></figcaption></figure><h2 id=patch-coverage-in-third-party-tools>Patch Coverage in third party tools</h2><p>Patch Coverage is not new, some third party tools support it:</p><ul><li><a href=https://docs.codecov.com/docs/commit-status#patch-status>CodeCov&rsquo;s Patch coverage</a></li><li><a href=https://docs.codeclimate.com/docs/configuring-your-analysis#test-coverage>Code climate&rsquo;s Diff Coverage</a></li></ul><h2 id=closing-words>Closing Words</h2><p>Code Coverage is a tool in the software engineer&rsquo;s toolbox that should not be disregarded.
+When used well, it can allow you to get quick feedback on your your code. Pariging it with
+Patch Coverage allows teams to make local changes that slowly impact the quality of the
+project as a whole.</p><p>Remember to approach testing with pragmatism. In a world where time to market and ability to pivot
+are everything, 100% coverage is rarely a good idea. It is possible to leverage patch coverage to
+ensure ever changing and high-risk code is well covered, while still focusing on flexibiity and
+velocity.</p></div></div><div></div></div><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js integrity="sha512-Pbb8o120v5/hN/a6LjF4N4Lxou+xYZ0QcVF8J6TWhBbHmctQWd8O6xTDmHpE/91OjPzCk4JRoiJsexHYg4SotQ==" crossorigin=anonymous></script><script>window.addEventListener('load',function(){hljs.initHighlighting()},!0)</script><script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-91134611-1','auto'),ga('send','pageview'))</script><script async src=https://www.google-analytics.com/analytics.js></script></body></html>
