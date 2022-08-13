@@ -41,7 +41,8 @@ jobs:
         $(go env GOPATH)/bin/positronic-sync
       env:
         POSITRONIC_GITHUB_REPO: seriousben/seriousben.com
-        POSITRONIC_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Using specific repo scoped token to trigger other actions.
+        POSITRONIC_GITHUB_TOKEN: ${{ secrets.POSITRONIC_GITHUB_TOKEN }}
         POSITRONIC_NEWSBLUR_USERNAME: ${{ secrets.POSITRONIC_NEWSBLUR_USERNAME }}
         POSITRONIC_NEWSBLUR_PASSWORD: ${{ secrets.POSITRONIC_NEWSBLUR_PASSWORD }}
         POSITRONIC_NEWSBLUR_CONTENT_PATH: content/links
