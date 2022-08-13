@@ -22,7 +22,7 @@ jobs:
 
     - if: github.event_name == 'pull_request'
       run: |
-        go install "github.com/seriousben/positronic-blogger/cmd/positronic-sync@main"
+        go install "github.com/seriousben/positronic-blogger/cmd/positronic-sync@v1.0.0"
 
         $(go env GOPATH)/bin/positronic-sync
       env:
@@ -36,7 +36,7 @@ jobs:
 
     - if: github.event_name == 'schedule'
       run: |
-        go install "github.com/seriousben/positronic-blogger/cmd/positronic-sync@main"
+        go install "github.com/seriousben/positronic-blogger/cmd/positronic-sync@v1.0.0"
 
         $(go env GOPATH)/bin/positronic-sync
       env:
