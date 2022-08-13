@@ -1,17 +1,18 @@
-name: "CI"
+name: "Blogger"
 
 on:
   schedule:
     # hourly 7to8 ET
     - cron: '15 10-23 * * *'
+  pull_request:
 
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-  checks:
-    name: "Checks"
+  blog:
+    name: "Blog"
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -19,7 +20,8 @@ jobs:
       with:
         go-version: "1.18"
 
-    - run: |
+    - if: github.event_name == 'pull_request'
+      run: |
         go install "github.com/seriousben/positronic-blogger/cmd/positronic-sync@main"
 
         $(go env GOPATH)/bin/positronic-sync
@@ -31,3 +33,17 @@ jobs:
         POSITRONIC_NEWSBLUR_CONTENT_PATH: content/links
         POSITRONIC_NEWSBLUR_CHECKPOINT_PATH: content/links/checkpoint
         POSITRONIC_SKIP_MERGE: true
+
+    - if: github.event_name == 'schedule'
+      run: |
+        go install "github.com/seriousben/positronic-blogger/cmd/positronic-sync@main"
+
+        $(go env GOPATH)/bin/positronic-sync
+      env:
+        POSITRONIC_GITHUB_REPO: seriousben/seriousben.com
+        POSITRONIC_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        POSITRONIC_NEWSBLUR_USERNAME: ${{ secrets.POSITRONIC_NEWSBLUR_USERNAME }}
+        POSITRONIC_NEWSBLUR_PASSWORD: ${{ secrets.POSITRONIC_NEWSBLUR_PASSWORD }}
+        POSITRONIC_NEWSBLUR_CONTENT_PATH: content/links
+        POSITRONIC_NEWSBLUR_CHECKPOINT_PATH: content/links/checkpoint
+        # POSITRONIC_SKIP_MERGE: true
