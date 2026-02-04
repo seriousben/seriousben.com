@@ -5,6 +5,7 @@ on:
     # hourly 7to8 ET
     - cron: '15 10-23 * * *'
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -20,7 +21,7 @@ jobs:
       with:
         go-version: "1.25"
 
-    - if: github.event_name == 'schedule'
+    - if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
       run: |
         go install "github.com/seriousben/positronic-blogger/cmd/positronic-sync@v1.0.0"
 
