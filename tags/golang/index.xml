@@ -1,1 +1,15 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>golang on Benjamin Boudreau</title><link>https://seriousben.com/tags/golang/</link><description>Recent content in golang on Benjamin Boudreau</description><generator>Hugo -- gohugo.io</generator><copyright>Copyright © Benjamin Boudreau 2017-2020</copyright><lastBuildDate>Sat, 12 Feb 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://seriousben.com/tags/golang/index.xml" rel="self" type="application/rss+xml"/><item><title>Patch Coverage</title><link>https://seriousben.com/posts/2022-02-patch-coverage/</link><pubDate>Sat, 12 Feb 2022 00:00:00 +0000</pubDate><guid>https://seriousben.com/posts/2022-02-patch-coverage/</guid><description>Code Coverage as a way to track code quality has existed for as long as code exists. For that same amount of time, different schools of thought have debated on how best to leverage coverage to help drive quality. For example, the concept of Modified condition/decision coverage which defines a criterion used in avionics, in automotive, and in lots of safety-critical systems has been referred to in standards created in 1992.</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Golang on Benjamin Boudreau</title><link>https://seriousben.com/tags/golang/</link><description>Recent content in Golang on Benjamin Boudreau</description><generator>Hugo</generator><language>en</language><copyright>Copyright © Benjamin Boudreau 2017-2020</copyright><lastBuildDate>Sat, 12 Feb 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://seriousben.com/tags/golang/index.xml" rel="self" type="application/rss+xml"/><item><title>Patch Coverage</title><link>https://seriousben.com/posts/2022-02-patch-coverage/</link><pubDate>Sat, 12 Feb 2022 00:00:00 +0000</pubDate><guid>https://seriousben.com/posts/2022-02-patch-coverage/</guid><description>&lt;p&gt;Code Coverage as a way to track code quality has existed for as long as code
+exists. For that same amount of time, different schools of thought have debated
+on how best to leverage coverage to help drive quality. For example, the
+concept of &lt;a href="https://en.wikipedia.org/wiki/Modified_condition/decision_coverage" target="_blank" rel="noopener"&gt;Modified condition/decision
+coverage&lt;/a&gt;
+
+which defines a criterion used in avionics, in automotive, and in lots of
+safety-critical systems has been referred to in standards &lt;a href="https://en.wikipedia.org/wiki/DO-178B" target="_blank" rel="noopener"&gt;created in
+1992&lt;/a&gt;
+.&lt;/p&gt;
+&lt;p&gt;But this post is not exploring the philosophical aspects of code coverage. It
+is about one metric we get with coverage: patch code coverage.
+We&amp;rsquo;ll explore what it is and how it can be used to write better code, how it
+can be determined, and we&amp;rsquo;ll have an extensive example of how it can be
+implemented for go programs and integrated with Github Actions.&lt;/p&gt;</description></item></channel></rss>

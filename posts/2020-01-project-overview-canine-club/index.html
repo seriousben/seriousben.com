@@ -1,293 +1,335 @@
-<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><title>Project: Aylmer Canine Club Membership Visualization - Benjamin Boudreau</title><meta name=HandheldFriendly content="True"><meta name=MobileOptimized content="320"><meta name=referrer content="no-referrer"><meta name=description content><meta property="og:site_name" content="Benjamin Boudreau"><meta property="og:locale" content="en_US"><meta property="og:type" content="article"><meta property="og:url" content="https://seriousben.com/posts/2020-01-project-overview-canine-club/"><meta property="og:title" content="Project: Aylmer Canine Club Membership Visualization"><meta property="og:image" content="https://seriousben.com/"><meta property="og:description" content><meta property="twitter:site" content="@seriousben"><meta property="twitter:title" content="Project: Aylmer Canine Club Membership Visualization"><meta property="twitter:image" content="https://seriousben.com/"><meta property="twitter:card" content="summary"><meta property="twitter:description" content><link rel=canonical href=https://seriousben.com/posts/2020-01-project-overview-canine-club/><link rel=stylesheet href=https://seriousben.com/style.d44234584139078e87c89dd53eda56c2d1f231c980bdd5bfb6b2e6b4f6bc6f43.css integrity="sha256-1EI0WEE5B46HyJ3VPtpWwtHyMcmAvdW/trLmtPa8b0M=" crossorigin=anonymous><link rel=stylesheet href=https://seriousben.com/css/highlight.css><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/site.webmanifest><link rel=mask-icon href=/safari-pinned-tab.svg color=#000><link rel="shortcut icon" href=/favicon.ico><link href rel=alternate type=application/rss+xml title="Benjamin Boudreau"></head><body><div class=container><header><div class=title-wrapper><a href=https://seriousben.com/>Serious Ben</a></div><div class=menu><ol><li><a class="text-uppercase nav-link" href=/posts/>Posts</a></li><li><a class="text-uppercase nav-link" href=/links/>Curated Links</a></li></ol></div></header><div class=content><h1>Project: Aylmer Canine Club Membership Visualization</h1><div class=meta><span class=date title="Sun Jan 12 2020 12:00:00 -0500">January 12, 2020</span>
-&bull;
-<span class="reading-time middot">16 minutes</span></div><div class=toc><strong>Contents</strong><nav id=TableOfContents><ul><li><a href=#overview>Overview</a></li><li><a href=#getting-the-data>Getting the data</a><ul><li><a href=#overall-algorithm>Overall algorithm</a></li><li><a href=#getting-the-list-of-member-pages>Getting the list of member pages</a></li><li><a href=#getting-the-list-of-members-from-a-page>Getting the list of members from a page</a></li><li><a href=#future>Future</a></li></ul></li><li><a href=#visualizing-the-data>Visualizing the data</a><ul><li><a href=#listing-members>Listing members</a></li><li><a href=#future-1>Future</a></li></ul></li><li><a href=#packaging>Packaging</a><ul><li><a href=#docker>Docker</a></li><li><a href=#abandoned-ideas>Abandoned Ideas</a></li><li><a href=#future-2>Future</a></li></ul></li><li><a href=#deployment>Deployment</a><ul><li><a href=#creating-the-kubernetes-cluster>Creating the Kubernetes cluster</a></li><li><a href=#configuring-the-cluster>Configuring the cluster</a></li><li><a href=#deploying-our-application>Deploying our application</a></li><li><a href=#continuous-deployment>Continuous Deployment</a></li><li><a href=#security>Security</a></li><li><a href=#future-3>Future</a></li></ul></li><li><a href=#conclusion>Conclusion</a></li><li><a href=#references>References</a></li></ul></nav></div><div class=article-content><p>Recently, my dog Bhumie joined our <a href=https://www.clubcaninaylmer.com/>local canine club</a>. The club protects dog owner rights in our small neighborhood like ensuring the existence and maintenance of our dog parks. Signing up meant that Bhumie&rsquo;s picture would show up on the club&rsquo;s website which made me browse the existing members/dogs. Looking at the different pages is painful. The site navigation was quickly put and added on without thinking about the user experience.</p><p>Feeling that pain made me think about the best way to show that membership data in a simpler and more meaningful way. Displaying all members in one page and displaying them per date would allow for very interesting insights. With the membership data of each members, it would also be possible to draw some interesting charts.</p><h2 id=overview>Overview</h2><p>This post covers the various technical decisions that were required to turn the raw member data into a visualization hosted as a web page on GKE Kubernetes cluster in an automated and secure way.</p><p>I will be using different technologies to come up with a functioning result:</p><ul><li><a href=https://golang.org/>Go</a></li><li><a href=https://developer.mozilla.org/en-US/docs/Web/javascript>JavaScript</a> (<a href=https://reactjs.org/>React</a>)</li><li><a href=https://www.docker.com/>Docker</a></li><li><a href=https://kubernetes.io/>Kubernetes</a> Primitives and Manifests</li><li>DNS</li><li>HTTP</li><li><a href=https://www.terraform.io/>Terraform</a></li><li><a href=https://cloud.google.com/>Google Cloud Platform</a></li><li><a href=https://github.com/actions>GitHub Actions</a></li></ul><p>If you want to skip ahead, the code is available at <a href=https://github.com/seriousben/club-canin-aylmer-members>https://github.com/seriousben/club-canin-aylmer-members</a> and the result is at <a href=https://club-canin-aylmer.seriousben.com/>https://club-canin-aylmer.seriousben.com/</a>.</p><figure><img src=./result.gif alt="Picture showing the timeline of members as pictures of dogs." width=800px><figcaption><p>Result of the project</p></figcaption></figure><h2 id=getting-the-data>Getting the data</h2><p>The initial step to be able to display membership information in an interesting way is to get that data. The website has no raw data of the members so I had to improvise. I wanted to get the pictures in two different sizes and the date each member joined the club. The raw data I could work with were:</p><ul><li>the various timestamps of the website (last modified data)</li><li>the list of members with their data: name and picture</li><li>the metadata of the pictures</li></ul><p>All the visualizations I wanted to have required the joined date of each member. Unfortunately, that data wasn&rsquo;t exposed on the website. I thought that the pictures could have interesting metadata like when they were uploaded or created. I hoped that those dates could be used as a way to guess the joined date of a member. To verify that the data could be used as that date, I decided to take a subset of the pictures and see if the dates were spaced out and ordered in a way that would indicate clusters of uploads that I could roughly translate into joined dates. Turns out that the data made a lot of sense.</p><p>Metadata of the first member:</p><figure><img src=./first-member-meta.png alt="Metadata of the first member. (title, address, type, Modified date, ...)" width=800px><figcaption><p>Metadata of the first member</p></figcaption></figure><p>Overview of the modified date of some images:</p><ul><li>First page:<ul><li><code>September 30, 2015</code></li><li><code>January 19, 2014</code></li><li><code>February 2, 2014</code></li><li><code>December 3, 2013</code></li><li><code>December 10, 2013</code></li></ul></li><li>Second page<ul><li><code>April 12, 2015</code></li><li><code>April 12, 2015</code></li><li><code>April 12, 2015</code></li><li><code>April 12, 2015</code></li><li><code>April 16, 2015</code></li></ul></li><li>Last page: (last members)<ul><li><code>December 10, 2019</code></li><li><code>December 3, 2019</code></li><li><code>November 29, 2019</code></li></ul></li></ul><p>Looking at this, I could see that there were some outliers in terms of ordering. But overall, it seemed possible to determine the date at which a member photo was added to the website. Therefore, allowing the use of that date as the joined date of the membership.</p><h3 id=overall-algorithm>Overall algorithm</h3><p>After knowing that using the pictures metadata was going to be possible, I had to extract that data from the website. This meant being able to list all member list pages, list all members from a given page, and extract the date and URL of the member image.</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#75715e># get the list of HTML member pages</span>
-memberPages <span style=color:#f92672>=</span> getMemberPages<span style=color:#f92672>()</span>
-
-<span style=color:#75715e># variable to store all the members</span>
-members <span style=color:#f92672>=</span> <span style=color:#f92672>[]</span>
-
-<span style=color:#75715e># iterate over all member pages</span>
-<span style=color:#66d9ef>for</span>-each mp in memberPages:
-    <span style=color:#75715e># fetch the data of each members contained within a given page</span>
-    membersOnPage <span style=color:#f92672>=</span> getMembersOnPage<span style=color:#f92672>(</span>mp<span style=color:#f92672>)</span>
-
-    <span style=color:#75715e># append the members on the page to the list of all members</span>
-    members <span style=color:#f92672>=</span> append<span style=color:#f92672>(</span>members, membersOnPage<span style=color:#f92672>)</span>
-
-<span style=color:#75715e># send JSON to standard out to allow piping the output to a file</span>
-printToJSON<span style=color:#f92672>(</span>members<span style=color:#f92672>)</span>
-</code></pre></div><h3 id=getting-the-list-of-member-pages>Getting the list of member pages</h3><p>This is how the current website is setup for browsing members (dogs):</p><figure><img src=./menu-screenshot.png alt="Screenshot of the members menu on the website of the Aylmer Canine Club" width=800px><figcaption><p>Members menu</p></figcaption></figure><p>Which is basically setup like this:</p><ul><li>Home</li><li>Members<ul><li>Members Page 2<ul><li>Members Page 3<ul><li>Members Page 4<ul><li>Members Page 5</li><li>Members Page 6</li><li>&mldr;</li></ul></li><li>Members Page 7</li><li>&mldr;</li></ul></li></ul></li></ul></li></ul><p>The only way to fetch the details of each member is to parse each of the member pages. But first, I needed to be able to get the list of pages themselves. To do that there were two options that I could take: parsing the HTML of the menu and getting the list of pages or parsing the XML of the sitemap which contains all the pages of a website. Parsing XML is the safest option since the HTML structure of a page tends to change over time when the style of the website changes while the structure of an XML sitemap would never change since it follow the sitemap protocol (<a href=https://en.wikipedia.org/wiki/Sitemaps)>https://en.wikipedia.org/wiki/Sitemaps)</a>.</p><p>Excerpt of the <code>sitemap.xml</code>:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#f92672>&lt;urlset&gt;</span>
-  <span style=color:#f92672>&lt;url&gt;</span>
-    <span style=color:#f92672>&lt;loc&gt;</span>
-      https://www.clubcaninaylmer.com/devenez-membre.html
-    <span style=color:#f92672>&lt;/loc&gt;</span>
-    <span style=color:#f92672>&lt;lastmod&gt;</span>2019-12-18T12:53:11+00:00<span style=color:#f92672>&lt;/lastmod&gt;</span>
-  <span style=color:#f92672>&lt;/url&gt;</span>
-  <span style=color:#f92672>&lt;url&gt;</span>
-    <span style=color:#f92672>&lt;loc&gt;</span>
-      https://www.clubcaninaylmer.com/membresmembers-page-3.html
-    <span style=color:#f92672>&lt;/loc&gt;</span>
-    <span style=color:#f92672>&lt;lastmod&gt;</span>2019-12-18T12:53:11+00:00<span style=color:#f92672>&lt;/lastmod&gt;</span>
-  <span style=color:#f92672>&lt;/url&gt;</span>
-  ...
-<span style=color:#f92672>&lt;/urlset&gt;</span>
-</code></pre></div><p>Here is the algorithm of how to get the list of pages:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#75715e># fetch the sitemap</span>
-body <span style=color:#f92672>=</span> fetchSitemap<span style=color:#f92672>()</span>
-
-<span style=color:#75715e># parse sitemap data</span>
-sitemap <span style=color:#f92672>=</span> parseXML<span style=color:#f92672>(</span>body<span style=color:#f92672>)</span>
-
-<span style=color:#75715e># variable to store the member pages</span>
-pages <span style=color:#f92672>=</span> <span style=color:#f92672>[]</span>
-
-<span style=color:#75715e># iterate through all the urlset of sitemap</span>
-<span style=color:#66d9ef>for</span>-each url in sitemap.urlset:
-
-    <span style=color:#75715e># check if the location of the url contains membresmembers</span>
-    <span style=color:#66d9ef>if</span> url.loc contains “membresmembers”:
-
-        <span style=color:#75715e># append the url location in the list of pages</span>
-        pages <span style=color:#f92672>=</span> append<span style=color:#f92672>(</span>pages, url.loc<span style=color:#f92672>)</span>
-</code></pre></div><h3 id=getting-the-list-of-members-from-a-page>Getting the list of members from a page</h3><p>Once I had a list of all the member pages, I needed to extract the data of each member available on the page. To do this, the only datasource I had access to was the content of the HTML page itself and the metadata of each image. So I needed to use an HTML parser to facilitate parsing and navigating the HTML using <a href=https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors>CSS Selectors</a>. For the images, ideally, I would only want to fetch the metadata of each images. For that purpose, I used an <a href=https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD>HTTP HEAD verb</a> which allowed me to fetch the headers without downloading the full image.</p><p>The data to extract is:</p><ul><li>Name: Extracted from the HTML</li><li>Original image URL: Extracted from the HTML</li><li>Image modified date: Taken from the image metadata</li></ul><p>Here is the algorithm allowing the fetching of member data from all the member pages:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#75715e># variable to store the list of members for all pages</span>
-members <span style=color:#f92672>=</span> <span style=color:#f92672>[]</span>
-
-<span style=color:#75715e># iterate through all member pages</span>
-<span style=color:#66d9ef>for</span>-each url in memberPages:
-
-    <span style=color:#75715e># fetch the HTML of the member page</span>
-    page <span style=color:#f92672>=</span> httpGet<span style=color:#f92672>(</span>url<span style=color:#f92672>)</span>
-    
-    <span style=color:#75715e># parse the HTML</span>
-    htmlPage <span style=color:#f92672>=</span> parseHTML<span style=color:#f92672>(</span>page<span style=color:#f92672>)</span>
-   
-    <span style=color:#75715e># use a CSS selector to find all member nodes in the gallery</span>
-    memberNodes <span style=color:#f92672>=</span> findNodes<span style=color:#f92672>(</span>htmlPage, <span style=color:#e6db74>&#34;div.galleryInnerImageHolder&#34;</span><span style=color:#f92672>)</span>
-   
-    <span style=color:#75715e># iterate through all member nodes</span>
-    <span style=color:#66d9ef>for</span>-each node in memberNodes:
-
-        <span style=color:#75715e># get text of node</span>
-        memberName <span style=color:#f92672>=</span> textNode<span style=color:#f92672>(</span>node, <span style=color:#e6db74>&#34;div.galleryCaptionInnerText&#34;</span><span style=color:#f92672>)</span>
-       
-        <span style=color:#75715e># get attribute href of a tag</span>
-        imageURL <span style=color:#f92672>=</span> attrNode<span style=color:#f92672>(</span>node, <span style=color:#e6db74>&#34;a&#34;</span>, <span style=color:#e6db74>&#34;href&#34;</span><span style=color:#f92672>)</span>
-       
-        <span style=color:#75715e># do an HTTP HEAD request against the image URL</span>
-        req <span style=color:#f92672>=</span> httpHead<span style=color:#f92672>(</span>imageURL<span style=color:#f92672>)</span>
-       
-        <span style=color:#75715e># Append the member data in the list of members</span>
-        members <span style=color:#f92672>=</span> append<span style=color:#f92672>(</span>members, Member<span style=color:#f92672>{</span>
-          name: memberName,
-          imageURL: imageURL,
-          imageModifiedAt: req.Header<span style=color:#f92672>[</span><span style=color:#e6db74>&#34;Last-Modified&#34;</span><span style=color:#f92672>]</span>
-        <span style=color:#f92672>})</span>
-</code></pre></div><h3 id=future>Future</h3><p>In the future, detecting pictures containing multiple dogs/members and duplicating those would allow us to have better data. Also, comparing various timestamps that are available would be useful to make sure the chosen ones are the best. I would also download the images instead of hot linking to them using their URLs. Also, trying to guess the breed of each dogs from the image would enable some very interesting insights.</p><h2 id=visualizing-the-data>Visualizing the data</h2><p>Visualization of the data is done using <a href=https://reactjs.org/>React</a> and the <a href=https://ant.design/>Antd component library</a>. One the main feature missing from the Canine club website is to be able to see all members on a single page ordered by date. With that in mind, the timeline component from Antd seemed like a very interesting and easy way of displaying members over time.</p><h3 id=listing-members>Listing members</h3><p>Here is the functional react component leveraging React hooks and Antd components to display members. This version is not grouping by date.</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-js data-lang=js><span style=color:#66d9ef>function</span> <span style=color:#a6e22e>App</span>() {
-  <span style=color:#75715e>// Create members state
-</span><span style=color:#75715e></span>  <span style=color:#66d9ef>const</span> [<span style=color:#a6e22e>members</span>, <span style=color:#a6e22e>setMembers</span>] <span style=color:#f92672>=</span> <span style=color:#a6e22e>React</span>.<span style=color:#a6e22e>useState</span>([]);
-
-  <span style=color:#75715e>// Create react side effect hook to setMembers after fetching
-</span><span style=color:#75715e></span>  <span style=color:#a6e22e>React</span>.<span style=color:#a6e22e>useEffect</span>(() =&gt; {
-    <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>function</span> <span style=color:#a6e22e>fetchData</span>() {
-      <span style=color:#66d9ef>const</span> <span style=color:#a6e22e>res</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>await</span> <span style=color:#a6e22e>fetch</span>(<span style=color:#e6db74>&#34;/members.json&#34;</span>, {});
-      <span style=color:#66d9ef>const</span> <span style=color:#a6e22e>mJson</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>await</span> <span style=color:#a6e22e>res</span>.<span style=color:#a6e22e>json</span>();
-      <span style=color:#66d9ef>const</span> <span style=color:#a6e22e>ms</span> <span style=color:#f92672>=</span> <span style=color:#a6e22e>mJson</span>.<span style=color:#a6e22e>members</span>.<span style=color:#a6e22e>map</span>(<span style=color:#a6e22e>m</span> =&gt; {
-        <span style=color:#75715e>// parse date
-</span><span style=color:#75715e></span>        <span style=color:#a6e22e>m</span>.<span style=color:#a6e22e>imageUploadedAt</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Date(<span style=color:#a6e22e>m</span>.<span style=color:#a6e22e>imageUploadedAt</span>);
-        <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>m</span>;
-      });
-      <span style=color:#75715e>// sort by date
-</span><span style=color:#75715e></span>      <span style=color:#a6e22e>ms</span>.<span style=color:#a6e22e>sort</span>((<span style=color:#a6e22e>a</span>, <span style=color:#a6e22e>b</span>) =&gt; <span style=color:#a6e22e>a</span>.<span style=color:#a6e22e>imageUploadedAt</span> <span style=color:#f92672>-</span> <span style=color:#a6e22e>b</span>.<span style=color:#a6e22e>imageUploadedAt</span>);
-      <span style=color:#a6e22e>setMembers</span>(<span style=color:#a6e22e>ms</span>);
-    }
-    <span style=color:#a6e22e>fetchData</span>();
-  }, []);
-  
-  <span style=color:#66d9ef>return</span> (
-    <span style=color:#f92672>&lt;</span><span style=color:#a6e22e>Timeline</span> <span style=color:#a6e22e>mode</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;alternate&#34;</span><span style=color:#f92672>&gt;</span>
-      {<span style=color:#a6e22e>members</span>.<span style=color:#a6e22e>forEach</span>(<span style=color:#a6e22e>m</span> =&gt; {
-        <span style=color:#66d9ef>return</span> (
-          <span style=color:#f92672>&lt;</span><span style=color:#a6e22e>Timeline</span>.<span style=color:#a6e22e>Item</span><span style=color:#f92672>&gt;</span>
-            <span style=color:#f92672>&lt;</span><span style=color:#a6e22e>Avatar</span>
-              <span style=color:#a6e22e>onClick</span><span style=color:#f92672>=</span>{() =&gt; window.<span style=color:#a6e22e>open</span>(<span style=color:#a6e22e>m</span>.<span style=color:#a6e22e>imageUrl</span>, <span style=color:#e6db74>&#34;_blank&#34;</span>)}
-              <span style=color:#a6e22e>shape</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;square&#34;</span>
-              <span style=color:#a6e22e>size</span><span style=color:#f92672>=</span>{<span style=color:#ae81ff>64</span>}
-              <span style=color:#a6e22e>src</span><span style=color:#f92672>=</span>{<span style=color:#a6e22e>m</span>.<span style=color:#a6e22e>imageUrl</span>}
-            <span style=color:#f92672>/&gt;</span>
-          <span style=color:#f92672>&lt;</span><span style=color:#960050;background-color:#1e0010>/Timeline.Item&gt;</span>
-        );
-      })}
-    <span style=color:#f92672>&lt;</span><span style=color:#960050;background-color:#1e0010>/Timeline&gt;</span>
-  );
-}
-</code></pre></div><h3 id=future-1>Future</h3><p>Displaying the data in charts would allow people to visualize the trends of memberships. Also, mobile support is not perfect. The use of a tool-tip does not work well on mobile. It could easily be fixed by using a popover opening on click with details on each member. Another possible improvement would be to gracefully fall back to an error image when the image of a member doesn&rsquo;t load.</p><h2 id=packaging>Packaging</h2><p>Some general guidelines / constraints:</p><ul><li>the project is to be deployed to Kubernetes</li><li>the project should be contained in one docker image</li><li>the site should have a static list of members</li></ul><h3 id=docker>Docker</h3><p>To perform this, I used <a href=https://docs.docker.com/develop/develop-images/multistage-build/>docker multi-stage builds</a>.</p><p>Source: <a href=https://github.com/seriousben/club-canin-aylmer-members/blob/master/Dockerfile>Dockerfile</a></p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-docker data-lang=docker><span style=color:#75715e># First stage called getmembers</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>FROM</span><span style=color:#e6db74> golang:latest AS getmembers</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>ENV</span> GOOS<span style=color:#f92672>=</span>linux GO111MODULE<span style=color:#f92672>=</span>on
-
-<span style=color:#66d9ef>WORKDIR</span><span style=color:#e6db74> /service</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#75715e># Copy the go sources</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>COPY</span> membersfetcher/* ./<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#75715e># Run the membersfetcher code</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>RUN</span> go run main.go &gt; members.json<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#75715e># Second stage called build</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>FROM</span><span style=color:#e6db74> node:13.2.0-alpine as build</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>WORKDIR</span><span style=color:#e6db74> /app</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>ENV</span> PATH /app/node_modules/.bin:$PATH<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>COPY</span> package.json /app/package.json<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>RUN</span> npm install --silent<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#75715e># Copy the react app</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>COPY</span> . /app<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#75715e># Copy the members list</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>COPY</span> --from<span style=color:#f92672>=</span>getmembers /service/members.json /app/public/.<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#75715e># Build the HTML</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>RUN</span> npm run build<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>FROM</span><span style=color:#e6db74> nginx:1.17-alpine</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#75715e># Copy the HTML + members list in the public folder of nginx</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>COPY</span> --from<span style=color:#f92672>=</span>build /app/build /usr/share/nginx/html<span style=color:#960050;background-color:#1e0010>
-</span></code></pre></div><p>This approach allows us to archive the list of members within each docker image. This means that we have a fully self-contained image that has everything it needs to display the members. The images is the only piece of data missing from the docker image.</p><h3 id=abandoned-ideas>Abandoned Ideas</h3><ul><li><p>Using an API</p><p>Using an API would have worked, but would have required having another process running and also to have some form of caching involved to not always do the full crawling of the club website which can take a few minutes.</p></li></ul><h3 id=future-2>Future</h3><p>It would be great to also save and serve a version of each images instead of relying on the images being served and available elsewhere.</p><h2 id=deployment>Deployment</h2><p>There are different parts required in order to go from source code to a website. The project is setup with CD (Continuous Deployment) so that every change to the master branch gets deployed. The project is deployed to a Kubernetes cluster as a docker image exposing the website through nginx.</p><h3 id=creating-the-kubernetes-cluster>Creating the Kubernetes cluster</h3><p>The code responsible for creating the cluster is at <a href=https://github.com/seriousben/serious-infra>https://github.com/seriousben/serious-infra</a>. It contains the terraform script to setup the GCP Kubernetes cluster and the DNS zones.</p><h3 id=configuring-the-cluster>Configuring the cluster</h3><p>The Kubernetes cluster has a set of core services deployed to be leveraged by applications running on the cluster. These core services are defined in <a href=https://github.com/seriousben/serious-core/>https://github.com/seriousben/serious-core/</a>.</p><ul><li><p><a href=https://github.com/kubernetes/ingress-nginx>nginx ingress controller</a></p><p>Allows centralizing all traffic going to our cluster to the same Google Cloud Load Balancer talking to one endpoint on the cluster: nginx.</p></li><li><p><a href=https://github.com/kubernetes-sigs/external-dns>External DNS</a> - Managing DNS records from Kubernetes.</p><p>Allows watching ingress definitions for managed sub-domains to automatically create DNS record on DNS provider.</p></li><li><p>Jetstack&rsquo;s <a href=https://github.com/jetstack/cert-manager>cert-manager</a> - Certificate manager to automate let&rsquo;s encrypt usage.</p><p>Allows watching ingress definitions for TLS certificate to automatically create and manage Let&rsquo;s Encrypt certificate.</p></li></ul><h3 id=deploying-our-application>Deploying our application</h3><p>The initial deployment of the application is done manually with <a href=https://kustomize.io/>Kustomize</a>. Kustomize allows patching some base manifest files for specific environment with common attributes.</p><p>We have 3 folders that are involved when running Kustomize to create the manifest to <code>kubectl apply</code>:</p><ul><li><code>deploy/base</code>: Is the folder containing one or many groups of manifests to be Kustomized when pulled into an overlay.</li><li><code>deploy/overlay</code>: Is the top-level manifest and kustomization. It defines what to pull from the bases into a main manifest. It adds default annotations, labels and a namespace.</li><li><code>deploy/manifest</code>: Outpout of the kustomization of the overlay. <code>kustomize build deploy/overlay > deploy/manifest/kustomized-overlay.yaml</code></li></ul><p>Once the file <code>deploy/manifest/kustomized-overlay.yaml</code> is updated from the base + overlay, it can be applied to the cluster with <code>kubectl apply deploy/manifest/kustomized-overlay.yaml</code>.</p><h4 id=base>Base</h4><p>The <code>deploy/base</code> folder contains this project&rsquo;s manifests:</p><ul><li><p>a <code>deployment</code>: Which defines the pod/container running the HTTP server in terms of Docker image and number of replicas.</p><p>Source: <a href=https://github.com/seriousben/club-canin-aylmer-members/blob/master/deploy/base/deployment.yaml>https://github.com/seriousben/club-canin-aylmer-members/blob/master/deploy/base/deployment.yaml</a></p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=color:#f92672>kind</span>: <span style=color:#ae81ff>Deployment</span>
-<span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>apps/v1</span>
-<span style=color:#f92672>metadata</span>:
-  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>frontend</span>
-  <span style=color:#f92672>labels</span>:
-    <span style=color:#f92672>app</span>: <span style=color:#ae81ff>frontend</span>
-<span style=color:#f92672>spec</span>:
-  <span style=color:#75715e># Only one pod for this deployment</span>
-  <span style=color:#75715e>#   (For High availability, having &gt;=2 is preferred)</span>
-  <span style=color:#f92672>replicas</span>: <span style=color:#ae81ff>1</span>
-  <span style=color:#f92672>revisionHistoryLimit</span>: <span style=color:#ae81ff>2</span>
-  <span style=color:#f92672>selector</span>:
-    <span style=color:#f92672>matchLabels</span>:
-      <span style=color:#f92672>app</span>: <span style=color:#ae81ff>frontend</span>
-  <span style=color:#75715e># Define the template of each pod created by the deployment</span>
-  <span style=color:#f92672>template</span>:
-    <span style=color:#f92672>metadata</span>:
-      <span style=color:#75715e># Define the labels to associate to any pods created by the deployment</span>
-      <span style=color:#f92672>labels</span>:
-        <span style=color:#f92672>app</span>: <span style=color:#ae81ff>frontend</span>
-    <span style=color:#f92672>spec</span>:
-      <span style=color:#f92672>containers</span>:
-      <span style=color:#75715e># Define first and only container of the pod</span>
-      - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>frontend</span>
-        <span style=color:#75715e># Using GitHub Docker registry for the image</span>
-        <span style=color:#f92672>image</span>: <span style=color:#ae81ff>docker.pkg.github.com/seriousben/club-canin-aylmer-members/site:latest</span>
-        <span style=color:#f92672>ports</span>:
-        - <span style=color:#f92672>containerPort</span>: <span style=color:#ae81ff>80</span>
-      <span style=color:#75715e># Defining the secret to access the GitHub docker registry</span>
-      <span style=color:#75715e>#   to fetch the docker image</span>
-      <span style=color:#f92672>imagePullSecrets</span>:
-      - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>github-docker-registry</span>
-</code></pre></div></li><li><p>a <code>service</code>: Which defines how the pods of the deployment can be accessed by finding pods by labels and by defining port mapping.</p><p>Source: <a href=https://github.com/seriousben/club-canin-aylmer-members/blob/master/deploy/base/deployment.yaml>https://github.com/seriousben/club-canin-aylmer-members/blob/master/deploy/base/deployment.yaml</a> (in the same file as the deployment)</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>v1</span>
-<span style=color:#f92672>kind</span>: <span style=color:#ae81ff>Service</span>
-<span style=color:#f92672>metadata</span>:
-  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>frontend</span>
-<span style=color:#f92672>spec</span>:
-  <span style=color:#f92672>ports</span>:
-  <span style=color:#75715e># Port mapping from incoming port 80 to port 80 of pod</span>
-  - <span style=color:#f92672>targetPort</span>: <span style=color:#ae81ff>80</span>
-    <span style=color:#f92672>port</span>: <span style=color:#ae81ff>80</span>
-  <span style=color:#75715e># Send traffic to any pod with label app=frontend</span>
-  <span style=color:#f92672>selector</span>:
-    <span style=color:#f92672>app</span>: <span style=color:#ae81ff>frontend</span>
-</code></pre></div></li><li><p>an <code>ingress</code>: Which defines how to route to a given service from the outside world. It also defines TLS configuration and Hostname configuration.</p><p>Source: <a href=https://github.com/seriousben/club-canin-aylmer-members/blob/master/deploy/base/ingress.yaml>https://github.com/seriousben/club-canin-aylmer-members/blob/master/deploy/base/ingress.yaml</a></p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>extensions/v1beta1</span>
-<span style=color:#f92672>kind</span>: <span style=color:#ae81ff>Ingress</span>
-<span style=color:#f92672>metadata</span>:
-  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>frontend</span>
-  <span style=color:#f92672>annotations</span>:
-    <span style=color:#75715e># Use nginx-ingress and not the Google Cloud ingress</span>
-    <span style=color:#f92672>kubernetes.io/ingress.class</span>: <span style=color:#ae81ff>nginx</span>
-    <span style=color:#75715e># Automatically get a TLS Certificate from Let&#39;s Encrypt</span>
-    <span style=color:#75715e>#  by configuring cert-manager</span>
-    <span style=color:#f92672>cert-manager.io/cluster-issuer</span>: <span style=color:#ae81ff>letsencrypt</span>
-<span style=color:#f92672>spec</span>:
-  <span style=color:#75715e># Name the host of the TLS certificate and the secret in</span>
-  <span style=color:#75715e>#   which the certificate needs to be.</span>
-  <span style=color:#f92672>tls</span>:
-  - <span style=color:#f92672>hosts</span>:
-    - <span style=color:#ae81ff>club-canin-aylmer.seriousben.com</span>
-    <span style=color:#f92672>secretName</span>: <span style=color:#ae81ff>club-canin-aylmer-seriousben-com-tls</span>
-  <span style=color:#f92672>rules</span>:
-  <span style=color:#75715e># Route all incoming traffic from club-canin-aylmer to</span>
-  <span style=color:#75715e>#   the frontend service at port 80</span>
-  <span style=color:#75715e>#   and automatically register subdomain in DNS zone by</span>
-  <span style=color:#75715e>#   external-dns.</span>
-  - <span style=color:#f92672>host</span>: <span style=color:#ae81ff>club-canin-aylmer.seriousben.com</span>
-    <span style=color:#f92672>http</span>:
-      <span style=color:#f92672>paths</span>:
-      - <span style=color:#f92672>backend</span>:
-          <span style=color:#f92672>serviceName</span>: <span style=color:#ae81ff>frontend</span>
-          <span style=color:#f92672>servicePort</span>: <span style=color:#ae81ff>80</span>
-</code></pre></div></li></ul><h3 id=continuous-deployment>Continuous Deployment</h3><p>The continuous deployment of this project uses <a href=https://github.com/actions>GitHub Actions</a>.</p><p>Here is an overview of the <a href=https://github.com/seriousben/club-canin-aylmer-members/blob/master/.github/workflows/deploy.yaml>deploy workflow</a> that is triggered for each merge to master:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=color:#f92672>name</span>: <span style=color:#ae81ff>CD</span>
-
-<span style=color:#f92672>on</span>:
-  <span style=color:#75715e># Run this file on pushes to master</span>
-  <span style=color:#f92672>push</span>:
-    <span style=color:#f92672>branches</span>:
-    - <span style=color:#ae81ff>master</span>
-  <span style=color:#75715e># Also run this file every Wednesday (To automatically refresh the list of members) </span>
-  <span style=color:#f92672>schedule</span>:
-  - <span style=color:#f92672>cron</span>: <span style=color:#e6db74>&#39;20 0 * * WED&#39;</span>
-
-<span style=color:#75715e># Environment variables available to all jobs and steps in this workflow</span>
-<span style=color:#f92672>env</span>:
-  <span style=color:#75715e># Configured in the GitHub UI</span>
-  <span style=color:#f92672>GKE_PROJECT</span>: <span style=color:#ae81ff>${{ secrets.GKE_PROJECT }}</span>
-  <span style=color:#f92672>GITHUB_SHA</span>: <span style=color:#ae81ff>${{ github.sha }}</span>
-  <span style=color:#f92672>GKE_ZONE</span>: <span style=color:#ae81ff>us-east1-d</span>
-  <span style=color:#f92672>GKE_CLUSTER</span>: <span style=color:#ae81ff>main</span>
-  <span style=color:#f92672>IMAGE</span>: <span style=color:#ae81ff>docker.pkg.github.com/seriousben/club-canin-aylmer-members/site</span>
-  <span style=color:#f92672>DOCKER_USER</span>: <span style=color:#ae81ff>seriousben</span>
-  <span style=color:#75715e># Automatically provided by GitHub</span>
-  <span style=color:#f92672>DOCKER_PASS</span>: <span style=color:#ae81ff>${{ secrets.github_token }}</span>
-
-<span style=color:#f92672>jobs</span>:
-  <span style=color:#f92672>setup-build-publish-deploy</span>:
-    <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Setup, Build, Publish, and Deploy</span>
-    <span style=color:#f92672>runs-on</span>: <span style=color:#ae81ff>ubuntu-latest</span>
-    <span style=color:#f92672>steps</span>:
-
-    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Checkout</span>
-      <span style=color:#f92672>uses</span>: <span style=color:#ae81ff>actions/checkout@master</span>
-
-    <span style=color:#75715e># Setup gcloud CLI</span>
-    - <span style=color:#f92672>uses</span>: <span style=color:#ae81ff>GoogleCloudPlatform/github-actions/setup-gcloud@master</span>
-      <span style=color:#f92672>with</span>:
-        <span style=color:#f92672>version</span>: <span style=color:#e6db74>&#39;272.0.0&#39;</span>
-        <span style=color:#75715e># Service Account key created specifically for this project</span>
-        <span style=color:#f92672>service_account_key</span>: <span style=color:#ae81ff>${{ secrets.GKE_KEY }}</span>
-
-    <span style=color:#75715e># Docker login against the GitHub Docker registry</span>
-    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Docker login</span>
-      <span style=color:#f92672>run</span>: |<span style=color:#e6db74>
-</span><span style=color:#e6db74>        </span>        <span style=color:#ae81ff>docker login docker.pkg.github.com -u $DOCKER_USER -p $DOCKER_PASS</span>
-
-    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Docker build</span>
-      <span style=color:#f92672>run</span>: |<span style=color:#e6db74>
-</span><span style=color:#e6db74>        docker build \
-</span><span style=color:#e6db74>          -t &#34;$IMAGE&#34;:&#34;$GITHUB_SHA&#34; \
-</span><span style=color:#e6db74>          -t &#34;$IMAGE&#34;:latest \
-</span><span style=color:#e6db74>          --build-arg GITHUB_SHA=&#34;$GITHUB_SHA&#34; \
-</span><span style=color:#e6db74>          --build-arg GITHUB_REF=&#34;$GITHUB_REF&#34; \
-</span><span style=color:#e6db74>          .</span>        
-    
-    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Docker push</span>
-      <span style=color:#f92672>run</span>: |<span style=color:#e6db74>
-</span><span style=color:#e6db74>        docker push $IMAGE:latest
-</span><span style=color:#e6db74>        docker push $IMAGE:$GITHUB_SHA
-</span><span style=color:#e6db74>        </span>        
-    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Deploy</span>
-      <span style=color:#f92672>run</span>: |<span style=color:#e6db74>
-</span><span style=color:#e6db74>        # Get kubectl credentials on the production Kubernetes cluster
-</span><span style=color:#e6db74>        gcloud container clusters get-credentials $GKE_CLUSTER --zone $GKE_ZONE --project $GKE_PROJECT
-</span><span style=color:#e6db74>        # Set the image version of the frontend container of the frontend deployment within the project&#39;s namespace
-</span><span style=color:#e6db74>        kubectl set image deployment/frontend frontend=$IMAGE:$GITHUB_SHA -n=club-canin-aylmer-members</span>        
-</code></pre></div><h3 id=security>Security</h3><p>In a production environment, I would not expose tokens, API keys or any types of production secrets in GitHub Actions. GitHub Actions are currently very new with possible security problems that have yet to be found. <a href=https://bounty.github.com/researchers/Vlaaaaaaad.html>A big security issue</a> was found less than 6 months ago (2019-09-29). It consisted in a secret leak vulnerability that would allow an attacker to get your secrets by just changing code in a fork of your repository. The <a href=https://en.wikipedia.org/wiki/Attack_surface>attack surface</a> is even bigger for public repositories which is the only type of repositories used in this project.</p><p>Since this project is in fact using GitHub Actions and exposing sensitive secrets through it, the <a href=https://en.wikipedia.org/wiki/Principle_of_least_privilege>principal of least privilege</a> is very important. It consists in only allowing a given module to perform actions that are necessary for its legitimate purpose. For the project, it means limiting the possible blast area that would be impacted if the secret was leaked. The secret for this project is used for deployment. It allows calling Google Cloud APIs and also Kubernetes APIs. Restricting the privileges that this secret has is very important to prevent malicious users from taking over my Google Cloud account.</p><p>Those restrictions are done in two different layers: in Google Cloud Platform and in the Kubernetes cluster.</p><p>That secret used in GitHub Actions is a Google Cloud Platform <a href=https://cloud.google.com/iam/docs/service-accounts>service account</a> key. It is used to call Google Cloud APIs to retrieve the authentication data to run <code>kubectl</code>/Kubernetes commands against the cluster. To limit its privileges within the Google Cloud Platform project, a service account is created and assigned a role restricting its permissions. The role it has makes it so that it can only get authentication data and call Kubernetes APIs. The details can be seen in this file: <a href=https://github.com/seriousben/serious-infra/blob/master/iam.tf>https://github.com/seriousben/serious-infra/blob/master/iam.tf</a></p><p>On the Kubernetes side, the project deployment only needs access to a few operations in the Kubernetes cluster. These operations are the management of deployments, jobs, ingress, configmaps, services, and pods. On top of that, it should only be allowed to manage it&rsquo;s own resources. So for that reason, the Service Account of the key used by the deployment workflow is scoped to these actions and to the project&rsquo;s namespace. That Kubernetes namespace is where all the project resources are created in. This Kubernetes restriction is done by creating a Role for that namespace as well as binding that role to the Google Platform Service Account to restrict permissions. It is done in this manifest file: <a href=https://github.com/seriousben/club-canin-aylmer-members/blob/master/deploy/overlay/role.yaml>https://github.com/seriousben/club-canin-aylmer-members/blob/master/deploy/overlay/role.yaml</a></p><h3 id=future-3>Future</h3><p>The artifact of this project is a static webpage hosted by a dockerized HTTP server. The hosting server could actually be anything. Using Kubernetes for it is not required and is making the infrastructure very complex. The ideal way would be to use a free static webpage hosting service like <a href=https://www.netlify.com/,>https://www.netlify.com/,</a> <a href=https://neocities.org/,>https://neocities.org/,</a> or <a href=https://www.nearlyfreespeech.net/>https://www.nearlyfreespeech.net/</a>. Using a Content Delivery Network (CDN) like <a href=https://aws.amazon.com/cloudfront/>CloudFront</a>, <a href=https://cloud.google.com/cdn/>Google Cloud CDN</a> or <a href=https://www.cloudflare.com/en-ca/cdn/>Cloudflare CDN</a> would also be a good alternative.</p><p>Another possibility would be to leverage serverless technologies. <a href=https://aws.amazon.com/lambda/>AWS Lambda</a>, <a href=https://www.cloudflare.com/en-ca/products/cloudflare-workers/>Google Cloud Run</a> or <a href=https://www.cloudflare.com/en-ca/products/cloudflare-workers/>Cloudflare Workers</a> are all good possible choices to build a great website with simplified infrastructure, a lower cost, and a better performance.</p><h2 id=conclusion>Conclusion</h2><p>Using various technologies, I built a webpage showing the timeline of memberships of the Aylmer Canine Club.</p><p>The code is available at <a href=https://github.com/seriousben/club-canin-aylmer-members>https://github.com/seriousben/club-canin-aylmer-members</a>.</p><p>The result is at <a href=https://club-canin-aylmer.seriousben.com/>https://club-canin-aylmer.seriousben.com/</a>.</p><figure><img src=./result.gif alt="Picture showing the timeline of members as pictures of dogs." width=800px><figcaption><p>Result of the project</p></figcaption></figure><h2 id=references>References</h2><ul><li><a href=https://www.clubcaninaylmer.com/>Aylmer Canine Club</a> - The website of the Canine club.</li><li>Kubernetes <a href=https://github.com/kubernetes-sigs/external-dns>External DNS</a> - Managing DNS records from Kubernetes.</li><li>Jetstack&rsquo;s <a href=https://github.com/jetstack/cert-manager>cert-manager</a> - Certificate manager to automate let&rsquo;s encrypt usage.</li><li><a href=https://kustomize.io/>Kustomize</a> - Kubernetes manifest management.</li><li><a href=https://letsencrypt.org/>Let&rsquo;s Encrypt</a> - The free, automated, and open Certificate Authority.</li><li><a href=https://www.terraform.io/>HashiCorp Terraform</a> - Declarative infrastructure as code tool.</li><li>HashiCorp Terraform <a href=https://www.terraform.io/docs/providers/google/index.html>Google Cloud Platform Provider</a> - Documentation on how to leverage terraform for managing infrastructure on GCP (Google Cloud Platform).</li></ul></div></div><div></div></div><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js integrity="sha512-Pbb8o120v5/hN/a6LjF4N4Lxou+xYZ0QcVF8J6TWhBbHmctQWd8O6xTDmHpE/91OjPzCk4JRoiJsexHYg4SotQ==" crossorigin=anonymous></script><script>window.addEventListener('load',function(){hljs.initHighlighting()},!0)</script><script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-91134611-1','auto'),ga('send','pageview'))</script><script async src=https://www.google-analytics.com/analytics.js></script></body></html>
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><title>Project: Aylmer Canine Club Membership Visualization - Benjamin Boudreau</title><meta name=HandheldFriendly content="True"><meta name=MobileOptimized content="320"><meta name=referrer content="no-referrer"><meta name=description content><meta property="og:site_name" content="Benjamin Boudreau"><meta property="og:locale" content="en_US"><meta property="og:type" content="article"><meta property="og:url" content="https://seriousben.com/posts/2020-01-project-overview-canine-club/"><meta property="og:title" content="Project: Aylmer Canine Club Membership Visualization"><meta property="og:image" content="https://seriousben.com/"><meta property="og:description" content><meta property="twitter:site" content="@seriousben"><meta property="twitter:title" content="Project: Aylmer Canine Club Membership Visualization"><meta property="twitter:image" content="https://seriousben.com/"><meta property="twitter:card" content="summary"><meta property="twitter:description" content><link rel=canonical href=https://seriousben.com/posts/2020-01-project-overview-canine-club/><link rel=stylesheet href=https://seriousben.com/style.d44234584139078e87c89dd53eda56c2d1f231c980bdd5bfb6b2e6b4f6bc6f43.css integrity="sha256-1EI0WEE5B46HyJ3VPtpWwtHyMcmAvdW/trLmtPa8b0M=" crossorigin=anonymous><link rel=stylesheet href=https://seriousben.com/css/highlight.css><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/site.webmanifest><link rel=mask-icon href=/safari-pinned-tab.svg color=#000><link rel="shortcut icon" href=/favicon.ico><link href rel=alternate type=application/rss+xml title="Benjamin Boudreau"></head><body><div class=container><header><div class=title-wrapper><a href=https://seriousben.com/>Serious Ben</a></div><div class=menu><ol><li><a class="text-uppercase nav-link" href=/posts/>Posts</a></li><li><a class="text-uppercase nav-link" href=/links/>Curated Links</a></li></ol></div></header><div class=content><h1>Project: Aylmer Canine Club Membership Visualization</h1><div class=meta><span class=date title='Sun Jan 12 2020 12:00:00 -0500'>January 12, 2020
+</span>&bull;
+<span class="reading-time middot">16 minutes</span></div><div class=toc><strong>Contents</strong><nav id=TableOfContents><ul><li><a href=#overview>Overview</a></li><li><a href=#getting-the-data>Getting the data</a><ul><li><a href=#overall-algorithm>Overall algorithm</a></li><li><a href=#getting-the-list-of-member-pages>Getting the list of member pages</a></li><li><a href=#getting-the-list-of-members-from-a-page>Getting the list of members from a page</a></li><li><a href=#future>Future</a></li></ul></li><li><a href=#visualizing-the-data>Visualizing the data</a><ul><li><a href=#listing-members>Listing members</a></li><li><a href=#future-1>Future</a></li></ul></li><li><a href=#packaging>Packaging</a><ul><li><a href=#docker>Docker</a></li><li><a href=#abandoned-ideas>Abandoned Ideas</a></li><li><a href=#future-2>Future</a></li></ul></li><li><a href=#deployment>Deployment</a><ul><li><a href=#creating-the-kubernetes-cluster>Creating the Kubernetes cluster</a></li><li><a href=#configuring-the-cluster>Configuring the cluster</a></li><li><a href=#deploying-our-application>Deploying our application</a></li><li><a href=#continuous-deployment>Continuous Deployment</a></li><li><a href=#security>Security</a></li><li><a href=#future-3>Future</a></li></ul></li><li><a href=#conclusion>Conclusion</a></li><li><a href=#references>References</a></li></ul></nav></div><div class=article-content><p>Recently, my dog Bhumie joined our <a href=https://www.clubcaninaylmer.com/ target=_blank rel=noopener>local canine club</a>
+. The club protects dog owner rights in our small neighborhood like ensuring the existence and maintenance of our dog parks. Signing up meant that Bhumie&rsquo;s picture would show up on the club&rsquo;s website which made me browse the existing members/dogs. Looking at the different pages is painful. The site navigation was quickly put and added on without thinking about the user experience.</p><p>Feeling that pain made me think about the best way to show that membership data in a simpler and more meaningful way. Displaying all members in one page and displaying them per date would allow for very interesting insights. With the membership data of each members, it would also be possible to draw some interesting charts.</p><h2 id=overview>Overview</h2><p>This post covers the various technical decisions that were required to turn the raw member data into a visualization hosted as a web page on GKE Kubernetes cluster in an automated and secure way.</p><p>I will be using different technologies to come up with a functioning result:</p><ul><li><a href=https://golang.org/ target=_blank rel=noopener>Go</a></li><li><a href=https://developer.mozilla.org/en-US/docs/Web/javascript target=_blank rel=noopener>JavaScript</a>
+(<a href=https://reactjs.org/ target=_blank rel=noopener>React</a>
+)</li><li><a href=https://www.docker.com/ target=_blank rel=noopener>Docker</a></li><li><a href=https://kubernetes.io/ target=_blank rel=noopener>Kubernetes</a>
+Primitives and Manifests</li><li>DNS</li><li>HTTP</li><li><a href=https://www.terraform.io/ target=_blank rel=noopener>Terraform</a></li><li><a href=https://cloud.google.com/ target=_blank rel=noopener>Google Cloud Platform</a></li><li><a href=https://github.com/actions target=_blank rel=noopener>GitHub Actions</a></li></ul><p>If you want to skip ahead, the code is available at <a href=https://github.com/seriousben/club-canin-aylmer-members target=_blank rel=noopener>https://github.com/seriousben/club-canin-aylmer-members</a>
+and the result is at <a href=https://club-canin-aylmer.seriousben.com/ target=_blank rel=noopener>https://club-canin-aylmer.seriousben.com/</a>
+.</p><figure><img src=/posts/2020-01-project-overview-canine-club/result.gif alt="Picture showing the timeline of members as pictures of dogs." width=800px><figcaption><p>Result of the project</p></figcaption></figure><h2 id=getting-the-data>Getting the data</h2><p>The initial step to be able to display membership information in an interesting way is to get that data. The website has no raw data of the members so I had to improvise. I wanted to get the pictures in two different sizes and the date each member joined the club. The raw data I could work with were:</p><ul><li>the various timestamps of the website (last modified data)</li><li>the list of members with their data: name and picture</li><li>the metadata of the pictures</li></ul><p>All the visualizations I wanted to have required the joined date of each member. Unfortunately, that data wasn&rsquo;t exposed on the website. I thought that the pictures could have interesting metadata like when they were uploaded or created. I hoped that those dates could be used as a way to guess the joined date of a member. To verify that the data could be used as that date, I decided to take a subset of the pictures and see if the dates were spaced out and ordered in a way that would indicate clusters of uploads that I could roughly translate into joined dates. Turns out that the data made a lot of sense.</p><p>Metadata of the first member:</p><figure><img src=/posts/2020-01-project-overview-canine-club/first-member-meta.png alt="Metadata of the first member. (title, address, type, Modified date, ...)" width=800px><figcaption><p>Metadata of the first member</p></figcaption></figure><p>Overview of the modified date of some images:</p><ul><li>First page:<ul><li><code>September 30, 2015</code></li><li><code>January 19, 2014</code></li><li><code>February 2, 2014</code></li><li><code>December 3, 2013</code></li><li><code>December 10, 2013</code></li></ul></li><li>Second page<ul><li><code>April 12, 2015</code></li><li><code>April 12, 2015</code></li><li><code>April 12, 2015</code></li><li><code>April 12, 2015</code></li><li><code>April 16, 2015</code></li></ul></li><li>Last page: (last members)<ul><li><code>December 10, 2019</code></li><li><code>December 3, 2019</code></li><li><code>November 29, 2019</code></li></ul></li></ul><p>Looking at this, I could see that there were some outliers in terms of ordering. But overall, it seemed possible to determine the date at which a member photo was added to the website. Therefore, allowing the use of that date as the joined date of the membership.</p><h3 id=overall-algorithm>Overall algorithm</h3><p>After knowing that using the pictures metadata was going to be possible, I had to extract that data from the website. This meant being able to list all member list pages, list all members from a given page, and extract the date and URL of the member image.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none><code class=language-sh data-lang=sh><span style=display:flex><span><span style=color:#75715e># get the list of HTML member pages</span>
+</span></span><span style=display:flex><span>memberPages <span style=color:#f92672>=</span> getMemberPages<span style=color:#f92672>()</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># variable to store all the members</span>
+</span></span><span style=display:flex><span>members <span style=color:#f92672>=</span> <span style=color:#f92672>[]</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># iterate over all member pages</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>for</span>-each mp in memberPages:
+</span></span><span style=display:flex><span>    <span style=color:#75715e># fetch the data of each members contained within a given page</span>
+</span></span><span style=display:flex><span>    membersOnPage <span style=color:#f92672>=</span> getMembersOnPage<span style=color:#f92672>(</span>mp<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># append the members on the page to the list of all members</span>
+</span></span><span style=display:flex><span>    members <span style=color:#f92672>=</span> append<span style=color:#f92672>(</span>members, membersOnPage<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># send JSON to standard out to allow piping the output to a file</span>
+</span></span><span style=display:flex><span>printToJSON<span style=color:#f92672>(</span>members<span style=color:#f92672>)</span>
+</span></span></code></pre></div><h3 id=getting-the-list-of-member-pages>Getting the list of member pages</h3><p>This is how the current website is setup for browsing members (dogs):</p><figure><img src=/posts/2020-01-project-overview-canine-club/menu-screenshot.png alt="Screenshot of the members menu on the website of the Aylmer Canine Club" width=800px><figcaption><p>Members menu</p></figcaption></figure><p>Which is basically setup like this:</p><ul><li>Home</li><li>Members<ul><li>Members Page 2<ul><li>Members Page 3<ul><li>Members Page 4<ul><li>Members Page 5</li><li>Members Page 6</li><li>&mldr;</li></ul></li><li>Members Page 7</li><li>&mldr;</li></ul></li></ul></li></ul></li></ul><p>The only way to fetch the details of each member is to parse each of the member pages. But first, I needed to be able to get the list of pages themselves. To do that there were two options that I could take: parsing the HTML of the menu and getting the list of pages or parsing the XML of the sitemap which contains all the pages of a website. Parsing XML is the safest option since the HTML structure of a page tends to change over time when the style of the website changes while the structure of an XML sitemap would never change since it follow the sitemap protocol (<a href=https://en.wikipedia.org/wiki/Sitemaps%29 target=_blank rel=noopener>https://en.wikipedia.org/wiki/Sitemaps)</a>
+.</p><p>Excerpt of the <code>sitemap.xml</code>:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none><code class=language-xml data-lang=xml><span style=display:flex><span><span style=color:#f92672>&lt;urlset&gt;</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&lt;url&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;loc&gt;</span>
+</span></span><span style=display:flex><span>      https://www.clubcaninaylmer.com/devenez-membre.html
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;/loc&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;lastmod&gt;</span>2019-12-18T12:53:11+00:00<span style=color:#f92672>&lt;/lastmod&gt;</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&lt;/url&gt;</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&lt;url&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;loc&gt;</span>
+</span></span><span style=display:flex><span>      https://www.clubcaninaylmer.com/membresmembers-page-3.html
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;/loc&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;lastmod&gt;</span>2019-12-18T12:53:11+00:00<span style=color:#f92672>&lt;/lastmod&gt;</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&lt;/url&gt;</span>
+</span></span><span style=display:flex><span>  ...
+</span></span><span style=display:flex><span><span style=color:#f92672>&lt;/urlset&gt;</span>
+</span></span></code></pre></div><p>Here is the algorithm of how to get the list of pages:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none><code class=language-sh data-lang=sh><span style=display:flex><span><span style=color:#75715e># fetch the sitemap</span>
+</span></span><span style=display:flex><span>body <span style=color:#f92672>=</span> fetchSitemap<span style=color:#f92672>()</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># parse sitemap data</span>
+</span></span><span style=display:flex><span>sitemap <span style=color:#f92672>=</span> parseXML<span style=color:#f92672>(</span>body<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># variable to store the member pages</span>
+</span></span><span style=display:flex><span>pages <span style=color:#f92672>=</span> <span style=color:#f92672>[]</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># iterate through all the urlset of sitemap</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>for</span>-each url in sitemap.urlset:
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># check if the location of the url contains membresmembers</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span> url.loc contains “membresmembers”:
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e># append the url location in the list of pages</span>
+</span></span><span style=display:flex><span>        pages <span style=color:#f92672>=</span> append<span style=color:#f92672>(</span>pages, url.loc<span style=color:#f92672>)</span>
+</span></span></code></pre></div><h3 id=getting-the-list-of-members-from-a-page>Getting the list of members from a page</h3><p>Once I had a list of all the member pages, I needed to extract the data of each member available on the page. To do this, the only datasource I had access to was the content of the HTML page itself and the metadata of each image. So I needed to use an HTML parser to facilitate parsing and navigating the HTML using <a href=https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors target=_blank rel=noopener>CSS Selectors</a>
+. For the images, ideally, I would only want to fetch the metadata of each images. For that purpose, I used an <a href=https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD target=_blank rel=noopener>HTTP HEAD verb</a>
+which allowed me to fetch the headers without downloading the full image.</p><p>The data to extract is:</p><ul><li>Name: Extracted from the HTML</li><li>Original image URL: Extracted from the HTML</li><li>Image modified date: Taken from the image metadata</li></ul><p>Here is the algorithm allowing the fetching of member data from all the member pages:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none><code class=language-sh data-lang=sh><span style=display:flex><span><span style=color:#75715e># variable to store the list of members for all pages</span>
+</span></span><span style=display:flex><span>members <span style=color:#f92672>=</span> <span style=color:#f92672>[]</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># iterate through all member pages</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>for</span>-each url in memberPages:
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># fetch the HTML of the member page</span>
+</span></span><span style=display:flex><span>    page <span style=color:#f92672>=</span> httpGet<span style=color:#f92672>(</span>url<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    <span style=color:#75715e># parse the HTML</span>
+</span></span><span style=display:flex><span>    htmlPage <span style=color:#f92672>=</span> parseHTML<span style=color:#f92672>(</span>page<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>   
+</span></span><span style=display:flex><span>    <span style=color:#75715e># use a CSS selector to find all member nodes in the gallery</span>
+</span></span><span style=display:flex><span>    memberNodes <span style=color:#f92672>=</span> findNodes<span style=color:#f92672>(</span>htmlPage, <span style=color:#e6db74>&#34;div.galleryInnerImageHolder&#34;</span><span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>   
+</span></span><span style=display:flex><span>    <span style=color:#75715e># iterate through all member nodes</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>for</span>-each node in memberNodes:
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e># get text of node</span>
+</span></span><span style=display:flex><span>        memberName <span style=color:#f92672>=</span> textNode<span style=color:#f92672>(</span>node, <span style=color:#e6db74>&#34;div.galleryCaptionInnerText&#34;</span><span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>       
+</span></span><span style=display:flex><span>        <span style=color:#75715e># get attribute href of a tag</span>
+</span></span><span style=display:flex><span>        imageURL <span style=color:#f92672>=</span> attrNode<span style=color:#f92672>(</span>node, <span style=color:#e6db74>&#34;a&#34;</span>, <span style=color:#e6db74>&#34;href&#34;</span><span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>       
+</span></span><span style=display:flex><span>        <span style=color:#75715e># do an HTTP HEAD request against the image URL</span>
+</span></span><span style=display:flex><span>        req <span style=color:#f92672>=</span> httpHead<span style=color:#f92672>(</span>imageURL<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>       
+</span></span><span style=display:flex><span>        <span style=color:#75715e># Append the member data in the list of members</span>
+</span></span><span style=display:flex><span>        members <span style=color:#f92672>=</span> append<span style=color:#f92672>(</span>members, Member<span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>          name: memberName,
+</span></span><span style=display:flex><span>          imageURL: imageURL,
+</span></span><span style=display:flex><span>          imageModifiedAt: req.Header<span style=color:#f92672>[</span><span style=color:#e6db74>&#34;Last-Modified&#34;</span><span style=color:#f92672>]</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>})</span>
+</span></span></code></pre></div><h3 id=future>Future</h3><p>In the future, detecting pictures containing multiple dogs/members and duplicating those would allow us to have better data. Also, comparing various timestamps that are available would be useful to make sure the chosen ones are the best. I would also download the images instead of hot linking to them using their URLs. Also, trying to guess the breed of each dogs from the image would enable some very interesting insights.</p><h2 id=visualizing-the-data>Visualizing the data</h2><p>Visualization of the data is done using <a href=https://reactjs.org/ target=_blank rel=noopener>React</a>
+and the <a href=https://ant.design/ target=_blank rel=noopener>Antd component library</a>
+. One the main feature missing from the Canine club website is to be able to see all members on a single page ordered by date. With that in mind, the timeline component from Antd seemed like a very interesting and easy way of displaying members over time.</p><h3 id=listing-members>Listing members</h3><p>Here is the functional react component leveraging React hooks and Antd components to display members. This version is not grouping by date.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none><code class=language-js data-lang=js><span style=display:flex><span><span style=color:#66d9ef>function</span> <span style=color:#a6e22e>App</span>() {
+</span></span><span style=display:flex><span>  <span style=color:#75715e>// Create members state
+</span></span></span><span style=display:flex><span>  <span style=color:#66d9ef>const</span> [<span style=color:#a6e22e>members</span>, <span style=color:#a6e22e>setMembers</span>] <span style=color:#f92672>=</span> <span style=color:#a6e22e>React</span>.<span style=color:#a6e22e>useState</span>([]);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e>// Create react side effect hook to setMembers after fetching
+</span></span></span><span style=display:flex><span>  <span style=color:#a6e22e>React</span>.<span style=color:#a6e22e>useEffect</span>(() =&gt; {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>function</span> <span style=color:#a6e22e>fetchData</span>() {
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>const</span> <span style=color:#a6e22e>res</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>await</span> <span style=color:#a6e22e>fetch</span>(<span style=color:#e6db74>&#34;/members.json&#34;</span>, {});
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>const</span> <span style=color:#a6e22e>mJson</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>await</span> <span style=color:#a6e22e>res</span>.<span style=color:#a6e22e>json</span>();
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>const</span> <span style=color:#a6e22e>ms</span> <span style=color:#f92672>=</span> <span style=color:#a6e22e>mJson</span>.<span style=color:#a6e22e>members</span>.<span style=color:#a6e22e>map</span>(<span style=color:#a6e22e>m</span> =&gt; {
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// parse date
+</span></span></span><span style=display:flex><span>        <span style=color:#a6e22e>m</span>.<span style=color:#a6e22e>imageUploadedAt</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Date(<span style=color:#a6e22e>m</span>.<span style=color:#a6e22e>imageUploadedAt</span>);
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>m</span>;
+</span></span><span style=display:flex><span>      });
+</span></span><span style=display:flex><span>      <span style=color:#75715e>// sort by date
+</span></span></span><span style=display:flex><span>      <span style=color:#a6e22e>ms</span>.<span style=color:#a6e22e>sort</span>((<span style=color:#a6e22e>a</span>, <span style=color:#a6e22e>b</span>) =&gt; <span style=color:#a6e22e>a</span>.<span style=color:#a6e22e>imageUploadedAt</span> <span style=color:#f92672>-</span> <span style=color:#a6e22e>b</span>.<span style=color:#a6e22e>imageUploadedAt</span>);
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>setMembers</span>(<span style=color:#a6e22e>ms</span>);
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>fetchData</span>();
+</span></span><span style=display:flex><span>  }, []);
+</span></span><span style=display:flex><span>  
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> (
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;</span><span style=color:#a6e22e>Timeline</span> <span style=color:#a6e22e>mode</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;alternate&#34;</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>      {<span style=color:#a6e22e>members</span>.<span style=color:#a6e22e>forEach</span>(<span style=color:#a6e22e>m</span> =&gt; {
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> (
+</span></span><span style=display:flex><span>          <span style=color:#f92672>&lt;</span><span style=color:#a6e22e>Timeline</span>.<span style=color:#a6e22e>Item</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>            <span style=color:#f92672>&lt;</span><span style=color:#a6e22e>Avatar</span>
+</span></span><span style=display:flex><span>              <span style=color:#a6e22e>onClick</span><span style=color:#f92672>=</span>{() =&gt; window.<span style=color:#a6e22e>open</span>(<span style=color:#a6e22e>m</span>.<span style=color:#a6e22e>imageUrl</span>, <span style=color:#e6db74>&#34;_blank&#34;</span>)}
+</span></span><span style=display:flex><span>              <span style=color:#a6e22e>shape</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;square&#34;</span>
+</span></span><span style=display:flex><span>              <span style=color:#a6e22e>size</span><span style=color:#f92672>=</span>{<span style=color:#ae81ff>64</span>}
+</span></span><span style=display:flex><span>              <span style=color:#a6e22e>src</span><span style=color:#f92672>=</span>{<span style=color:#a6e22e>m</span>.<span style=color:#a6e22e>imageUrl</span>}
+</span></span><span style=display:flex><span>            <span style=color:#f92672>/&gt;</span>
+</span></span><span style=display:flex><span>          <span style=color:#f92672>&lt;</span><span style=color:#960050;background-color:#1e0010>/Timeline.Item&gt;</span>
+</span></span><span style=display:flex><span>        );
+</span></span><span style=display:flex><span>      })}
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;</span><span style=color:#960050;background-color:#1e0010>/Timeline&gt;</span>
+</span></span><span style=display:flex><span>  );
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=future-1>Future</h3><p>Displaying the data in charts would allow people to visualize the trends of memberships. Also, mobile support is not perfect. The use of a tool-tip does not work well on mobile. It could easily be fixed by using a popover opening on click with details on each member. Another possible improvement would be to gracefully fall back to an error image when the image of a member doesn&rsquo;t load.</p><h2 id=packaging>Packaging</h2><p>Some general guidelines / constraints:</p><ul><li>the project is to be deployed to Kubernetes</li><li>the project should be contained in one docker image</li><li>the site should have a static list of members</li></ul><h3 id=docker>Docker</h3><p>To perform this, I used <a href=https://docs.docker.com/develop/develop-images/multistage-build/ target=_blank rel=noopener>docker multi-stage builds</a>
+.</p><p>Source: <a href=https://github.com/seriousben/club-canin-aylmer-members/blob/master/Dockerfile target=_blank rel=noopener>Dockerfile</a></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none><code class=language-docker data-lang=docker><span style=display:flex><span><span style=color:#75715e># First stage called getmembers</span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#66d9ef>FROM</span> <span style=color:#e6db74>golang:latest</span> <span style=color:#66d9ef>AS</span> <span style=color:#e6db74>getmembers</span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#66d9ef>ENV</span> GOOS<span style=color:#f92672>=</span>linux GO111MODULE<span style=color:#f92672>=</span>on
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>WORKDIR</span> <span style=color:#e6db74>/service</span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#75715e># Copy the go sources</span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#66d9ef>COPY</span> membersfetcher/* ./<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#75715e># Run the membersfetcher code</span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#66d9ef>RUN</span> go run main.go &gt; members.json<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#75715e># Second stage called build</span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#66d9ef>FROM</span> <span style=color:#e6db74>node:13.2.0-alpine</span> <span style=color:#66d9ef>as</span> <span style=color:#e6db74>build</span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#66d9ef>WORKDIR</span> <span style=color:#e6db74>/app</span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#66d9ef>ENV</span> PATH /app/node_modules/.bin:$PATH<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#66d9ef>COPY</span> package.json /app/package.json<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#66d9ef>RUN</span> npm install --silent<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#75715e># Copy the react app</span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#66d9ef>COPY</span> . /app<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#75715e># Copy the members list</span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#66d9ef>COPY</span> --from<span style=color:#f92672>=</span>getmembers /service/members.json /app/public/.<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#75715e># Build the HTML</span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#66d9ef>RUN</span> npm run build<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#66d9ef>FROM</span> <span style=color:#e6db74>nginx:1.17-alpine</span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#75715e># Copy the HTML + members list in the public folder of nginx</span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#66d9ef>COPY</span> --from<span style=color:#f92672>=</span>build /app/build /usr/share/nginx/html<span style=color:#960050;background-color:#1e0010>
+</span></span></span></code></pre></div><p>This approach allows us to archive the list of members within each docker image. This means that we have a fully self-contained image that has everything it needs to display the members. The images is the only piece of data missing from the docker image.</p><h3 id=abandoned-ideas>Abandoned Ideas</h3><ul><li><p>Using an API</p><p>Using an API would have worked, but would have required having another process running and also to have some form of caching involved to not always do the full crawling of the club website which can take a few minutes.</p></li></ul><h3 id=future-2>Future</h3><p>It would be great to also save and serve a version of each images instead of relying on the images being served and available elsewhere.</p><h2 id=deployment>Deployment</h2><p>There are different parts required in order to go from source code to a website. The project is setup with CD (Continuous Deployment) so that every change to the master branch gets deployed. The project is deployed to a Kubernetes cluster as a docker image exposing the website through nginx.</p><h3 id=creating-the-kubernetes-cluster>Creating the Kubernetes cluster</h3><p>The code responsible for creating the cluster is at <a href=https://github.com/seriousben/serious-infra target=_blank rel=noopener>https://github.com/seriousben/serious-infra</a>
+. It contains the terraform script to setup the GCP Kubernetes cluster and the DNS zones.</p><h3 id=configuring-the-cluster>Configuring the cluster</h3><p>The Kubernetes cluster has a set of core services deployed to be leveraged by applications running on the cluster. These core services are defined in <a href=https://github.com/seriousben/serious-core/ target=_blank rel=noopener>https://github.com/seriousben/serious-core/</a>
+.</p><ul><li><p><a href=https://github.com/kubernetes/ingress-nginx target=_blank rel=noopener>nginx ingress controller</a></p><p>Allows centralizing all traffic going to our cluster to the same Google Cloud Load Balancer talking to one endpoint on the cluster: nginx.</p></li><li><p><a href=https://github.com/kubernetes-sigs/external-dns target=_blank rel=noopener>External DNS</a>
+- Managing DNS records from Kubernetes.</p><p>Allows watching ingress definitions for managed sub-domains to automatically create DNS record on DNS provider.</p></li><li><p>Jetstack&rsquo;s <a href=https://github.com/jetstack/cert-manager target=_blank rel=noopener>cert-manager</a>
+- Certificate manager to automate let&rsquo;s encrypt usage.</p><p>Allows watching ingress definitions for TLS certificate to automatically create and manage Let&rsquo;s Encrypt certificate.</p></li></ul><h3 id=deploying-our-application>Deploying our application</h3><p>The initial deployment of the application is done manually with <a href=https://kustomize.io/ target=_blank rel=noopener>Kustomize</a>
+. Kustomize allows patching some base manifest files for specific environment with common attributes.</p><p>We have 3 folders that are involved when running Kustomize to create the manifest to <code>kubectl apply</code>:</p><ul><li><code>deploy/base</code>: Is the folder containing one or many groups of manifests to be Kustomized when pulled into an overlay.</li><li><code>deploy/overlay</code>: Is the top-level manifest and kustomization. It defines what to pull from the bases into a main manifest. It adds default annotations, labels and a namespace.</li><li><code>deploy/manifest</code>: Outpout of the kustomization of the overlay. <code>kustomize build deploy/overlay > deploy/manifest/kustomized-overlay.yaml</code></li></ul><p>Once the file <code>deploy/manifest/kustomized-overlay.yaml</code> is updated from the base + overlay, it can be applied to the cluster with <code>kubectl apply deploy/manifest/kustomized-overlay.yaml</code>.</p><h4 id=base>Base</h4><p>The <code>deploy/base</code> folder contains this project&rsquo;s manifests:</p><ul><li><p>a <code>deployment</code>: Which defines the pod/container running the HTTP server in terms of Docker image and number of replicas.</p><p>Source: <a href=https://github.com/seriousben/club-canin-aylmer-members/blob/master/deploy/base/deployment.yaml target=_blank rel=noopener>https://github.com/seriousben/club-canin-aylmer-members/blob/master/deploy/base/deployment.yaml</a></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>kind</span>: <span style=color:#ae81ff>Deployment</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>apps/v1</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>metadata</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>frontend</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>labels</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>app</span>: <span style=color:#ae81ff>frontend</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>spec</span>:
+</span></span><span style=display:flex><span>  <span style=color:#75715e># Only one pod for this deployment</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e>#   (For High availability, having &gt;=2 is preferred)</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>replicas</span>: <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>revisionHistoryLimit</span>: <span style=color:#ae81ff>2</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>selector</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>matchLabels</span>:
+</span></span><span style=display:flex><span>      <span style=color:#f92672>app</span>: <span style=color:#ae81ff>frontend</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># Define the template of each pod created by the deployment</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>template</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>metadata</span>:
+</span></span><span style=display:flex><span>      <span style=color:#75715e># Define the labels to associate to any pods created by the deployment</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>labels</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>app</span>: <span style=color:#ae81ff>frontend</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>spec</span>:
+</span></span><span style=display:flex><span>      <span style=color:#f92672>containers</span>:
+</span></span><span style=display:flex><span>      <span style=color:#75715e># Define first and only container of the pod</span>
+</span></span><span style=display:flex><span>      - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>frontend</span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e># Using GitHub Docker registry for the image</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>image</span>: <span style=color:#ae81ff>docker.pkg.github.com/seriousben/club-canin-aylmer-members/site:latest</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>ports</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#f92672>containerPort</span>: <span style=color:#ae81ff>80</span>
+</span></span><span style=display:flex><span>      <span style=color:#75715e># Defining the secret to access the GitHub docker registry</span>
+</span></span><span style=display:flex><span>      <span style=color:#75715e>#   to fetch the docker image</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>imagePullSecrets</span>:
+</span></span><span style=display:flex><span>      - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>github-docker-registry</span>
+</span></span></code></pre></div></li><li><p>a <code>service</code>: Which defines how the pods of the deployment can be accessed by finding pods by labels and by defining port mapping.</p><p>Source: <a href=https://github.com/seriousben/club-canin-aylmer-members/blob/master/deploy/base/deployment.yaml target=_blank rel=noopener>https://github.com/seriousben/club-canin-aylmer-members/blob/master/deploy/base/deployment.yaml</a>
+(in the same file as the deployment)</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>v1</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>kind</span>: <span style=color:#ae81ff>Service</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>metadata</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>frontend</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>spec</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>ports</span>:
+</span></span><span style=display:flex><span>  <span style=color:#75715e># Port mapping from incoming port 80 to port 80 of pod</span>
+</span></span><span style=display:flex><span>  - <span style=color:#f92672>targetPort</span>: <span style=color:#ae81ff>80</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>port</span>: <span style=color:#ae81ff>80</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># Send traffic to any pod with label app=frontend</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>selector</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>app</span>: <span style=color:#ae81ff>frontend</span>
+</span></span></code></pre></div></li><li><p>an <code>ingress</code>: Which defines how to route to a given service from the outside world. It also defines TLS configuration and Hostname configuration.</p><p>Source: <a href=https://github.com/seriousben/club-canin-aylmer-members/blob/master/deploy/base/ingress.yaml target=_blank rel=noopener>https://github.com/seriousben/club-canin-aylmer-members/blob/master/deploy/base/ingress.yaml</a></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>extensions/v1beta1</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>kind</span>: <span style=color:#ae81ff>Ingress</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>metadata</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>frontend</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>annotations</span>:
+</span></span><span style=display:flex><span>    <span style=color:#75715e># Use nginx-ingress and not the Google Cloud ingress</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>kubernetes.io/ingress.class</span>: <span style=color:#ae81ff>nginx</span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># Automatically get a TLS Certificate from Let&#39;s Encrypt</span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e>#  by configuring cert-manager</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>cert-manager.io/cluster-issuer</span>: <span style=color:#ae81ff>letsencrypt</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>spec</span>:
+</span></span><span style=display:flex><span>  <span style=color:#75715e># Name the host of the TLS certificate and the secret in</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e>#   which the certificate needs to be.</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>tls</span>:
+</span></span><span style=display:flex><span>  - <span style=color:#f92672>hosts</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#ae81ff>club-canin-aylmer.seriousben.com</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>secretName</span>: <span style=color:#ae81ff>club-canin-aylmer-seriousben-com-tls</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>rules</span>:
+</span></span><span style=display:flex><span>  <span style=color:#75715e># Route all incoming traffic from club-canin-aylmer to</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e>#   the frontend service at port 80</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e>#   and automatically register subdomain in DNS zone by</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e>#   external-dns.</span>
+</span></span><span style=display:flex><span>  - <span style=color:#f92672>host</span>: <span style=color:#ae81ff>club-canin-aylmer.seriousben.com</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>http</span>:
+</span></span><span style=display:flex><span>      <span style=color:#f92672>paths</span>:
+</span></span><span style=display:flex><span>      - <span style=color:#f92672>backend</span>:
+</span></span><span style=display:flex><span>          <span style=color:#f92672>serviceName</span>: <span style=color:#ae81ff>frontend</span>
+</span></span><span style=display:flex><span>          <span style=color:#f92672>servicePort</span>: <span style=color:#ae81ff>80</span>
+</span></span></code></pre></div></li></ul><h3 id=continuous-deployment>Continuous Deployment</h3><p>The continuous deployment of this project uses <a href=https://github.com/actions target=_blank rel=noopener>GitHub Actions</a>
+.</p><p>Here is an overview of the <a href=https://github.com/seriousben/club-canin-aylmer-members/blob/master/.github/workflows/deploy.yaml target=_blank rel=noopener>deploy workflow</a>
+that is triggered for each merge to master:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>name</span>: <span style=color:#ae81ff>CD</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>on</span>:
+</span></span><span style=display:flex><span>  <span style=color:#75715e># Run this file on pushes to master</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>push</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>branches</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#ae81ff>master</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># Also run this file every Wednesday (To automatically refresh the list of members) </span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>schedule</span>:
+</span></span><span style=display:flex><span>  - <span style=color:#f92672>cron</span>: <span style=color:#e6db74>&#39;20 0 * * WED&#39;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Environment variables available to all jobs and steps in this workflow</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>env</span>:
+</span></span><span style=display:flex><span>  <span style=color:#75715e># Configured in the GitHub UI</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>GKE_PROJECT</span>: <span style=color:#ae81ff>${{ secrets.GKE_PROJECT }}</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>GITHUB_SHA</span>: <span style=color:#ae81ff>${{ github.sha }}</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>GKE_ZONE</span>: <span style=color:#ae81ff>us-east1-d</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>GKE_CLUSTER</span>: <span style=color:#ae81ff>main</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>IMAGE</span>: <span style=color:#ae81ff>docker.pkg.github.com/seriousben/club-canin-aylmer-members/site</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>DOCKER_USER</span>: <span style=color:#ae81ff>seriousben</span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e># Automatically provided by GitHub</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>DOCKER_PASS</span>: <span style=color:#ae81ff>${{ secrets.github_token }}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>jobs</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>setup-build-publish-deploy</span>:
+</span></span><span style=display:flex><span>    <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Setup, Build, Publish, and Deploy</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>runs-on</span>: <span style=color:#ae81ff>ubuntu-latest</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>steps</span>:
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Checkout</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>uses</span>: <span style=color:#ae81ff>actions/checkout@master</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># Setup gcloud CLI</span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>uses</span>: <span style=color:#ae81ff>GoogleCloudPlatform/github-actions/setup-gcloud@master</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>with</span>:
+</span></span><span style=display:flex><span>        <span style=color:#f92672>version</span>: <span style=color:#e6db74>&#39;272.0.0&#39;</span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e># Service Account key created specifically for this project</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>service_account_key</span>: <span style=color:#ae81ff>${{ secrets.GKE_KEY }}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># Docker login against the GitHub Docker registry</span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Docker login</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>run</span>: |<span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        docker login docker.pkg.github.com -u $DOCKER_USER -p $DOCKER_PASS</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Docker build</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>run</span>: |<span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        docker build \
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          -t &#34;$IMAGE&#34;:&#34;$GITHUB_SHA&#34; \
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          -t &#34;$IMAGE&#34;:latest \
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          --build-arg GITHUB_SHA=&#34;$GITHUB_SHA&#34; \
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          --build-arg GITHUB_REF=&#34;$GITHUB_REF&#34; \
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          .</span>
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Docker push</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>run</span>: |<span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        docker push $IMAGE:latest
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        docker push $IMAGE:$GITHUB_SHA
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        </span>
+</span></span><span style=display:flex><span>    - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>Deploy</span>
+</span></span><span style=display:flex><span>      <span style=color:#f92672>run</span>: |<span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        # Get kubectl credentials on the production Kubernetes cluster
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        gcloud container clusters get-credentials $GKE_CLUSTER --zone $GKE_ZONE --project $GKE_PROJECT
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        # Set the image version of the frontend container of the frontend deployment within the project&#39;s namespace
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        kubectl set image deployment/frontend frontend=$IMAGE:$GITHUB_SHA -n=club-canin-aylmer-members</span>
+</span></span></code></pre></div><h3 id=security>Security</h3><p>In a production environment, I would not expose tokens, API keys or any types of production secrets in GitHub Actions. GitHub Actions are currently very new with possible security problems that have yet to be found. <a href=https://bounty.github.com/researchers/Vlaaaaaaad.html target=_blank rel=noopener>A big security issue</a>
+was found less than 6 months ago (2019-09-29). It consisted in a secret leak vulnerability that would allow an attacker to get your secrets by just changing code in a fork of your repository. The <a href=https://en.wikipedia.org/wiki/Attack_surface target=_blank rel=noopener>attack surface</a>
+is even bigger for public repositories which is the only type of repositories used in this project.</p><p>Since this project is in fact using GitHub Actions and exposing sensitive secrets through it, the <a href=https://en.wikipedia.org/wiki/Principle_of_least_privilege target=_blank rel=noopener>principal of least privilege</a>
+is very important. It consists in only allowing a given module to perform actions that are necessary for its legitimate purpose. For the project, it means limiting the possible blast area that would be impacted if the secret was leaked. The secret for this project is used for deployment. It allows calling Google Cloud APIs and also Kubernetes APIs. Restricting the privileges that this secret has is very important to prevent malicious users from taking over my Google Cloud account.</p><p>Those restrictions are done in two different layers: in Google Cloud Platform and in the Kubernetes cluster.</p><p>That secret used in GitHub Actions is a Google Cloud Platform <a href=https://cloud.google.com/iam/docs/service-accounts target=_blank rel=noopener>service account</a>
+key. It is used to call Google Cloud APIs to retrieve the authentication data to run <code>kubectl</code>/Kubernetes commands against the cluster. To limit its privileges within the Google Cloud Platform project, a service account is created and assigned a role restricting its permissions. The role it has makes it so that it can only get authentication data and call Kubernetes APIs. The details can be seen in this file: <a href=https://github.com/seriousben/serious-infra/blob/master/iam.tf target=_blank rel=noopener>https://github.com/seriousben/serious-infra/blob/master/iam.tf</a></p><p>On the Kubernetes side, the project deployment only needs access to a few operations in the Kubernetes cluster. These operations are the management of deployments, jobs, ingress, configmaps, services, and pods. On top of that, it should only be allowed to manage it&rsquo;s own resources. So for that reason, the Service Account of the key used by the deployment workflow is scoped to these actions and to the project&rsquo;s namespace. That Kubernetes namespace is where all the project resources are created in. This Kubernetes restriction is done by creating a Role for that namespace as well as binding that role to the Google Platform Service Account to restrict permissions. It is done in this manifest file: <a href=https://github.com/seriousben/club-canin-aylmer-members/blob/master/deploy/overlay/role.yaml target=_blank rel=noopener>https://github.com/seriousben/club-canin-aylmer-members/blob/master/deploy/overlay/role.yaml</a></p><h3 id=future-3>Future</h3><p>The artifact of this project is a static webpage hosted by a dockerized HTTP server. The hosting server could actually be anything. Using Kubernetes for it is not required and is making the infrastructure very complex. The ideal way would be to use a free static webpage hosting service like <a href=https://www.netlify.com/ target=_blank rel=noopener>https://www.netlify.com/</a>
+, <a href=https://neocities.org/ target=_blank rel=noopener>https://neocities.org/</a>
+, or <a href=https://www.nearlyfreespeech.net/ target=_blank rel=noopener>https://www.nearlyfreespeech.net/</a>
+. Using a Content Delivery Network (CDN) like <a href=https://aws.amazon.com/cloudfront/ target=_blank rel=noopener>CloudFront</a>
+, <a href=https://cloud.google.com/cdn/ target=_blank rel=noopener>Google Cloud CDN</a>
+or <a href=https://www.cloudflare.com/en-ca/cdn/ target=_blank rel=noopener>Cloudflare CDN</a>
+would also be a good alternative.</p><p>Another possibility would be to leverage serverless technologies. <a href=https://aws.amazon.com/lambda/ target=_blank rel=noopener>AWS Lambda</a>
+, <a href=https://www.cloudflare.com/en-ca/products/cloudflare-workers/ target=_blank rel=noopener>Google Cloud Run</a>
+or <a href=https://www.cloudflare.com/en-ca/products/cloudflare-workers/ target=_blank rel=noopener>Cloudflare Workers</a>
+are all good possible choices to build a great website with simplified infrastructure, a lower cost, and a better performance.</p><h2 id=conclusion>Conclusion</h2><p>Using various technologies, I built a webpage showing the timeline of memberships of the Aylmer Canine Club.</p><p>The code is available at <a href=https://github.com/seriousben/club-canin-aylmer-members target=_blank rel=noopener>https://github.com/seriousben/club-canin-aylmer-members</a>
+.</p><p>The result is at <a href=https://club-canin-aylmer.seriousben.com/ target=_blank rel=noopener>https://club-canin-aylmer.seriousben.com/</a>
+.</p><figure><img src=/posts/2020-01-project-overview-canine-club/result.gif alt="Picture showing the timeline of members as pictures of dogs." width=800px><figcaption><p>Result of the project</p></figcaption></figure><h2 id=references>References</h2><ul><li><a href=https://www.clubcaninaylmer.com/ target=_blank rel=noopener>Aylmer Canine Club</a>
+- The website of the Canine club.</li><li>Kubernetes <a href=https://github.com/kubernetes-sigs/external-dns target=_blank rel=noopener>External DNS</a>
+- Managing DNS records from Kubernetes.</li><li>Jetstack&rsquo;s <a href=https://github.com/jetstack/cert-manager target=_blank rel=noopener>cert-manager</a>
+- Certificate manager to automate let&rsquo;s encrypt usage.</li><li><a href=https://kustomize.io/ target=_blank rel=noopener>Kustomize</a>
+- Kubernetes manifest management.</li><li><a href=https://letsencrypt.org/ target=_blank rel=noopener>Let&rsquo;s Encrypt</a>
+- The free, automated, and open Certificate Authority.</li><li><a href=https://www.terraform.io/ target=_blank rel=noopener>HashiCorp Terraform</a>
+- Declarative infrastructure as code tool.</li><li>HashiCorp Terraform <a href=https://www.terraform.io/docs/providers/google/index.html target=_blank rel=noopener>Google Cloud Platform Provider</a>
+- Documentation on how to leverage terraform for managing infrastructure on GCP (Google Cloud Platform).</li></ul></div></div><div></div></div><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js integrity="sha512-EBLzUL8XLl+va/zAsmXwS7Z2B1F9HUHkZwyS/VKwh3S7T/U0nF4BaU29EP/ZSf6zgiIxYAnKLu6bJ8dqpmX5uw==" crossorigin=anonymous></script><script>window.addEventListener("load",function(){hljs.highlightAll()},!0)</script></body></html>

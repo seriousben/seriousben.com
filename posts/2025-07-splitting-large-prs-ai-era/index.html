@@ -1,381 +1,391 @@
-<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><title>Being Nice to Reviewers: Splitting Large PRs in the AI Era - Benjamin Boudreau</title><meta name=HandheldFriendly content="True"><meta name=MobileOptimized content="320"><meta name=referrer content="no-referrer"><meta name=description content><meta property="og:site_name" content="Benjamin Boudreau"><meta property="og:locale" content="en_US"><meta property="og:type" content="article"><meta property="og:url" content="https://seriousben.com/posts/2025-07-splitting-large-prs-ai-era/"><meta property="og:title" content="Being Nice to Reviewers: Splitting Large PRs in the AI Era"><meta property="og:image" content="https://seriousben.com/"><meta property="og:description" content><meta property="twitter:site" content="@seriousben"><meta property="twitter:title" content="Being Nice to Reviewers: Splitting Large PRs in the AI Era"><meta property="twitter:image" content="https://seriousben.com/"><meta property="twitter:card" content="summary"><meta property="twitter:description" content><link rel=canonical href=https://seriousben.com/posts/2025-07-splitting-large-prs-ai-era/><link rel=stylesheet href=https://seriousben.com/style.d44234584139078e87c89dd53eda56c2d1f231c980bdd5bfb6b2e6b4f6bc6f43.css integrity="sha256-1EI0WEE5B46HyJ3VPtpWwtHyMcmAvdW/trLmtPa8b0M=" crossorigin=anonymous><link rel=stylesheet href=https://seriousben.com/css/highlight.css><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/site.webmanifest><link rel=mask-icon href=/safari-pinned-tab.svg color=#000><link rel="shortcut icon" href=/favicon.ico><link href rel=alternate type=application/rss+xml title="Benjamin Boudreau"></head><body><div class=container><header><div class=title-wrapper><a href=https://seriousben.com/>Serious Ben</a></div><div class=menu><ol><li><a class="text-uppercase nav-link" href=/posts/>Posts</a></li><li><a class="text-uppercase nav-link" href=/links/>Curated Links</a></li></ol></div></header><div class=content><h1>Being Nice to Reviewers: Splitting Large PRs in the AI Era</h1><div class=meta><span class=date title="Tue Jul 29 2025 10:00:00 -0400">July 29, 2025</span>
-&bull;
-<span class="reading-time middot">18 minutes</span></div><div class=toc><strong>Contents</strong><nav id=TableOfContents><ul><li><a href=#the-empathy-problem>The Empathy Problem</a></li><li><a href=#a-recent-example-the-notification-system>A Recent Example: The Notification System</a></li><li><a href=#why-large-prs-hurt-everyone>Why Large PRs Hurt Everyone</a><ul><li><a href=#for-reviewers>For Reviewers</a></li><li><a href=#for-incidents>For Incidents</a></li><li><a href=#for-code-history>For Code History</a></li></ul></li><li><a href=#the-empathic-solution-file-based-pr-splitting>The Empathic Solution: File-Based PR Splitting</a></li><li><a href=#practical-guide-using-ai-to-split-your-large-pr>Practical Guide: Using AI to Split Your Large PR</a><ul><li><a href=#step-1-safety-first---push-and-backup>Step 1: Safety First - Push and Backup</a></li><li><a href=#step-2-analyze-your-changes-with-ai>Step 2: Analyze Your Changes with AI</a></li><li><a href=#step-3-create-the-automation-script>Step 3: Create the Automation Script</a></li><li><a href=#step-4-test-and-validate>Step 4: Test and Validate</a></li><li><a href=#example-ai-conversation-flow>Example AI Conversation Flow</a></li><li><a href=#the-result-a-custom-splitting-script>The Result: A Custom Splitting Script</a></li></ul></li><li><a href=#the-notification-system-a-complete-example>The Notification System: A Complete Example</a><ul><li><a href=#pr1-database-foundation-6-files>PR1: Database Foundation (6 files)</a></li><li><a href=#pr2-backend-services-12-files>PR2: Backend Services (12 files)</a></li><li><a href=#pr3-frontend-components-14-files>PR3: Frontend Components (14 files)</a></li><li><a href=#pr4-tests--configuration-6-files>PR4: Tests & Configuration (6 files)</a></li></ul></li><li><a href=#benefits-of-empathic-pr-splitting>Benefits of Empathic PR Splitting</a></li><li><a href=#future-improvements--advanced-techniques>Future Improvements & Advanced Techniques</a><ul><li><a href=#line-level-splitting>Line-Level Splitting</a></li><li><a href=#semantic-commits>Semantic Commits</a></li><li><a href=#exercise-for-readers>Exercise for Readers</a></li><li><a href=#advanced-tooling>Advanced Tooling</a></li></ul></li><li><a href=#conclusion>Conclusion</a></li></ul></nav></div><div class=article-content><blockquote><p><strong>Note</strong>: This post was written with the assistance of an LLM (Claude), which seemed fitting given the topic. The ideas, experiences, and approach described are my own, but AI helped structure the writing and generate the example script—much like how AI can help us split large PRs while human judgment guides the strategy.</p></blockquote><p>AI tools are making us incredibly productive at writing code. They are also making our pull requests massive. What used to be a 5-file feature now easily becomes 30+ files spanning database migrations, API endpoints, frontend components, tests, and configuration changes. This increased productivity is amazing, but it has created a new problem: we are overwhelming our reviewers.</p><p>This problem is already being felt across the industry. As one developer noted in a <a href="https://news.ycombinator.com/item?id=38372972">recent Hacker News discussion</a>, &ldquo;Large pull requests slow down development&rdquo; because developers end up having to &ldquo;babysit their PRs morning, evening, and night&rdquo; just to maintain velocity. The community is recognizing that <a href=https://graphite.dev/blog/how-ai-code-review-reduces-review-cycles>AI code assistants &ldquo;pour gasoline on the PR backlog fire&rdquo;</a> by creating huge changesets that overwhelm reviewers.</p><p>This is not just about making reviews faster—it is about <a href=../2020-05-changing-code-empathically/>changing code empathically</a>. In that post, I wrote about optimizing for happiness and being considerate to your teammates. Large PRs are the opposite of empathic code changes. They dump cognitive load onto reviewers, make meaningful feedback nearly impossible, and turn code review from a collaborative conversation into a rubber-stamping exercise.</p><h2 id=the-empathy-problem>The Empathy Problem</h2><p>In &ldquo;Changing Code Empathically,&rdquo; I argued that we should optimize for the people who will read, review, and maintain our code. Large PRs violate this principle completely. Reviewers cannot hold 40+ files in their head at once—the cognitive overload is immense. When faced with massive changes, they start skimming instead of engaging deeply with the actual logic and design decisions. The story of your change gets buried in noise, and review fatigue sets in. Large PRs make reviewers want to just approve and move on rather than provide thoughtful feedback.</p><p>Research shows that <a href=https://www.swarmia.com/blog/why-small-pull-requests-are-better/>&ldquo;code review fatigue is a real phenomenon&rdquo;</a> where reviewers start &ldquo;skimming code, leaving fewer comments, and ending up with superficial &lsquo;LGTM&rsquo; reviews.&rdquo; The result is reduced code quality and missed issues that could have been caught with more thorough reviews.</p><p>AI-based review tools like <a href=https://www.coderabbit.ai/>CodeRabbit</a> and others are helping tremendously by catching syntax errors, style issues, and even tricky bugs that humans might miss—like race conditions, memory leaks, or subtle logic errors. These tools are amazing at handling the mechanical aspects of code review—the &ldquo;how&rdquo; of implementation details. But they don&rsquo;t replace human reviewers; they make human reviews more effective by allowing reviewers to focus on the &ldquo;what&rdquo;—the strategic decisions, architectural choices, and business logic that actually matter.</p><p>However, AI reviewers fundamentally lack what human teammates bring most to the table: strategic thinking. Does this change move us toward our product goals? Will it actually solve the problem our users face? These tools can tell you if your function is well-tested, but they cannot tell you if you are building the right thing. They miss the bigger picture of how changes fit with long-term technical direction and business objectives.</p><p>With AI helping us write more code faster, this problem is only getting worse. As noted in discussions about <a href=https://www.greptile.com/blog/ai-code-reviews-conflict>AI code reviews</a>, &ldquo;AI has reduced the average quality of the code that good engineers write&rdquo; partly because &ldquo;engineers underestimate&rdquo; the need to carefully review AI-generated code. Even with AI review assistants, we need new strategies for being nice to our human reviewers in the AI era.</p><h2 id=a-recent-example-the-notification-system>A Recent Example: The Notification System</h2><p>Last month, I found myself staring at a feature branch with 38 changed files. I had been working on a notification system for our application, and with AI assistance, I had implemented everything from database migrations to React components to comprehensive test coverage.</p><p>The feature worked perfectly. All tests passed. But as I was about to create the PR, I imagined my teammate trying to review it. They would have to understand the database schema changes, follow the API implementation, review React component logic, verify test coverage, check type definitions, and validate configuration changes. All in one massive review session.</p><p>This is not being nice to your teammates.</p><h2 id=why-large-prs-hurt-everyone>Why Large PRs Hurt Everyone</h2><p>Large PRs hurt more than just reviewers. They hurt the entire team:</p><h3 id=for-reviewers>For Reviewers</h3><p>When reviewers see a PR with 30+ files, their brains essentially shut down. The cognitive overload is real—human working memory just cannot handle that much context switching. What happens instead? Shallow reviews where important issues get missed and feedback becomes generic. Many reviewers admit that large PRs feel intimidating, so they procrastinate or rush through them just to get them off their plate.</p><p>As one <a href=https://softwareengineering.stackexchange.com/questions/381343/how-to-make-better-code-reviews-when-pull-requests-are-large>Stack Overflow discussion</a> notes: &ldquo;Reviewing large pull requests with hundreds of lines of code can overwhelm even the most experienced developers.&rdquo;</p><h3 id=for-incidents>For Incidents</h3><p>When something breaks and you need to track down the cause, large PRs become a nightmare. You are staring at a changeset that touches database schemas, API endpoints, frontend components, and configuration files all at once. Where do you even start? The blast radius is huge—one small bug buried in a large PR can take down multiple systems. And if you need to roll back? You lose all the good changes along with the problematic ones.</p><h3 id=for-code-history>For Code History</h3><p>Six months later, when you are debugging an issue, git blame shows you a massive commit that changed 40 files at once. Good luck figuring out why that particular line was modified or what the developer was thinking. The story of how a feature evolved gets compressed into one giant commit message. Large PRs also create more merge conflicts since they touch so many files that other developers might be working on simultaneously.</p><p>The Hacker News community has recognized this pattern, with developers noting that some workplaces <a href="https://news.ycombinator.com/item?id=38372972">&ldquo;would straight up reject a PR if it was too big and demand it be broken out into smaller logical pieces&rdquo;</a> to maintain code quality and review effectiveness.</p><h2 id=the-empathic-solution-file-based-pr-splitting>The Empathic Solution: File-Based PR Splitting</h2><p>The solution is not to stop using AI tools—it is to develop better practices for organizing our changes. I have started splitting large features into logical PR chains. Each PR tells a clear story focused on one aspect of the feature. They build on each other in a dependency chain that makes sense. Most importantly, each PR can be reviewed, tested, and deployed independently while respecting the cognitive limits of human reviewers.</p><h2 id=practical-guide-using-ai-to-split-your-large-pr>Practical Guide: Using AI to Split Your Large PR</h2><p>Rather than manually figuring out how to split a large PR (which is time-consuming and error-prone), you can use an LLM like Claude to help you create an automated splitting script. Here is the step-by-step process I used:</p><h3 id=step-1-safety-first---push-and-backup>Step 1: Safety First - Push and Backup</h3><p>Before doing anything, protect your work:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#75715e># Push your feature branch to remote</span>
-git push origin feature/notification-system
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><title>Being Nice to Reviewers: Splitting Large PRs in the AI Era - Benjamin Boudreau</title><meta name=HandheldFriendly content="True"><meta name=MobileOptimized content="320"><meta name=referrer content="no-referrer"><meta name=description content><meta property="og:site_name" content="Benjamin Boudreau"><meta property="og:locale" content="en_US"><meta property="og:type" content="article"><meta property="og:url" content="https://seriousben.com/posts/2025-07-splitting-large-prs-ai-era/"><meta property="og:title" content="Being Nice to Reviewers: Splitting Large PRs in the AI Era"><meta property="og:image" content="https://seriousben.com/"><meta property="og:description" content><meta property="twitter:site" content="@seriousben"><meta property="twitter:title" content="Being Nice to Reviewers: Splitting Large PRs in the AI Era"><meta property="twitter:image" content="https://seriousben.com/"><meta property="twitter:card" content="summary"><meta property="twitter:description" content><link rel=canonical href=https://seriousben.com/posts/2025-07-splitting-large-prs-ai-era/><link rel=stylesheet href=https://seriousben.com/style.d44234584139078e87c89dd53eda56c2d1f231c980bdd5bfb6b2e6b4f6bc6f43.css integrity="sha256-1EI0WEE5B46HyJ3VPtpWwtHyMcmAvdW/trLmtPa8b0M=" crossorigin=anonymous><link rel=stylesheet href=https://seriousben.com/css/highlight.css><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/site.webmanifest><link rel=mask-icon href=/safari-pinned-tab.svg color=#000><link rel="shortcut icon" href=/favicon.ico><link href rel=alternate type=application/rss+xml title="Benjamin Boudreau"></head><body><div class=container><header><div class=title-wrapper><a href=https://seriousben.com/>Serious Ben</a></div><div class=menu><ol><li><a class="text-uppercase nav-link" href=/posts/>Posts</a></li><li><a class="text-uppercase nav-link" href=/links/>Curated Links</a></li></ol></div></header><div class=content><h1>Being Nice to Reviewers: Splitting Large PRs in the AI Era</h1><div class=meta><span class=date title='Tue Jul 29 2025 10:00:00 -0400'>July 29, 2025
+</span>&bull;
+<span class="reading-time middot">18 minutes</span></div><div class=toc><strong>Contents</strong><nav id=TableOfContents><ul><li><a href=#the-empathy-problem>The Empathy Problem</a></li><li><a href=#a-recent-example-the-notification-system>A Recent Example: The Notification System</a></li><li><a href=#why-large-prs-hurt-everyone>Why Large PRs Hurt Everyone</a><ul><li><a href=#for-reviewers>For Reviewers</a></li><li><a href=#for-incidents>For Incidents</a></li><li><a href=#for-code-history>For Code History</a></li></ul></li><li><a href=#the-empathic-solution-file-based-pr-splitting>The Empathic Solution: File-Based PR Splitting</a></li><li><a href=#practical-guide-using-ai-to-split-your-large-pr>Practical Guide: Using AI to Split Your Large PR</a><ul><li><a href=#step-1-safety-first---push-and-backup>Step 1: Safety First - Push and Backup</a></li><li><a href=#step-2-analyze-your-changes-with-ai>Step 2: Analyze Your Changes with AI</a></li><li><a href=#step-3-create-the-automation-script>Step 3: Create the Automation Script</a></li><li><a href=#step-4-test-and-validate>Step 4: Test and Validate</a></li><li><a href=#example-ai-conversation-flow>Example AI Conversation Flow</a></li><li><a href=#the-result-a-custom-splitting-script>The Result: A Custom Splitting Script</a></li></ul></li><li><a href=#the-notification-system-a-complete-example>The Notification System: A Complete Example</a><ul><li><a href=#pr1-database-foundation-6-files>PR1: Database Foundation (6 files)</a></li><li><a href=#pr2-backend-services-12-files>PR2: Backend Services (12 files)</a></li><li><a href=#pr3-frontend-components-14-files>PR3: Frontend Components (14 files)</a></li><li><a href=#pr4-tests--configuration-6-files>PR4: Tests & Configuration (6 files)</a></li></ul></li><li><a href=#benefits-of-empathic-pr-splitting>Benefits of Empathic PR Splitting</a></li><li><a href=#future-improvements--advanced-techniques>Future Improvements & Advanced Techniques</a><ul><li><a href=#line-level-splitting>Line-Level Splitting</a></li><li><a href=#semantic-commits>Semantic Commits</a></li><li><a href=#exercise-for-readers>Exercise for Readers</a></li><li><a href=#advanced-tooling>Advanced Tooling</a></li></ul></li><li><a href=#conclusion>Conclusion</a></li></ul></nav></div><div class=article-content><blockquote><p><strong>Note</strong>: This post was written with the assistance of an LLM (Claude), which seemed fitting given the topic. The ideas, experiences, and approach described are my own, but AI helped structure the writing and generate the example script—much like how AI can help us split large PRs while human judgment guides the strategy.</p></blockquote><p>AI tools are making us incredibly productive at writing code. They are also making our pull requests massive. What used to be a 5-file feature now easily becomes 30+ files spanning database migrations, API endpoints, frontend components, tests, and configuration changes. This increased productivity is amazing, but it has created a new problem: we are overwhelming our reviewers.</p><p>This problem is already being felt across the industry. As one developer noted in a <a href="https://news.ycombinator.com/item?id=38372972" target=_blank rel=noopener>recent Hacker News discussion</a>
+, &ldquo;Large pull requests slow down development&rdquo; because developers end up having to &ldquo;babysit their PRs morning, evening, and night&rdquo; just to maintain velocity. The community is recognizing that <a href=https://graphite.dev/blog/how-ai-code-review-reduces-review-cycles target=_blank rel=noopener>AI code assistants &ldquo;pour gasoline on the PR backlog fire&rdquo;</a>
+by creating huge changesets that overwhelm reviewers.</p><p>This is not just about making reviews faster—it is about <a href=../2020-05-changing-code-empathically/>changing code empathically</a>
+. In that post, I wrote about optimizing for happiness and being considerate to your teammates. Large PRs are the opposite of empathic code changes. They dump cognitive load onto reviewers, make meaningful feedback nearly impossible, and turn code review from a collaborative conversation into a rubber-stamping exercise.</p><h2 id=the-empathy-problem>The Empathy Problem</h2><p>In &ldquo;Changing Code Empathically,&rdquo; I argued that we should optimize for the people who will read, review, and maintain our code. Large PRs violate this principle completely. Reviewers cannot hold 40+ files in their head at once—the cognitive overload is immense. When faced with massive changes, they start skimming instead of engaging deeply with the actual logic and design decisions. The story of your change gets buried in noise, and review fatigue sets in. Large PRs make reviewers want to just approve and move on rather than provide thoughtful feedback.</p><p>Research shows that <a href=https://www.swarmia.com/blog/why-small-pull-requests-are-better/ target=_blank rel=noopener>&ldquo;code review fatigue is a real phenomenon&rdquo;</a>
+where reviewers start &ldquo;skimming code, leaving fewer comments, and ending up with superficial &lsquo;LGTM&rsquo; reviews.&rdquo; The result is reduced code quality and missed issues that could have been caught with more thorough reviews.</p><p>AI-based review tools like <a href=https://www.coderabbit.ai/ target=_blank rel=noopener>CodeRabbit</a>
+and others are helping tremendously by catching syntax errors, style issues, and even tricky bugs that humans might miss—like race conditions, memory leaks, or subtle logic errors. These tools are amazing at handling the mechanical aspects of code review—the &ldquo;how&rdquo; of implementation details. But they don&rsquo;t replace human reviewers; they make human reviews more effective by allowing reviewers to focus on the &ldquo;what&rdquo;—the strategic decisions, architectural choices, and business logic that actually matter.</p><p>However, AI reviewers fundamentally lack what human teammates bring most to the table: strategic thinking. Does this change move us toward our product goals? Will it actually solve the problem our users face? These tools can tell you if your function is well-tested, but they cannot tell you if you are building the right thing. They miss the bigger picture of how changes fit with long-term technical direction and business objectives.</p><p>With AI helping us write more code faster, this problem is only getting worse. As noted in discussions about <a href=https://www.greptile.com/blog/ai-code-reviews-conflict target=_blank rel=noopener>AI code reviews</a>
+, &ldquo;AI has reduced the average quality of the code that good engineers write&rdquo; partly because &ldquo;engineers underestimate&rdquo; the need to carefully review AI-generated code. Even with AI review assistants, we need new strategies for being nice to our human reviewers in the AI era.</p><h2 id=a-recent-example-the-notification-system>A Recent Example: The Notification System</h2><p>Last month, I found myself staring at a feature branch with 38 changed files. I had been working on a notification system for our application, and with AI assistance, I had implemented everything from database migrations to React components to comprehensive test coverage.</p><p>The feature worked perfectly. All tests passed. But as I was about to create the PR, I imagined my teammate trying to review it. They would have to understand the database schema changes, follow the API implementation, review React component logic, verify test coverage, check type definitions, and validate configuration changes. All in one massive review session.</p><p>This is not being nice to your teammates.</p><h2 id=why-large-prs-hurt-everyone>Why Large PRs Hurt Everyone</h2><p>Large PRs hurt more than just reviewers. They hurt the entire team:</p><h3 id=for-reviewers>For Reviewers</h3><p>When reviewers see a PR with 30+ files, their brains essentially shut down. The cognitive overload is real—human working memory just cannot handle that much context switching. What happens instead? Shallow reviews where important issues get missed and feedback becomes generic. Many reviewers admit that large PRs feel intimidating, so they procrastinate or rush through them just to get them off their plate.</p><p>As one <a href=https://softwareengineering.stackexchange.com/questions/381343/how-to-make-better-code-reviews-when-pull-requests-are-large target=_blank rel=noopener>Stack Overflow discussion</a>
+notes: &ldquo;Reviewing large pull requests with hundreds of lines of code can overwhelm even the most experienced developers.&rdquo;</p><h3 id=for-incidents>For Incidents</h3><p>When something breaks and you need to track down the cause, large PRs become a nightmare. You are staring at a changeset that touches database schemas, API endpoints, frontend components, and configuration files all at once. Where do you even start? The blast radius is huge—one small bug buried in a large PR can take down multiple systems. And if you need to roll back? You lose all the good changes along with the problematic ones.</p><h3 id=for-code-history>For Code History</h3><p>Six months later, when you are debugging an issue, git blame shows you a massive commit that changed 40 files at once. Good luck figuring out why that particular line was modified or what the developer was thinking. The story of how a feature evolved gets compressed into one giant commit message. Large PRs also create more merge conflicts since they touch so many files that other developers might be working on simultaneously.</p><p>The Hacker News community has recognized this pattern, with developers noting that some workplaces <a href="https://news.ycombinator.com/item?id=38372972" target=_blank rel=noopener>&ldquo;would straight up reject a PR if it was too big and demand it be broken out into smaller logical pieces&rdquo;</a>
+to maintain code quality and review effectiveness.</p><h2 id=the-empathic-solution-file-based-pr-splitting>The Empathic Solution: File-Based PR Splitting</h2><p>The solution is not to stop using AI tools—it is to develop better practices for organizing our changes. I have started splitting large features into logical PR chains. Each PR tells a clear story focused on one aspect of the feature. They build on each other in a dependency chain that makes sense. Most importantly, each PR can be reviewed, tested, and deployed independently while respecting the cognitive limits of human reviewers.</p><h2 id=practical-guide-using-ai-to-split-your-large-pr>Practical Guide: Using AI to Split Your Large PR</h2><p>Rather than manually figuring out how to split a large PR (which is time-consuming and error-prone), you can use an LLM like Claude to help you create an automated splitting script. Here is the step-by-step process I used:</p><h3 id=step-1-safety-first---push-and-backup>Step 1: Safety First - Push and Backup</h3><p>Before doing anything, protect your work:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#75715e># Push your feature branch to remote</span>
+</span></span><span style=display:flex><span>git push origin feature/notification-system
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Create a backup in a separate directory</span>
+</span></span><span style=display:flex><span>cp -r /path/to/your/project /path/to/backup/project-backup-<span style=color:#66d9ef>$(</span>date +%Y%m%d<span style=color:#66d9ef>)</span>
+</span></span></code></pre></div><h3 id=step-2-analyze-your-changes-with-ai>Step 2: Analyze Your Changes with AI</h3><p>Start by asking your AI assistant to help analyze what you have:</p><p><strong>Prompt 1: Initial Analysis</strong></p><pre tabindex=0><code>I have a large feature branch with many files. Help me understand what files have changed:
 
-<span style=color:#75715e># Create a backup in a separate directory</span>
-cp -r /path/to/your/project /path/to/backup/project-backup-<span style=color:#66d9ef>$(</span>date +%Y%m%d<span style=color:#66d9ef>)</span>
-</code></pre></div><h3 id=step-2-analyze-your-changes-with-ai>Step 2: Analyze Your Changes with AI</h3><p>Start by asking your AI assistant to help analyze what you have:</p><p><strong>Prompt 1: Initial Analysis</strong></p><pre><code>I have a large feature branch with many files. Help me understand what files have changed:
-
-Can you help me run `git diff --name-only main..HEAD` and analyze the types of files I'm working with?
-</code></pre><p><strong>Prompt 2: Categorization</strong></p><pre><code>Now help me categorize these files into logical groups for separate PRs. I'm working on a [describe your feature]. What would be a good way to split this into 3-4 logical PRs that build on each other?
-</code></pre><h3 id=step-3-create-the-automation-script>Step 3: Create the Automation Script</h3><p>Once you have a plan, ask the AI to create the automation:</p><p><strong>Prompt 3: Script Generation</strong></p><pre><code>Create a bash script to split this feature branch into logical PRs with proper git commands, commit messages referencing [your ticket number], and GitHub CLI commands to create the PRs with dependencies.
+Can you help me run `git diff --name-only main..HEAD` and analyze the types of files I&#39;m working with?
+</code></pre><p><strong>Prompt 2: Categorization</strong></p><pre tabindex=0><code>Now help me categorize these files into logical groups for separate PRs. I&#39;m working on a [describe your feature]. What would be a good way to split this into 3-4 logical PRs that build on each other?
+</code></pre><h3 id=step-3-create-the-automation-script>Step 3: Create the Automation Script</h3><p>Once you have a plan, ask the AI to create the automation:</p><p><strong>Prompt 3: Script Generation</strong></p><pre tabindex=0><code>Create a bash script to split this feature branch into logical PRs with proper git commands, commit messages referencing [your ticket number], and GitHub CLI commands to create the PRs with dependencies.
 
 Make it so the script:
 - Creates branches from the appropriate base branches
 - Cherry-picks specific files using `git checkout feature-branch -- file1 file2`
 - Validates each PR with [your build/test commands]
 - Creates PRs with proper dependency chains
-</code></pre><p><strong>Prompt 4: File Verification</strong></p><pre><code>Can you double check that all files are present in the script? I want to make sure we don't miss any files from the original feature branch.
+</code></pre><p><strong>Prompt 4: File Verification</strong></p><pre tabindex=0><code>Can you double check that all files are present in the script? I want to make sure we don&#39;t miss any files from the original feature branch.
 
-Compare the files in my feature branch with what's included in the script sections.
-</code></pre><h3 id=step-4-test-and-validate>Step 4: Test and Validate</h3><p><strong>Prompt 5: Final Verification</strong></p><pre><code>Now help me verify the script is correct:
+Compare the files in my feature branch with what&#39;s included in the script sections.
+</code></pre><h3 id=step-4-test-and-validate>Step 4: Test and Validate</h3><p><strong>Prompt 5: Final Verification</strong></p><pre tabindex=0><code>Now help me verify the script is correct:
 1. Check that all [X] files from my feature branch are accounted for
 2. Make sure the dependency chain makes sense
 3. Verify the commit messages follow good practices
 
 Also, can you suggest how to test this safely before running it on my real branch?
-</code></pre><h3 id=example-ai-conversation-flow>Example AI Conversation Flow</h3><p>Here is what this looked like in practice when I was splitting my notification system:</p><pre><code>Me: &quot;I have a feature branch with 38 files for a notification system. Help me split this into logical PRs.&quot;
+</code></pre><h3 id=example-ai-conversation-flow>Example AI Conversation Flow</h3><p>Here is what this looked like in practice when I was splitting my notification system:</p><pre tabindex=0><code>Me: &#34;I have a feature branch with 38 files for a notification system. Help me split this into logical PRs.&#34;
 
-AI: &quot;Let me analyze your files... I see database migrations, API endpoints, React components, and tests. I'd suggest 4 PRs:
+AI: &#34;Let me analyze your files... I see database migrations, API endpoints, React components, and tests. I&#39;d suggest 4 PRs:
 1. Database foundation
 2. Backend services  
 3. Frontend components
-4. Tests and configuration&quot;
+4. Tests and configuration&#34;
 
-Me: &quot;Create a bash script that does this automatically with validation.&quot;
+Me: &#34;Create a bash script that does this automatically with validation.&#34;
 
 AI: [Generated the complete script]
 
-Me: &quot;Double-check that all 38 files are included in the script.&quot;
+Me: &#34;Double-check that all 38 files are included in the script.&#34;
 
-AI: &quot;I found 1 missing file: src/components/__tests__/NotificationBell.test.tsx - it should go in PR4&quot;
-</code></pre><h3 id=the-result-a-custom-splitting-script>The Result: A Custom Splitting Script</h3><p>After this AI-assisted process, you&rsquo;ll have a script like this one for our notification system:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#75715e>#!/bin/bash
-</span><span style=color:#75715e></span>
-<span style=color:#75715e># Notification System PR Splitter</span>
-<span style=color:#75715e># Generated by AI to split a 38-file feature into logical PRs</span>
-<span style=color:#75715e># Usage: ./split-notification-feature.sh [target-repo-directory] [--pr-only]</span>
-
-set -euo pipefail
-
-<span style=color:#75715e># Configuration - customize these for your project</span>
-FEATURE_BRANCH<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;feature/notification-system&#34;</span>
-MAIN_BRANCH<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;main&#34;</span>
-ISSUE_KEY<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;FEAT-1234&#34;</span>
-BRANCH_PREFIX<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;feature&#34;</span>
-
-<span style=color:#75715e># Colors for better output</span>
-RED<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;\033[0;31m&#39;</span>
-GREEN<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;\033[0;32m&#39;</span>
-BLUE<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;\033[0;34m&#39;</span>
-NC<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;\033[0m&#39;</span>
-
-log_info<span style=color:#f92672>()</span> <span style=color:#f92672>{</span> echo -e <span style=color:#e6db74>&#34;</span><span style=color:#e6db74>${</span>BLUE<span style=color:#e6db74>}</span><span style=color:#e6db74>[INFO]</span><span style=color:#e6db74>${</span>NC<span style=color:#e6db74>}</span><span style=color:#e6db74> </span>$1<span style=color:#e6db74>&#34;</span>; <span style=color:#f92672>}</span>
-log_success<span style=color:#f92672>()</span> <span style=color:#f92672>{</span> echo -e <span style=color:#e6db74>&#34;</span><span style=color:#e6db74>${</span>GREEN<span style=color:#e6db74>}</span><span style=color:#e6db74>[SUCCESS]</span><span style=color:#e6db74>${</span>NC<span style=color:#e6db74>}</span><span style=color:#e6db74> </span>$1<span style=color:#e6db74>&#34;</span>; <span style=color:#f92672>}</span>
-log_error<span style=color:#f92672>()</span> <span style=color:#f92672>{</span> echo -e <span style=color:#e6db74>&#34;</span><span style=color:#e6db74>${</span>RED<span style=color:#e6db74>}</span><span style=color:#e6db74>[ERROR]</span><span style=color:#e6db74>${</span>NC<span style=color:#e6db74>}</span><span style=color:#e6db74> </span>$1<span style=color:#e6db74>&#34;</span>; <span style=color:#f92672>}</span>
-
-<span style=color:#75715e># Validation function - ensures each PR can build independently</span>
-validate_branch<span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
-    local branch_name<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;</span>$1<span style=color:#e6db74>&#34;</span>
-    log_info <span style=color:#e6db74>&#34;Validating: </span>$branch_name<span style=color:#e6db74>&#34;</span>
-    
-    <span style=color:#75715e># Run your project&#39;s validation commands</span>
-    npm run build <span style=color:#f92672>||</span> <span style=color:#f92672>{</span> log_error <span style=color:#e6db74>&#34;Build failed&#34;</span>; <span style=color:#66d9ef>return</span> 1; <span style=color:#f92672>}</span>
-    npm run lint <span style=color:#f92672>||</span> <span style=color:#f92672>{</span> log_error <span style=color:#e6db74>&#34;Lint failed&#34;</span>; <span style=color:#66d9ef>return</span> 1; <span style=color:#f92672>}</span>
-    npm test <span style=color:#f92672>||</span> <span style=color:#f92672>{</span> log_error <span style=color:#e6db74>&#34;Tests failed&#34;</span>; <span style=color:#66d9ef>return</span> 1; <span style=color:#f92672>}</span>
-    
-    log_success <span style=color:#e6db74>&#34;Validation passed: </span>$branch_name<span style=color:#e6db74>&#34;</span>
-<span style=color:#f92672>}</span>
-
-<span style=color:#75715e># Parse arguments</span>
-TARGET_DIR<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;</span><span style=color:#e6db74>${</span>1<span style=color:#66d9ef>:-$(</span>pwd<span style=color:#66d9ef>)</span><span style=color:#e6db74>}</span><span style=color:#e6db74>&#34;</span>
-PR_ONLY<span style=color:#f92672>=</span>false
-
-<span style=color:#75715e># Check for --pr-only flag (skip branch creation if branches exist)</span>
-<span style=color:#66d9ef>for</span> arg in <span style=color:#e6db74>&#34;</span>$@<span style=color:#e6db74>&#34;</span>; <span style=color:#66d9ef>do</span>
-    <span style=color:#66d9ef>case</span> $arg in
-        --pr-only<span style=color:#f92672>)</span> PR_ONLY<span style=color:#f92672>=</span>true; shift ;;
-    <span style=color:#66d9ef>esac</span>
-<span style=color:#66d9ef>done</span>
-
-cd <span style=color:#e6db74>&#34;</span>$TARGET_DIR<span style=color:#e6db74>&#34;</span>
-log_info <span style=color:#e6db74>&#34;Working in: </span><span style=color:#66d9ef>$(</span>pwd<span style=color:#66d9ef>)</span><span style=color:#e6db74>&#34;</span>
-
-<span style=color:#75715e># Safety checks - verify we have what we need</span>
-<span style=color:#66d9ef>if</span> ! command -v gh &amp;&gt; /dev/null; <span style=color:#66d9ef>then</span>
-    log_error <span style=color:#e6db74>&#34;GitHub CLI (gh) required but not installed&#34;</span>
-    exit <span style=color:#ae81ff>1</span>
-<span style=color:#66d9ef>fi</span>
-
-<span style=color:#66d9ef>if</span> <span style=color:#f92672>[</span> ! -f <span style=color:#e6db74>&#34;package.json&#34;</span> <span style=color:#f92672>]</span>; <span style=color:#66d9ef>then</span>
-    log_error <span style=color:#e6db74>&#34;package.json not found - is this a Node.js project?&#34;</span>
-    exit <span style=color:#ae81ff>1</span>
-<span style=color:#66d9ef>fi</span>
-
-<span style=color:#75715e># Define our PR structure - AI determined these logical groupings</span>
-PR1_BRANCH<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;</span>$BRANCH_PREFIX<span style=color:#e6db74>/notifications-database&#34;</span>
-PR2_BRANCH<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;</span>$BRANCH_PREFIX<span style=color:#e6db74>/notifications-backend&#34;</span> 
-PR3_BRANCH<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;</span>$BRANCH_PREFIX<span style=color:#e6db74>/notifications-frontend&#34;</span>
-PR4_BRANCH<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;</span>$BRANCH_PREFIX<span style=color:#e6db74>/notifications-tests&#34;</span>
-
-<span style=color:#66d9ef>if</span> <span style=color:#f92672>[</span> <span style=color:#e6db74>&#34;</span>$PR_ONLY<span style=color:#e6db74>&#34;</span> <span style=color:#f92672>=</span> false <span style=color:#f92672>]</span>; <span style=color:#66d9ef>then</span>
-    log_info <span style=color:#e6db74>&#34;=== Creating branches ===&#34;</span>
-
-    <span style=color:#75715e># PR 1: Database Foundation (6 files)</span>
-    <span style=color:#75715e># Why: Database schema must exist before any code can use it</span>
-    log_info <span style=color:#e6db74>&#34;Creating: </span>$PR1_BRANCH<span style=color:#e6db74>&#34;</span>
-    git checkout <span style=color:#e6db74>&#34;</span>$MAIN_BRANCH<span style=color:#e6db74>&#34;</span>
-    git checkout -b <span style=color:#e6db74>&#34;</span>$PR1_BRANCH<span style=color:#e6db74>&#34;</span>
-
-    git checkout <span style=color:#e6db74>&#34;</span>$FEATURE_BRANCH<span style=color:#e6db74>&#34;</span> -- <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        prisma/* <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        src/types/notification.ts <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        package.json <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        package-lock.json <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        tsconfig.json
-
-    <span style=color:#75715e># Always run dependency management after file changes</span>
-    npm install
-    git add .
-    git commit -m <span style=color:#e6db74>&#34;feat(</span>$ISSUE_KEY<span style=color:#e6db74>): add notification database schema
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>- Add Prisma schema for notifications table
-</span><span style=color:#e6db74>- Create database migration for notification system
-</span><span style=color:#e6db74>- Add TypeScript types for notification entities
-</span><span style=color:#e6db74>- Foundation for notification feature implementation
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74></span>$ISSUE_KEY<span style=color:#e6db74>&#34;</span>
-
-    validate_branch <span style=color:#e6db74>&#34;</span>$PR1_BRANCH<span style=color:#e6db74>&#34;</span>
-    git push -u origin <span style=color:#e6db74>&#34;</span>$PR1_BRANCH<span style=color:#e6db74>&#34;</span>
-    log_success <span style=color:#e6db74>&#34;Created: </span>$PR1_BRANCH<span style=color:#e6db74>&#34;</span>
-
-    <span style=color:#75715e># PR 2: Backend Services (12 files) </span>
-    <span style=color:#75715e># Why: API layer depends on database schema and types</span>
-    log_info <span style=color:#e6db74>&#34;Creating: </span>$PR2_BRANCH<span style=color:#e6db74>&#34;</span>
-    git checkout <span style=color:#e6db74>&#34;</span>$PR1_BRANCH<span style=color:#e6db74>&#34;</span>  <span style=color:#75715e># Build on PR1, not main</span>
-    git checkout -b <span style=color:#e6db74>&#34;</span>$PR2_BRANCH<span style=color:#e6db74>&#34;</span>
-
-    git checkout <span style=color:#e6db74>&#34;</span>$FEATURE_BRANCH<span style=color:#e6db74>&#34;</span> -- <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        src/api/* <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        src/services/* <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        src/middleware/* <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        src/utils/* <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        src/config/* <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        src/types/api.ts <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        package.json <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        package-lock.json
-
-    npm install
-    git add .
-    git commit -m <span style=color:#e6db74>&#34;feat(</span>$ISSUE_KEY<span style=color:#e6db74>): implement notification API and services
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>- Add REST API endpoints for notifications CRUD
-</span><span style=color:#e6db74>- Implement notification service with business logic
-</span><span style=color:#e6db74>- Add email service integration for notification delivery
-</span><span style=color:#e6db74>- Include authentication middleware for secure access
-</span><span style=color:#e6db74>- Add validation utilities for notification data
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74></span>$ISSUE_KEY<span style=color:#e6db74>&#34;</span>
-
-    validate_branch <span style=color:#e6db74>&#34;</span>$PR2_BRANCH<span style=color:#e6db74>&#34;</span>
-    git push -u origin <span style=color:#e6db74>&#34;</span>$PR2_BRANCH<span style=color:#e6db74>&#34;</span>
-    log_success <span style=color:#e6db74>&#34;Created: </span>$PR2_BRANCH<span style=color:#e6db74>&#34;</span>
-
-    <span style=color:#75715e># PR 3: Frontend Components (14 files)</span>
-    <span style=color:#75715e># Why: UI components depend on API types and endpoints</span>
-    log_info <span style=color:#e6db74>&#34;Creating: </span>$PR3_BRANCH<span style=color:#e6db74>&#34;</span>
-    git checkout <span style=color:#e6db74>&#34;</span>$PR2_BRANCH<span style=color:#e6db74>&#34;</span>  <span style=color:#75715e># Build on PR2</span>
-    git checkout -b <span style=color:#e6db74>&#34;</span>$PR3_BRANCH<span style=color:#e6db74>&#34;</span>
-
-    git checkout <span style=color:#e6db74>&#34;</span>$FEATURE_BRANCH<span style=color:#e6db74>&#34;</span> -- <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        src/components/* <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        src/hooks/* <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        src/pages/* <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        src/styles/* <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        src/contexts/* <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        src/types/components.ts <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        package.json <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        package-lock.json
-
-    npm install
-    git add .
-    git commit -m <span style=color:#e6db74>&#34;feat(</span>$ISSUE_KEY<span style=color:#e6db74>): add notification UI components and pages
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>- Add NotificationList and NotificationItem components
-</span><span style=color:#e6db74>- Implement NotificationBell with real-time updates
-</span><span style=color:#e6db74>- Create custom hooks for notification state management
-</span><span style=color:#e6db74>- Add NotificationsPage for full notification management
-</span><span style=color:#e6db74>- Include responsive styling and accessibility features
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74></span>$ISSUE_KEY<span style=color:#e6db74>&#34;</span>
-
-    validate_branch <span style=color:#e6db74>&#34;</span>$PR3_BRANCH<span style=color:#e6db74>&#34;</span>
-    git push -u origin <span style=color:#e6db74>&#34;</span>$PR3_BRANCH<span style=color:#e6db74>&#34;</span>
-    log_success <span style=color:#e6db74>&#34;Created: </span>$PR3_BRANCH<span style=color:#e6db74>&#34;</span>
-
-    <span style=color:#75715e># PR 4: Tests &amp; Configuration (6 files)</span>
-    <span style=color:#75715e># Why: Tests validate the complete integrated system</span>
-    log_info <span style=color:#e6db74>&#34;Creating: </span>$PR4_BRANCH<span style=color:#e6db74>&#34;</span>
-    git checkout <span style=color:#e6db74>&#34;</span>$PR3_BRANCH<span style=color:#e6db74>&#34;</span>  <span style=color:#75715e># Build on PR3</span>
-    git checkout -b <span style=color:#e6db74>&#34;</span>$PR4_BRANCH<span style=color:#e6db74>&#34;</span>
-
-    git checkout <span style=color:#e6db74>&#34;</span>$FEATURE_BRANCH<span style=color:#e6db74>&#34;</span> -- <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        src/**/__tests__/* <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        jest.config.js <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>        .github/workflows/*
-
-    npm install
-    git add .
-    git commit -m <span style=color:#e6db74>&#34;feat(</span>$ISSUE_KEY<span style=color:#e6db74>): add comprehensive test coverage and CI updates
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>- Add API endpoint tests with mocked dependencies
-</span><span style=color:#e6db74>- Include service layer unit tests with edge cases
-</span><span style=color:#e6db74>- Add React component tests with user interactions
-</span><span style=color:#e6db74>- Include custom hook tests for state management
-</span><span style=color:#e6db74>- Update CI workflow to test notification features
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74></span>$ISSUE_KEY<span style=color:#e6db74>&#34;</span>
-
-    validate_branch <span style=color:#e6db74>&#34;</span>$PR4_BRANCH<span style=color:#e6db74>&#34;</span>
-    git push -u origin <span style=color:#e6db74>&#34;</span>$PR4_BRANCH<span style=color:#e6db74>&#34;</span>
-    log_success <span style=color:#e6db74>&#34;Created: </span>$PR4_BRANCH<span style=color:#e6db74>&#34;</span>
-
-    log_success <span style=color:#e6db74>&#34;All branches created and validated!&#34;</span>
-<span style=color:#66d9ef>else</span>
-    log_info <span style=color:#e6db74>&#34;=== PR-only mode: Verifying branches exist ===&#34;</span>
-    
-    <span style=color:#75715e># Verify all branches exist before creating PRs</span>
-    <span style=color:#66d9ef>for</span> branch in <span style=color:#e6db74>&#34;</span>$PR1_BRANCH<span style=color:#e6db74>&#34;</span> <span style=color:#e6db74>&#34;</span>$PR2_BRANCH<span style=color:#e6db74>&#34;</span> <span style=color:#e6db74>&#34;</span>$PR3_BRANCH<span style=color:#e6db74>&#34;</span> <span style=color:#e6db74>&#34;</span>$PR4_BRANCH<span style=color:#e6db74>&#34;</span>; <span style=color:#66d9ef>do</span>
-        <span style=color:#66d9ef>if</span> ! git show-ref --verify --quiet refs/heads/$branch; <span style=color:#66d9ef>then</span>
-            log_error <span style=color:#e6db74>&#34;Branch &#39;</span>$branch<span style=color:#e6db74>&#39; does not exist. Run without --pr-only first.&#34;</span>
-            exit <span style=color:#ae81ff>1</span>
-        <span style=color:#66d9ef>fi</span>
-        log_info <span style=color:#e6db74>&#34;✓ Branch exists: </span>$branch<span style=color:#e6db74>&#34;</span>
-    <span style=color:#66d9ef>done</span>
-    
-    log_success <span style=color:#e6db74>&#34;All branches verified!&#34;</span>
-<span style=color:#66d9ef>fi</span>
-
-<span style=color:#75715e># Create PRs with proper dependency chain</span>
-log_info <span style=color:#e6db74>&#34;=== Creating GitHub PRs ===&#34;</span>
-
-<span style=color:#75715e># PR1 -&gt; main (foundation)</span>
-gh pr create <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>    --title <span style=color:#e6db74>&#34;feat(</span>$ISSUE_KEY<span style=color:#e6db74>): add notification database schema&#34;</span> <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>    --body <span style=color:#e6db74>&#34;## Summary
-</span><span style=color:#e6db74>- Database foundation for notification system
-</span><span style=color:#e6db74>- Prisma schema and migration files
-</span><span style=color:#e6db74>- TypeScript type definitions
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>## Testing
-</span><span style=color:#e6db74>- All builds, lints, and tests pass
-</span><span style=color:#e6db74>- Database migration tested locally
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>## Next Steps
-</span><span style=color:#e6db74>This PR establishes the data layer foundation. The API implementation will follow.
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>Relates to </span>$ISSUE_KEY<span style=color:#e6db74>&#34;</span> <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>    --base <span style=color:#e6db74>&#34;</span>$MAIN_BRANCH<span style=color:#e6db74>&#34;</span> <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>    --head <span style=color:#e6db74>&#34;</span>$PR1_BRANCH<span style=color:#e6db74>&#34;</span>
-
-<span style=color:#75715e># PR2 -&gt; PR1 (depends on database)</span>
-gh pr create <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>    --title <span style=color:#e6db74>&#34;feat(</span>$ISSUE_KEY<span style=color:#e6db74>): implement notification API and services&#34;</span> <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>    --body <span style=color:#e6db74>&#34;## Summary
-</span><span style=color:#e6db74>- REST API endpoints for notification CRUD operations
-</span><span style=color:#e6db74>- Business logic in service layer with email integration
-</span><span style=color:#e6db74>- Authentication and validation middleware
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>## Dependencies
-</span><span style=color:#e6db74>⚠️ **Depends on database schema PR** - merge that first
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>## Testing
-</span><span style=color:#e6db74>- All API endpoints tested with integration tests
-</span><span style=color:#e6db74>- Service layer has comprehensive unit test coverage
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>## Next Steps
-</span><span style=color:#e6db74>UI components will be built on top of this API layer.
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>Relates to </span>$ISSUE_KEY<span style=color:#e6db74>&#34;</span> <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>    --base <span style=color:#e6db74>&#34;</span>$PR1_BRANCH<span style=color:#e6db74>&#34;</span> <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>    --head <span style=color:#e6db74>&#34;</span>$PR2_BRANCH<span style=color:#e6db74>&#34;</span>
-
-<span style=color:#75715e># PR3 -&gt; PR2 (depends on API)</span>
-gh pr create <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>    --title <span style=color:#e6db74>&#34;feat(</span>$ISSUE_KEY<span style=color:#e6db74>): add notification UI components and pages&#34;</span> <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>    --body <span style=color:#e6db74>&#34;## Summary
-</span><span style=color:#e6db74>- React components for notification display and management
-</span><span style=color:#e6db74>- Custom hooks for state management and real-time updates
-</span><span style=color:#e6db74>- Responsive design with accessibility considerations
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>## Dependencies
-</span><span style=color:#e6db74>⚠️ **Depends on API implementation PR** - merge that first
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>## Testing
-</span><span style=color:#e6db74>- Component tests with user interaction scenarios
-</span><span style=color:#e6db74>- Hook tests for state management edge cases
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>## Next Steps
-</span><span style=color:#e6db74>Final testing and CI integration will complete the feature.
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>Relates to </span>$ISSUE_KEY<span style=color:#e6db74>&#34;</span> <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>    --base <span style=color:#e6db74>&#34;</span>$PR2_BRANCH<span style=color:#e6db74>&#34;</span> <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>    --head <span style=color:#e6db74>&#34;</span>$PR3_BRANCH<span style=color:#e6db74>&#34;</span>
-
-<span style=color:#75715e># PR4 -&gt; PR3 (depends on full feature)</span>
-gh pr create <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>    --title <span style=color:#e6db74>&#34;feat(</span>$ISSUE_KEY<span style=color:#e6db74>): add comprehensive test coverage and CI updates&#34;</span> <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>    --body <span style=color:#e6db74>&#34;## Summary
-</span><span style=color:#e6db74>- Integration tests for complete notification workflow
-</span><span style=color:#e6db74>- Enhanced CI pipeline for notification feature validation
-</span><span style=color:#e6db74>- Edge case coverage and error handling tests
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>## Dependencies
-</span><span style=color:#e6db74>⚠️ **Depends on UI implementation PR** - merge that first
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>## Testing
-</span><span style=color:#e6db74>- Full end-to-end test coverage
-</span><span style=color:#e6db74>- CI pipeline validates all notification functionality
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>## Completion
-</span><span style=color:#e6db74>This completes the notification system implementation with full test coverage.
-</span><span style=color:#e6db74>
-</span><span style=color:#e6db74>Relates to </span>$ISSUE_KEY<span style=color:#e6db74>&#34;</span> <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>    --base <span style=color:#e6db74>&#34;</span>$PR3_BRANCH<span style=color:#e6db74>&#34;</span> <span style=color:#ae81ff>\
-</span><span style=color:#ae81ff></span>    --head <span style=color:#e6db74>&#34;</span>$PR4_BRANCH<span style=color:#e6db74>&#34;</span>
-
-log_success <span style=color:#e6db74>&#34;All PRs created!&#34;</span>
-log_info <span style=color:#e6db74>&#34;Merge order: PR1 → PR2 → PR3 → PR4&#34;</span>
-log_info <span style=color:#e6db74>&#34;Each PR builds on the previous one and can be reviewed independently.&#34;</span>
-</code></pre></div><p>The script that AI generates will:</p><ul><li>Handle your specific project structure and build commands</li><li>Include all your files in logical, dependency-aware groups</li><li>Validate each PR independently before moving to the next</li><li>Create PRs with clear descriptions and dependency documentation</li><li>Be reusable for future large features</li></ul><h2 id=the-notification-system-a-complete-example>The Notification System: A Complete Example</h2><p>Here is how I split that 38-file notification system:</p><h3 id=pr1-database-foundation-6-files>PR1: Database Foundation (6 files)</h3><pre><code>prisma/*
+AI: &#34;I found 1 missing file: src/components/__tests__/NotificationBell.test.tsx - it should go in PR4&#34;
+</code></pre><h3 id=the-result-a-custom-splitting-script>The Result: A Custom Splitting Script</h3><p>After this AI-assisted process, you&rsquo;ll have a script like this one for our notification system:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#75715e>#!/bin/bash
+</span></span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Notification System PR Splitter</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Generated by AI to split a 38-file feature into logical PRs</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Usage: ./split-notification-feature.sh [target-repo-directory] [--pr-only]</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>set -euo pipefail
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Configuration - customize these for your project</span>
+</span></span><span style=display:flex><span>FEATURE_BRANCH<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;feature/notification-system&#34;</span>
+</span></span><span style=display:flex><span>MAIN_BRANCH<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;main&#34;</span>
+</span></span><span style=display:flex><span>ISSUE_KEY<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;FEAT-1234&#34;</span>
+</span></span><span style=display:flex><span>BRANCH_PREFIX<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;feature&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Colors for better output</span>
+</span></span><span style=display:flex><span>RED<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;\033[0;31m&#39;</span>
+</span></span><span style=display:flex><span>GREEN<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;\033[0;32m&#39;</span>
+</span></span><span style=display:flex><span>BLUE<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;\033[0;34m&#39;</span>
+</span></span><span style=display:flex><span>NC<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;\033[0m&#39;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>log_info<span style=color:#f92672>()</span> <span style=color:#f92672>{</span> echo -e <span style=color:#e6db74>&#34;</span><span style=color:#e6db74>${</span>BLUE<span style=color:#e6db74>}</span><span style=color:#e6db74>[INFO]</span><span style=color:#e6db74>${</span>NC<span style=color:#e6db74>}</span><span style=color:#e6db74> </span>$1<span style=color:#e6db74>&#34;</span>; <span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>log_success<span style=color:#f92672>()</span> <span style=color:#f92672>{</span> echo -e <span style=color:#e6db74>&#34;</span><span style=color:#e6db74>${</span>GREEN<span style=color:#e6db74>}</span><span style=color:#e6db74>[SUCCESS]</span><span style=color:#e6db74>${</span>NC<span style=color:#e6db74>}</span><span style=color:#e6db74> </span>$1<span style=color:#e6db74>&#34;</span>; <span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>log_error<span style=color:#f92672>()</span> <span style=color:#f92672>{</span> echo -e <span style=color:#e6db74>&#34;</span><span style=color:#e6db74>${</span>RED<span style=color:#e6db74>}</span><span style=color:#e6db74>[ERROR]</span><span style=color:#e6db74>${</span>NC<span style=color:#e6db74>}</span><span style=color:#e6db74> </span>$1<span style=color:#e6db74>&#34;</span>; <span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Validation function - ensures each PR can build independently</span>
+</span></span><span style=display:flex><span>validate_branch<span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>    local branch_name<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;</span>$1<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    log_info <span style=color:#e6db74>&#34;Validating: </span>$branch_name<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    <span style=color:#75715e># Run your project&#39;s validation commands</span>
+</span></span><span style=display:flex><span>    npm run build <span style=color:#f92672>||</span> <span style=color:#f92672>{</span> log_error <span style=color:#e6db74>&#34;Build failed&#34;</span>; <span style=color:#66d9ef>return</span> 1; <span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>    npm run lint <span style=color:#f92672>||</span> <span style=color:#f92672>{</span> log_error <span style=color:#e6db74>&#34;Lint failed&#34;</span>; <span style=color:#66d9ef>return</span> 1; <span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>    npm test <span style=color:#f92672>||</span> <span style=color:#f92672>{</span> log_error <span style=color:#e6db74>&#34;Tests failed&#34;</span>; <span style=color:#66d9ef>return</span> 1; <span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    log_success <span style=color:#e6db74>&#34;Validation passed: </span>$branch_name<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Parse arguments</span>
+</span></span><span style=display:flex><span>TARGET_DIR<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;</span><span style=color:#e6db74>${</span>1<span style=color:#66d9ef>:-$(</span>pwd<span style=color:#66d9ef>)</span><span style=color:#e6db74>}</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>PR_ONLY<span style=color:#f92672>=</span>false
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Check for --pr-only flag (skip branch creation if branches exist)</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>for</span> arg in <span style=color:#e6db74>&#34;</span>$@<span style=color:#e6db74>&#34;</span>; <span style=color:#66d9ef>do</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>case</span> $arg in
+</span></span><span style=display:flex><span>        --pr-only<span style=color:#f92672>)</span> PR_ONLY<span style=color:#f92672>=</span>true; shift ;;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>esac</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>done</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>cd <span style=color:#e6db74>&#34;</span>$TARGET_DIR<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>log_info <span style=color:#e6db74>&#34;Working in: </span><span style=color:#66d9ef>$(</span>pwd<span style=color:#66d9ef>)</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Safety checks - verify we have what we need</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>if</span> ! command -v gh &amp;&gt; /dev/null; <span style=color:#66d9ef>then</span>
+</span></span><span style=display:flex><span>    log_error <span style=color:#e6db74>&#34;GitHub CLI (gh) required but not installed&#34;</span>
+</span></span><span style=display:flex><span>    exit <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>fi</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>if</span> <span style=color:#f92672>[</span> ! -f <span style=color:#e6db74>&#34;package.json&#34;</span> <span style=color:#f92672>]</span>; <span style=color:#66d9ef>then</span>
+</span></span><span style=display:flex><span>    log_error <span style=color:#e6db74>&#34;package.json not found - is this a Node.js project?&#34;</span>
+</span></span><span style=display:flex><span>    exit <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>fi</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Define our PR structure - AI determined these logical groupings</span>
+</span></span><span style=display:flex><span>PR1_BRANCH<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;</span>$BRANCH_PREFIX<span style=color:#e6db74>/notifications-database&#34;</span>
+</span></span><span style=display:flex><span>PR2_BRANCH<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;</span>$BRANCH_PREFIX<span style=color:#e6db74>/notifications-backend&#34;</span> 
+</span></span><span style=display:flex><span>PR3_BRANCH<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;</span>$BRANCH_PREFIX<span style=color:#e6db74>/notifications-frontend&#34;</span>
+</span></span><span style=display:flex><span>PR4_BRANCH<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;</span>$BRANCH_PREFIX<span style=color:#e6db74>/notifications-tests&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>if</span> <span style=color:#f92672>[</span> <span style=color:#e6db74>&#34;</span>$PR_ONLY<span style=color:#e6db74>&#34;</span> <span style=color:#f92672>=</span> false <span style=color:#f92672>]</span>; <span style=color:#66d9ef>then</span>
+</span></span><span style=display:flex><span>    log_info <span style=color:#e6db74>&#34;=== Creating branches ===&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># PR 1: Database Foundation (6 files)</span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># Why: Database schema must exist before any code can use it</span>
+</span></span><span style=display:flex><span>    log_info <span style=color:#e6db74>&#34;Creating: </span>$PR1_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    git checkout <span style=color:#e6db74>&#34;</span>$MAIN_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    git checkout -b <span style=color:#e6db74>&#34;</span>$PR1_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    git checkout <span style=color:#e6db74>&#34;</span>$FEATURE_BRANCH<span style=color:#e6db74>&#34;</span> -- <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        prisma/* <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        src/types/notification.ts <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        package.json <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        package-lock.json <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        tsconfig.json
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># Always run dependency management after file changes</span>
+</span></span><span style=display:flex><span>    npm install
+</span></span><span style=display:flex><span>    git add .
+</span></span><span style=display:flex><span>    git commit -m <span style=color:#e6db74>&#34;feat(</span>$ISSUE_KEY<span style=color:#e6db74>): add notification database schema
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Add Prisma schema for notifications table
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Create database migration for notification system
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Add TypeScript types for notification entities
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Foundation for notification feature implementation
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span>$ISSUE_KEY<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    validate_branch <span style=color:#e6db74>&#34;</span>$PR1_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    git push -u origin <span style=color:#e6db74>&#34;</span>$PR1_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    log_success <span style=color:#e6db74>&#34;Created: </span>$PR1_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># PR 2: Backend Services (12 files) </span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># Why: API layer depends on database schema and types</span>
+</span></span><span style=display:flex><span>    log_info <span style=color:#e6db74>&#34;Creating: </span>$PR2_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    git checkout <span style=color:#e6db74>&#34;</span>$PR1_BRANCH<span style=color:#e6db74>&#34;</span>  <span style=color:#75715e># Build on PR1, not main</span>
+</span></span><span style=display:flex><span>    git checkout -b <span style=color:#e6db74>&#34;</span>$PR2_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    git checkout <span style=color:#e6db74>&#34;</span>$FEATURE_BRANCH<span style=color:#e6db74>&#34;</span> -- <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        src/api/* <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        src/services/* <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        src/middleware/* <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        src/utils/* <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        src/config/* <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        src/types/api.ts <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        package.json <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        package-lock.json
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    npm install
+</span></span><span style=display:flex><span>    git add .
+</span></span><span style=display:flex><span>    git commit -m <span style=color:#e6db74>&#34;feat(</span>$ISSUE_KEY<span style=color:#e6db74>): implement notification API and services
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Add REST API endpoints for notifications CRUD
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Implement notification service with business logic
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Add email service integration for notification delivery
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Include authentication middleware for secure access
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Add validation utilities for notification data
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span>$ISSUE_KEY<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    validate_branch <span style=color:#e6db74>&#34;</span>$PR2_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    git push -u origin <span style=color:#e6db74>&#34;</span>$PR2_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    log_success <span style=color:#e6db74>&#34;Created: </span>$PR2_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># PR 3: Frontend Components (14 files)</span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># Why: UI components depend on API types and endpoints</span>
+</span></span><span style=display:flex><span>    log_info <span style=color:#e6db74>&#34;Creating: </span>$PR3_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    git checkout <span style=color:#e6db74>&#34;</span>$PR2_BRANCH<span style=color:#e6db74>&#34;</span>  <span style=color:#75715e># Build on PR2</span>
+</span></span><span style=display:flex><span>    git checkout -b <span style=color:#e6db74>&#34;</span>$PR3_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    git checkout <span style=color:#e6db74>&#34;</span>$FEATURE_BRANCH<span style=color:#e6db74>&#34;</span> -- <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        src/components/* <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        src/hooks/* <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        src/pages/* <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        src/styles/* <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        src/contexts/* <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        src/types/components.ts <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        package.json <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        package-lock.json
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    npm install
+</span></span><span style=display:flex><span>    git add .
+</span></span><span style=display:flex><span>    git commit -m <span style=color:#e6db74>&#34;feat(</span>$ISSUE_KEY<span style=color:#e6db74>): add notification UI components and pages
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Add NotificationList and NotificationItem components
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Implement NotificationBell with real-time updates
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Create custom hooks for notification state management
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Add NotificationsPage for full notification management
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Include responsive styling and accessibility features
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span>$ISSUE_KEY<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    validate_branch <span style=color:#e6db74>&#34;</span>$PR3_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    git push -u origin <span style=color:#e6db74>&#34;</span>$PR3_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    log_success <span style=color:#e6db74>&#34;Created: </span>$PR3_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># PR 4: Tests &amp; Configuration (6 files)</span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># Why: Tests validate the complete integrated system</span>
+</span></span><span style=display:flex><span>    log_info <span style=color:#e6db74>&#34;Creating: </span>$PR4_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    git checkout <span style=color:#e6db74>&#34;</span>$PR3_BRANCH<span style=color:#e6db74>&#34;</span>  <span style=color:#75715e># Build on PR3</span>
+</span></span><span style=display:flex><span>    git checkout -b <span style=color:#e6db74>&#34;</span>$PR4_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    git checkout <span style=color:#e6db74>&#34;</span>$FEATURE_BRANCH<span style=color:#e6db74>&#34;</span> -- <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        src/**/__tests__/* <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        jest.config.js <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>        .github/workflows/*
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    npm install
+</span></span><span style=display:flex><span>    git add .
+</span></span><span style=display:flex><span>    git commit -m <span style=color:#e6db74>&#34;feat(</span>$ISSUE_KEY<span style=color:#e6db74>): add comprehensive test coverage and CI updates
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Add API endpoint tests with mocked dependencies
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Include service layer unit tests with edge cases
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Add React component tests with user interactions
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Include custom hook tests for state management
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Update CI workflow to test notification features
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span>$ISSUE_KEY<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    validate_branch <span style=color:#e6db74>&#34;</span>$PR4_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    git push -u origin <span style=color:#e6db74>&#34;</span>$PR4_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    log_success <span style=color:#e6db74>&#34;Created: </span>$PR4_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    log_success <span style=color:#e6db74>&#34;All branches created and validated!&#34;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>else</span>
+</span></span><span style=display:flex><span>    log_info <span style=color:#e6db74>&#34;=== PR-only mode: Verifying branches exist ===&#34;</span>
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    <span style=color:#75715e># Verify all branches exist before creating PRs</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>for</span> branch in <span style=color:#e6db74>&#34;</span>$PR1_BRANCH<span style=color:#e6db74>&#34;</span> <span style=color:#e6db74>&#34;</span>$PR2_BRANCH<span style=color:#e6db74>&#34;</span> <span style=color:#e6db74>&#34;</span>$PR3_BRANCH<span style=color:#e6db74>&#34;</span> <span style=color:#e6db74>&#34;</span>$PR4_BRANCH<span style=color:#e6db74>&#34;</span>; <span style=color:#66d9ef>do</span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span> ! git show-ref --verify --quiet refs/heads/$branch; <span style=color:#66d9ef>then</span>
+</span></span><span style=display:flex><span>            log_error <span style=color:#e6db74>&#34;Branch &#39;</span>$branch<span style=color:#e6db74>&#39; does not exist. Run without --pr-only first.&#34;</span>
+</span></span><span style=display:flex><span>            exit <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>fi</span>
+</span></span><span style=display:flex><span>        log_info <span style=color:#e6db74>&#34;✓ Branch exists: </span>$branch<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>done</span>
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    log_success <span style=color:#e6db74>&#34;All branches verified!&#34;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>fi</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Create PRs with proper dependency chain</span>
+</span></span><span style=display:flex><span>log_info <span style=color:#e6db74>&#34;=== Creating GitHub PRs ===&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># PR1 -&gt; main (foundation)</span>
+</span></span><span style=display:flex><span>gh pr create <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>    --title <span style=color:#e6db74>&#34;feat(</span>$ISSUE_KEY<span style=color:#e6db74>): add notification database schema&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>    --body <span style=color:#e6db74>&#34;## Summary
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Database foundation for notification system
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Prisma schema and migration files
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- TypeScript type definitions
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>## Testing
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- All builds, lints, and tests pass
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Database migration tested locally
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>## Next Steps
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>This PR establishes the data layer foundation. The API implementation will follow.
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>Relates to </span>$ISSUE_KEY<span style=color:#e6db74>&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>    --base <span style=color:#e6db74>&#34;</span>$MAIN_BRANCH<span style=color:#e6db74>&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>    --head <span style=color:#e6db74>&#34;</span>$PR1_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># PR2 -&gt; PR1 (depends on database)</span>
+</span></span><span style=display:flex><span>gh pr create <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>    --title <span style=color:#e6db74>&#34;feat(</span>$ISSUE_KEY<span style=color:#e6db74>): implement notification API and services&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>    --body <span style=color:#e6db74>&#34;## Summary
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- REST API endpoints for notification CRUD operations
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Business logic in service layer with email integration
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Authentication and validation middleware
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>## Dependencies
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>⚠️ **Depends on database schema PR** - merge that first
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>## Testing
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- All API endpoints tested with integration tests
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Service layer has comprehensive unit test coverage
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>## Next Steps
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>UI components will be built on top of this API layer.
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>Relates to </span>$ISSUE_KEY<span style=color:#e6db74>&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>    --base <span style=color:#e6db74>&#34;</span>$PR1_BRANCH<span style=color:#e6db74>&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>    --head <span style=color:#e6db74>&#34;</span>$PR2_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># PR3 -&gt; PR2 (depends on API)</span>
+</span></span><span style=display:flex><span>gh pr create <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>    --title <span style=color:#e6db74>&#34;feat(</span>$ISSUE_KEY<span style=color:#e6db74>): add notification UI components and pages&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>    --body <span style=color:#e6db74>&#34;## Summary
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- React components for notification display and management
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Custom hooks for state management and real-time updates
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Responsive design with accessibility considerations
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>## Dependencies
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>⚠️ **Depends on API implementation PR** - merge that first
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>## Testing
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Component tests with user interaction scenarios
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Hook tests for state management edge cases
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>## Next Steps
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>Final testing and CI integration will complete the feature.
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>Relates to </span>$ISSUE_KEY<span style=color:#e6db74>&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>    --base <span style=color:#e6db74>&#34;</span>$PR2_BRANCH<span style=color:#e6db74>&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>    --head <span style=color:#e6db74>&#34;</span>$PR3_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># PR4 -&gt; PR3 (depends on full feature)</span>
+</span></span><span style=display:flex><span>gh pr create <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>    --title <span style=color:#e6db74>&#34;feat(</span>$ISSUE_KEY<span style=color:#e6db74>): add comprehensive test coverage and CI updates&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>    --body <span style=color:#e6db74>&#34;## Summary
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Integration tests for complete notification workflow
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Enhanced CI pipeline for notification feature validation
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Edge case coverage and error handling tests
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>## Dependencies
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>⚠️ **Depends on UI implementation PR** - merge that first
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>## Testing
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- Full end-to-end test coverage
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- CI pipeline validates all notification functionality
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>## Completion
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>This completes the notification system implementation with full test coverage.
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>Relates to </span>$ISSUE_KEY<span style=color:#e6db74>&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>    --base <span style=color:#e6db74>&#34;</span>$PR3_BRANCH<span style=color:#e6db74>&#34;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span>    --head <span style=color:#e6db74>&#34;</span>$PR4_BRANCH<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>log_success <span style=color:#e6db74>&#34;All PRs created!&#34;</span>
+</span></span><span style=display:flex><span>log_info <span style=color:#e6db74>&#34;Merge order: PR1 → PR2 → PR3 → PR4&#34;</span>
+</span></span><span style=display:flex><span>log_info <span style=color:#e6db74>&#34;Each PR builds on the previous one and can be reviewed independently.&#34;</span>
+</span></span></code></pre></div><p>The script that AI generates will:</p><ul><li>Handle your specific project structure and build commands</li><li>Include all your files in logical, dependency-aware groups</li><li>Validate each PR independently before moving to the next</li><li>Create PRs with clear descriptions and dependency documentation</li><li>Be reusable for future large features</li></ul><h2 id=the-notification-system-a-complete-example>The Notification System: A Complete Example</h2><p>Here is how I split that 38-file notification system:</p><h3 id=pr1-database-foundation-6-files>PR1: Database Foundation (6 files)</h3><pre tabindex=0><code>prisma/*
 src/types/notification.ts
 package.json
 package-lock.json
 tsconfig.json
 </code></pre><p><strong>Story</strong>: &ldquo;Establish the data foundation for notifications&rdquo;
-<strong>Review focus</strong>: Schema design, data relationships, type safety</p><h3 id=pr2-backend-services-12-files>PR2: Backend Services (12 files)</h3><pre><code>src/api/*
+<strong>Review focus</strong>: Schema design, data relationships, type safety</p><h3 id=pr2-backend-services-12-files>PR2: Backend Services (12 files)</h3><pre tabindex=0><code>src/api/*
 src/services/*
 src/middleware/*
 src/utils/*
 src/config/*
 src/types/api.ts
 </code></pre><p><strong>Story</strong>: &ldquo;Implement notification business logic and API&rdquo;
-<strong>Review focus</strong>: API design, business rules, error handling</p><h3 id=pr3-frontend-components-14-files>PR3: Frontend Components (14 files)</h3><pre><code>src/components/*
+<strong>Review focus</strong>: API design, business rules, error handling</p><h3 id=pr3-frontend-components-14-files>PR3: Frontend Components (14 files)</h3><pre tabindex=0><code>src/components/*
 src/hooks/*
 src/pages/*
 src/styles/*
 src/contexts/*
 src/types/components.ts
 </code></pre><p><strong>Story</strong>: &ldquo;Add notification UI and user interactions&rdquo;
-<strong>Review focus</strong>: UX, accessibility, state management</p><h3 id=pr4-tests--configuration-6-files>PR4: Tests & Configuration (6 files)</h3><pre><code>src/**/__tests__/*
+<strong>Review focus</strong>: UX, accessibility, state management</p><h3 id=pr4-tests--configuration-6-files>PR4: Tests & Configuration (6 files)</h3><pre tabindex=0><code>src/**/__tests__/*
 jest.config.js
 .github/workflows/*
 </code></pre><p><strong>Story</strong>: &ldquo;Ensure comprehensive test coverage&rdquo;
-<strong>Review focus</strong>: Test quality, edge cases, configuration</p><h2 id=benefits-of-empathic-pr-splitting>Benefits of Empathic PR Splitting</h2><p>This approach transformed the review experience. Each PR now has a clear, narrow focus—instead of 38 files, reviewers handle 6-14 files and can follow the feature&rsquo;s evolution step by step. Research supports this: <a href=https://www.swarmia.com/blog/why-small-pull-requests-are-better/>&ldquo;Small pull requests speed up the feedback cycle&rdquo;</a> and ensure &ldquo;earlier discussion about the chosen solution and better design decisions.&rdquo;</p><p>The quality of feedback improved dramatically. Reviewers can actually understand each change and provide feedback on real design decisions rather than just surface issues. PRs become collaborative discussions instead of rubber stamps.</p><p>Deployments became safer too. You can revert individual pieces without losing everything—smaller changes mean smaller blast radius. When debugging later, git blame tells a much clearer story about what was changed and why.</p><p>Most importantly, git history now shows how the feature developed naturally. Each commit has a focused purpose, and six months later, the reasoning behind decisions is still clear.</p><p>As one developer noted in the <a href="https://news.ycombinator.com/item?id=38372972">Hacker News discussion</a>: mixing multiple types of changes in one PR &ldquo;slows things down, and hides potential problems by covering the intended modification in the fog of the other changes.&rdquo;</p><h2 id=future-improvements--advanced-techniques>Future Improvements & Advanced Techniques</h2><p>File-level splitting is just the beginning. There are more advanced techniques for creating truly empathic code changes:</p><h3 id=line-level-splitting>Line-Level Splitting</h3><p>Sometimes a single file contains multiple types of changes. Git&rsquo;s patch mode lets you split even further:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#75715e># Split changes within a file</span>
-git add --patch src/components/UserProfile.tsx
-
-<span style=color:#75715e># This lets you create separate commits for:</span>
-<span style=color:#75715e># - Formatting/style changes</span>
-<span style=color:#75715e># - Bug fixes  </span>
-<span style=color:#75715e># - New features</span>
-<span style=color:#75715e># even within the same file</span>
-</code></pre></div><h3 id=semantic-commits>Semantic Commits</h3><p>Break changes into logical commits that tell a story:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#75715e># Instead of one big commit:</span>
-git commit -m <span style=color:#e6db74>&#34;Add user profile feature&#34;</span>
-
-<span style=color:#75715e># Create a series of focused commits:</span>
-git commit -m <span style=color:#e6db74>&#34;refactor: extract user validation logic&#34;</span>
-git commit -m <span style=color:#e6db74>&#34;feat: add user profile component&#34;</span> 
-git commit -m <span style=color:#e6db74>&#34;test: add profile component tests&#34;</span>
-git commit -m <span style=color:#e6db74>&#34;docs: update user management README&#34;</span>
-</code></pre></div><h3 id=exercise-for-readers>Exercise for Readers</h3><p>Try this with your next feature: Take a file that has both business logic changes and formatting updates. Use <code>git add --patch</code> to split them into separate commits within the same PR. You&rsquo;ll be surprised how much clearer the change becomes.</p><h3 id=advanced-tooling>Advanced Tooling</h3><p>Several tools can make this process even smoother. Git-absorb automatically creates fixup commits for changes. Interactive rebase helps you reorganize commits to tell better stories. Git hooks can automatically validate PR size and suggest splits when you push large changesets. Some emerging tools even use AI to analyze your changes and suggest logical file groupings.</p><p>The perfect split is more art than science, but starting with file-level organization gets you 80% of the way there.</p><h2 id=conclusion>Conclusion</h2><p>In the AI era, our ability to generate code is outpacing our ability to review it thoughtfully. The solution is not to slow down our productivity—it is to develop more empathic practices for organizing our changes. The irony is perfect: we can use AI to help us fix the problems that AI created.</p><p>Splitting large PRs is about more than just making reviews faster. It is about respecting your teammates' time and cognitive capacity. It is about creating code that tells a story. It is about optimizing for the humans who will read, review, and maintain your work.</p><p>As I wrote in &ldquo;Changing Code Empathically&rdquo;: optimize for happiness. What I have discovered is that with AI assistance, this &ldquo;extra effort&rdquo; to split PRs actually becomes quite manageable. The prompts I have shared above can help you create a custom splitting script in about 20 minutes—a small investment that pays dividends in team happiness.</p><p>The next time AI helps you build a feature that touches 30+ files, do not despair about the size. Instead, paste the file list into your favorite AI assistant and ask it to help you split it up. Use the prompts from this post as a starting point. Ask it to analyze your changed files and categorize them. Ask it to create a script to split this into logical PRs. Ask it to double-check that all files are accounted for. Ask it to add validation and error handling.</p><p>Your reviewers will thank you, your git history will be clearer, and your incidents will be easier to debug. Most importantly, you will be treating your teammates with the empathy they deserve.</p><p>Being nice to reviewers is being nice to your teammates—and AI can help us do that better than ever before.</p></div></div><div></div></div><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js integrity="sha512-Pbb8o120v5/hN/a6LjF4N4Lxou+xYZ0QcVF8J6TWhBbHmctQWd8O6xTDmHpE/91OjPzCk4JRoiJsexHYg4SotQ==" crossorigin=anonymous></script><script>window.addEventListener('load',function(){hljs.initHighlighting()},!0)</script><script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-91134611-1','auto'),ga('send','pageview'))</script><script async src=https://www.google-analytics.com/analytics.js></script></body></html>
+<strong>Review focus</strong>: Test quality, edge cases, configuration</p><h2 id=benefits-of-empathic-pr-splitting>Benefits of Empathic PR Splitting</h2><p>This approach transformed the review experience. Each PR now has a clear, narrow focus—instead of 38 files, reviewers handle 6-14 files and can follow the feature&rsquo;s evolution step by step. Research supports this: <a href=https://www.swarmia.com/blog/why-small-pull-requests-are-better/ target=_blank rel=noopener>&ldquo;Small pull requests speed up the feedback cycle&rdquo;</a>
+and ensure &ldquo;earlier discussion about the chosen solution and better design decisions.&rdquo;</p><p>The quality of feedback improved dramatically. Reviewers can actually understand each change and provide feedback on real design decisions rather than just surface issues. PRs become collaborative discussions instead of rubber stamps.</p><p>Deployments became safer too. You can revert individual pieces without losing everything—smaller changes mean smaller blast radius. When debugging later, git blame tells a much clearer story about what was changed and why.</p><p>Most importantly, git history now shows how the feature developed naturally. Each commit has a focused purpose, and six months later, the reasoning behind decisions is still clear.</p><p>As one developer noted in the <a href="https://news.ycombinator.com/item?id=38372972" target=_blank rel=noopener>Hacker News discussion</a>
+: mixing multiple types of changes in one PR &ldquo;slows things down, and hides potential problems by covering the intended modification in the fog of the other changes.&rdquo;</p><h2 id=future-improvements--advanced-techniques>Future Improvements & Advanced Techniques</h2><p>File-level splitting is just the beginning. There are more advanced techniques for creating truly empathic code changes:</p><h3 id=line-level-splitting>Line-Level Splitting</h3><p>Sometimes a single file contains multiple types of changes. Git&rsquo;s patch mode lets you split even further:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#75715e># Split changes within a file</span>
+</span></span><span style=display:flex><span>git add --patch src/components/UserProfile.tsx
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># This lets you create separate commits for:</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># - Formatting/style changes</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># - Bug fixes  </span>
+</span></span><span style=display:flex><span><span style=color:#75715e># - New features</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># even within the same file</span>
+</span></span></code></pre></div><h3 id=semantic-commits>Semantic Commits</h3><p>Break changes into logical commits that tell a story:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#75715e># Instead of one big commit:</span>
+</span></span><span style=display:flex><span>git commit -m <span style=color:#e6db74>&#34;Add user profile feature&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Create a series of focused commits:</span>
+</span></span><span style=display:flex><span>git commit -m <span style=color:#e6db74>&#34;refactor: extract user validation logic&#34;</span>
+</span></span><span style=display:flex><span>git commit -m <span style=color:#e6db74>&#34;feat: add user profile component&#34;</span> 
+</span></span><span style=display:flex><span>git commit -m <span style=color:#e6db74>&#34;test: add profile component tests&#34;</span>
+</span></span><span style=display:flex><span>git commit -m <span style=color:#e6db74>&#34;docs: update user management README&#34;</span>
+</span></span></code></pre></div><h3 id=exercise-for-readers>Exercise for Readers</h3><p>Try this with your next feature: Take a file that has both business logic changes and formatting updates. Use <code>git add --patch</code> to split them into separate commits within the same PR. You&rsquo;ll be surprised how much clearer the change becomes.</p><h3 id=advanced-tooling>Advanced Tooling</h3><p>Several tools can make this process even smoother. Git-absorb automatically creates fixup commits for changes. Interactive rebase helps you reorganize commits to tell better stories. Git hooks can automatically validate PR size and suggest splits when you push large changesets. Some emerging tools even use AI to analyze your changes and suggest logical file groupings.</p><p>The perfect split is more art than science, but starting with file-level organization gets you 80% of the way there.</p><h2 id=conclusion>Conclusion</h2><p>In the AI era, our ability to generate code is outpacing our ability to review it thoughtfully. The solution is not to slow down our productivity—it is to develop more empathic practices for organizing our changes. The irony is perfect: we can use AI to help us fix the problems that AI created.</p><p>Splitting large PRs is about more than just making reviews faster. It is about respecting your teammates&rsquo; time and cognitive capacity. It is about creating code that tells a story. It is about optimizing for the humans who will read, review, and maintain your work.</p><p>As I wrote in &ldquo;Changing Code Empathically&rdquo;: optimize for happiness. What I have discovered is that with AI assistance, this &ldquo;extra effort&rdquo; to split PRs actually becomes quite manageable. The prompts I have shared above can help you create a custom splitting script in about 20 minutes—a small investment that pays dividends in team happiness.</p><p>The next time AI helps you build a feature that touches 30+ files, do not despair about the size. Instead, paste the file list into your favorite AI assistant and ask it to help you split it up. Use the prompts from this post as a starting point. Ask it to analyze your changed files and categorize them. Ask it to create a script to split this into logical PRs. Ask it to double-check that all files are accounted for. Ask it to add validation and error handling.</p><p>Your reviewers will thank you, your git history will be clearer, and your incidents will be easier to debug. Most importantly, you will be treating your teammates with the empathy they deserve.</p><p>Being nice to reviewers is being nice to your teammates—and AI can help us do that better than ever before.</p></div></div><div></div></div><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js integrity="sha512-EBLzUL8XLl+va/zAsmXwS7Z2B1F9HUHkZwyS/VKwh3S7T/U0nF4BaU29EP/ZSf6zgiIxYAnKLu6bJ8dqpmX5uw==" crossorigin=anonymous></script><script>window.addEventListener("load",function(){hljs.highlightAll()},!0)</script></body></html>
