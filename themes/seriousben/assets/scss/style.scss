@@ -41,7 +41,9 @@ a {
 
 .index {
     margin-top: 100px;
+
     p {
+        display: inline;
         font-size: 4em;
         margin: 0;
         line-height: 1em;
@@ -49,6 +51,15 @@ a {
         @include breakpoint($medium) {
             font-size: 2em;
             line-height: 1;
+        }
+    }
+
+    .social-links {
+        display: inline;
+        margin-left: 0.3em;
+
+        .social {
+            display: inline;
         }
     }
 
@@ -285,13 +296,13 @@ li code, p code {
 }
 
 .social a {
-	display: inline-block;
-	text-decoration: none;
+    display: inline-block;
+    text-decoration: none;
     border: none;
 }
 
 .social a.icon {
-	fill: currentColor;
-	width: 0.6em;
-	height: 0.6em;
+    fill: currentColor;
+    width: 0.6em;
+    height: 0.6em;
 }
