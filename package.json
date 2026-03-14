@@ -1,0 +1,14 @@
+{
+  "name": "seriousben.com",
+  "version": "1.0.0",
+  "description": "Benjamin Boudreau's blog",
+  "scripts": {
+    "build:css": "npx tailwindcss -i ./styles.css -o ./themes/seriousben/assets/scss/tailwind-output.css --minify",
+    "watch:css": "npx tailwindcss -i ./styles.css -o ./themes/seriousben/assets/scss/tailwind-output.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.15",
+    "tailwindcss": "^3.4.17"
+  },
+  "private": true
+}

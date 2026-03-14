@@ -1,0 +1,369 @@
+/**
+ * Tailwind CSS Input
+ * Merges Tailwind utilities with the original typography system
+ */
+
+/* Import Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Preserve original base styles */
+@layer base {
+  body {
+    @apply text-primary;
+    @apply font-serif;
+    @apply antialiased;
+    font-family: cardo, georgia, serif;
+    line-height: 1.7em;
+    font-size: 1.04rem;
+    text-rendering: optimizeLegibility;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  a {
+    @apply text-primary;
+    text-decoration: none;
+
+    /* Article content link styling */
+    .content & {
+      @apply border-b border-dashed border-primary;
+    }
+
+    .content &:hover,
+    .content &:focus {
+      @apply border-none;
+    }
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-black;
+    @apply font-sans;
+    @apply font-normal;
+  }
+
+  h1 {
+    @apply mt-6;
+    margin-top: 25px;
+    margin-bottom: 10px;
+    padding-bottom: 25px;
+  }
+
+  /* Code styling */
+  li code, p code {
+    @apply bg-code-bg;
+    @apply font-mono;
+    font-size: 0.80rem;
+    @apply px-1;
+    @apply py-[2px] [padding-left:4px] [padding-right:4px];
+  }
+}
+
+/* Preserve component styles */
+@layer components {
+  /* Container */
+  .container {
+    @apply mx-0;
+    max-width: 1240px;
+    margin-left: 15px;
+  }
+
+  /* Index page intro */
+  .index {
+    @apply mt-[100px];
+
+    p {
+      @apply inline;
+      @apply text-4xl;
+      @apply m-0;
+      line-height: 1em;
+
+      @media (max-width: 800px) {
+        @apply text-2xl;
+        line-height: 1;
+      }
+    }
+
+    .social-links {
+      @apply inline;
+      margin-left: 0.3em;
+
+      .social {
+        @apply inline;
+      }
+    }
+
+    ol {
+      @apply flex;
+      @apply flex-row;
+      @apply list-none;
+
+      li {
+        @apply p-[10px];
+      }
+    }
+  }
+
+  /* Header */
+  header {
+    @apply flex;
+    @apply flex-row;
+    @apply border-b;
+    @apply border-primary;
+    @apply justify-between;
+    @apply items-center;
+
+    .title-wrapper {
+      @apply text-2.5xl;
+      line-height: 1.2;
+      font-family: cardo, georgia, serif;
+      @apply text-black;
+      @apply font-normal;
+      @apply m-0;
+    }
+
+    .menu {
+      @apply flex;
+      @apply flex-col;
+
+      ol {
+        @apply flex;
+        @apply flex-row;
+        @apply m-0;
+        @apply p-0;
+      }
+
+      li {
+        @apply list-none;
+        @apply text-[1.3rem];
+
+        &:not(:first-child) {
+          @apply ml-5;
+        }
+      }
+    }
+
+    @media (max-width: 800px) {
+      @apply flex-col;
+    }
+  }
+
+  /* Content wrapper */
+  .content {
+    h1 {
+      font-family: helvetica, arial, geneva, sans-serif;
+    }
+
+    .meta {
+      @apply mb-6;
+    }
+  }
+
+  /* Table of contents */
+  .toc {
+    @apply max-w-toc;
+    font-size: 0.95em;
+
+    ul {
+      @apply list-decimal;
+      @apply mt-0;
+
+      li {
+        @apply my-1;
+        @apply ml-2;
+        @apply pl-2;
+      }
+
+      @apply mb-0;
+    }
+
+    ul ul {
+      @apply list-alpha;
+
+      li {
+        @apply my-[7px];
+      }
+
+      ul {
+        @apply text-[0.7em];
+        @apply list-roman;
+      }
+    }
+  }
+
+  /* Article content */
+  .article-content {
+    p, ul, ol, dl {
+      @apply max-w-article;
+    }
+
+    pre {
+      @apply max-w-code;
+    }
+
+    figure {
+      @apply max-w-code;
+      @apply mx-0;
+
+      img {
+        @apply max-w-code;
+      }
+
+      figcaption, figcaption p {
+        @apply max-w-full;
+        @apply text-center;
+        @apply m-0;
+        @apply italic;
+      }
+
+      &.large-figure {
+        img {
+          @apply w-full;
+        }
+      }
+    }
+
+    blockquote {
+      @apply border-l;
+      @apply pl-4;
+      @apply italic;
+      border-left-width: 0.25em;
+      margin: 1em;
+      padding: 0 1em;
+
+      cite {
+        @apply font-bold;
+        @apply not-italic;
+
+        &::before {
+          content: "—— ";
+        }
+      }
+    }
+  }
+
+  /* Posts list */
+  .posts-group {
+    @apply max-w-content;
+    @apply flex;
+    @apply mb-[1.9em];
+    line-height: normal;
+
+    .post-year {
+      @apply pt-1;
+      @apply mr-[1.8em];
+      @apply text-1.6xl;
+      @apply cursor-pointer;
+
+      &:hover {
+        @apply underline;
+      }
+    }
+
+    .posts-list {
+      @apply flex-1;
+      @apply m-0;
+      @apply p-0;
+      @apply list-none;
+    }
+
+    .post-item {
+      @apply border-b;
+      @apply border-dashed;
+      border-bottom-color: lightgrey;
+
+      a {
+        @apply flex;
+        @apply justify-between;
+        @apply items-baseline;
+        @apply py-3;
+      }
+    }
+
+    .post-day {
+      @apply flex-none;
+      @apply ml-4;
+    }
+  }
+
+  /* Code highlighting */
+  .highlight {
+    @apply max-w-highlight;
+
+    pre {
+      @apply text-[0.9em];
+      line-height: 1.5em;
+      @apply overflow-x-auto;
+    }
+
+    .language-docker {
+      @apply block;
+      @apply bg-black;
+      @apply text-gray-200;
+      @apply p-2;
+    }
+  }
+
+  /* Social links */
+  .social a {
+    @apply inline-block;
+    text-decoration: none;
+    @apply border-none;
+  }
+
+  .social a.icon {
+    fill: currentColor;
+    width: 0.6em;
+    height: 0.6em;
+  }
+
+  /* Article link within content */
+  .article-content a {
+    @apply border-b;
+    @apply border-dashed;
+    @apply border-primary;
+
+    &:hover {
+      @apply border-none;
+    }
+  }
+}
+
+/* Custom list styles that Tailwind doesn't have by default */
+@layer utilities {
+  .list-alpha li {
+    list-style-type: lower-alpha;
+  }
+
+  .list-roman li {
+    list-style-type: lower-roman;
+  }
+
+  .text-1\.\.6xl {
+    font-size: 1.6em;
+  }
+
+  .text-2\.\.5xl {
+    font-size: 2.5em;
+  }
+
+  .max-w-toc {
+    max-width: 550px;
+  }
+
+  .max-w-article {
+    max-width: 650px;
+  }
+
+  .max-w-code {
+    max-width: 800px;
+  }
+
+  .max-w-highlight {
+    max-width: 600px;
+  }
+
+  .max-w-content {
+    max-width: 1000px;
+  }
+}

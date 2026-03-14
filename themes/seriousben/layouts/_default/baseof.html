@@ -30,9 +30,15 @@
 
     <link rel="canonical" href="{{ .Permalink }}">
 
-    {{ $options := (dict "targetPath" "style.css" "outputStyle" "compressed" "enableSourceMap" true) -}}
-    {{ $style := resources.Get "scss/style.scss" | css.Sass $options | fingerprint -}}
-	<link rel="stylesheet" href="{{ $style.Permalink }}" {{ printf "integrity=%q" $style.Data.Integrity | safeHTMLAttr }} crossorigin="anonymous">
+    {{/* Try Tailwind CSS first, fall back to SCSS */}}
+    {{- $tailwindStyle := resources.Get "scss/tailwind-output.css" -}}
+    {{- if $tailwindStyle -}}
+        <link rel="stylesheet" href="{{ $tailwindStyle.Permalink }}">
+    {{- else -}}
+        {{ $options := (dict "targetPath" "style.css" "outputStyle" "compressed" "enableSourceMap" true) -}}
+        {{ $style := resources.Get "scss/style.scss" | css.Sass $options | fingerprint -}}
+	    <link rel="stylesheet" href="{{ $style.Permalink }}" {{ printf "integrity=%q" $style.Data.Integrity | safeHTMLAttr }} crossorigin="anonymous">
+    {{- end -}}
 
     {{ if .Site.Params.highlightjs }}
         <link rel="stylesheet" href="{{ .Site.BaseURL }}css/highlight.css" />
