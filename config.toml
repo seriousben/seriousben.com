@@ -14,7 +14,7 @@ enableEmoji = true
   tag = "tags"
 
 [params]
-copyright = "Copyright © Benjamin Boudreau 2017-2020"
+  copyright = "Copyright © Benjamin Boudreau 2017-2020"
 copyrightUrl = "https://seriousben.com/"
 twitter = "seriousben"
 github = "seriousben"
