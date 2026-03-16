@@ -4,7 +4,7 @@ date: 2020-02-23T20:00:00-05:00
 toc: true
 ---
 
-Some time ago, I needed to load balance websocket connections over AWS Elastic Load Balancers (ELB) or Classic Load Balancers as they are now called. But ELBs did not (and still don't) support proxying websocket traffic over their HTTP(S) listener. To support websocket traffic, a TCP listener is required. This means that the proxy server (ELB) looses knowledge of the HTTP protocol since it goes from being a layer 7 (application) proxy to being a layer 4 (transport) proxy. Without knowledge of HTTP, the proxy can't add the [`X-Forwarded-For` HTTP header][x-forwarded-for] to let upstream servers know what the original client IP address is.
+Some time ago, I needed to load balance websocket connections over AWS Elastic Load Balancers (ELB) or Classic Load Balancers as they are now called. But ELBs did not (and still don't) support proxying websocket traffic over their HTTP(S) listener. To support websocket traffic, a TCP listener is required. This means that the proxy server (ELB) loses knowledge of the HTTP protocol since it goes from being a layer 7 (application) proxy to being a layer 4 (transport) proxy. Without knowledge of HTTP, the proxy can't add the [`X-Forwarded-For` HTTP header][x-forwarded-for] to let upstream servers know what the original client IP address is.
 
 This problem is exactly what the PROXY protocol has been created to solve. It allows "Application Protocol" agnostic proxies (or "dumb proxies" like its [specification][proxy-protocol-spec] calls them) to inject data about the calling client in the request being proxied without knowing about the proxied protocol by staying efficient.
 
@@ -28,7 +28,7 @@ To explain it in my own words. The goal of the PROXY protocol is to allow TCP "d
 
 ## Version 1 Specification
 
-The version 1 of the protocol is text based. It is human readable and therefore faciliates adoption and implementations.
+The version 1 of the protocol is text based. It is human readable and therefore facilitates adoption and implementations.
 
 Here is a text representation of an HTTP request containing the PROXY protocol version 1 header:
 
@@ -113,7 +113,7 @@ ac 13 00 01 ac 13 00 03  a6 52 00 50 47 45 54 20  |.........R.PGET |
 The fields of version one are defined with a position and bit representation:
 
 Signature
-: Constant 12 bytes allow an proxy to identify that the request starts with a PROXY protocol header.
+: Constant 12 bytes allow a proxy to identify that the request starts with a PROXY protocol header.
 : __Length:__ 3 * 32 bits = 12 bytes
 : __Position:__ bytes 0 to 11
 : __Value:__ `\x0D \x0A \x0D \x0A \x00 \x0D \x0A \x51 \x55 \x49 \x54 \x0A`

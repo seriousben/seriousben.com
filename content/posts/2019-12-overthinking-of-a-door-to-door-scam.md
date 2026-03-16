@@ -90,7 +90,7 @@ Salesperson: "No, not at all. We want you to save money and are only giving you 
 
 (Commentary: What you take pictures of your customers/installations as marketing material? I would not agree with this. This is a privacy problem.)
 
-Me: "Great. Do you anything for us to get to know you better. Any data on your company or something?"
+Me: "Great. Do you have anything for us to get to know you better. Any data on your company or something?"
 
 Salesperson: "We are an ecological company, so we don’t give papers."
 

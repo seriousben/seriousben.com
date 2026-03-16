@@ -194,7 +194,7 @@ err2 IS nil -> customError string
 
 You can see that even though my `customError` implements the `Error` interface it is not equal to `Error(nil)`.
 
-This gotchas is the reason why you should always return a nil of type `error` and never of you custom type.
+This gotcha is the reason why you should always return a nil of type `error` and never of your custom type.
 
 ## Fun with golang scopes and := assignment operator
 

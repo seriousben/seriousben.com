@@ -344,7 +344,7 @@ The initial deployment of the application is done manually with [Kustomize](http
 We have 3 folders that are involved when running Kustomize to create the manifest to `kubectl apply`:
 - `deploy/base`: Is the folder containing one or many groups of manifests to be Kustomized when pulled into an overlay.
 - `deploy/overlay`: Is the top-level manifest and kustomization. It defines what to pull from the bases into a main manifest. It adds default annotations, labels and a namespace.
-- `deploy/manifest`: Outpout of the kustomization of the overlay. `kustomize build deploy/overlay > deploy/manifest/kustomized-overlay.yaml`
+- `deploy/manifest`: Output of the kustomization of the overlay. `kustomize build deploy/overlay > deploy/manifest/kustomized-overlay.yaml`
 
 Once the file `deploy/manifest/kustomized-overlay.yaml` is updated from the base + overlay, it can be applied to the cluster with `kubectl apply deploy/manifest/kustomized-overlay.yaml`.
 
