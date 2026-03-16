@@ -288,6 +288,11 @@ li code, p code {
 	display: inline-block;
 	text-decoration: none;
     border: none;
+    margin-right: 0.15em;
+}
+
+.social a:last-child {
+    margin-right: 0;
 }
 
 .social a.icon {
