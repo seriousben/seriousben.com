@@ -359,60 +359,55 @@ li code, p code {
 	height: 0.6em;
 }
 
+/* Header theme toggle as menu item */
 .theme-toggle {
 	background: none;
-	border: 1px solid var(--border-color);
+	border: none;
 	color: var(--text-color);
 	cursor: pointer;
-	padding: 6px 12px;
-	font-size: 0.9rem;
-	font-family: $font-stack;
-	border-radius: 4px;
-	transition: background-color 0.2s ease, color 0.2s ease;
-	margin-left: 15px;
+	padding: 0;
+	font-family: inherit;
+	font-size: 1.3rem;
+	text-transform: uppercase;
 
 	&:hover {
-		background-color: var(--text-color);
-		color: var(--bg-color);
+		opacity: 0.7;
 	}
 
-	@include breakpoint($medium) {
-		margin-top: 10px;
-		margin-left: 0;
-	}
-}
-
-.theme-toggle-container {
-	display: flex;
-	align-items: center;
-
-	@include breakpoint($medium) {
-		margin-top: 15px;
-	}
-}
-
-.theme-toggle {
 	svg {
-		width: 1em;
-		height: 1em;
-		vertical-align: middle;
+		width: 0.85em;
+		height: 0.85em;
+		vertical-align: baseline;
 	}
 
-	.theme-icon-light {
-		display: inline-block;
+	/* Default: show auto icon */
+	.theme-icon-auto {
+		display: inline;
 	}
-
+	.theme-icon-light,
 	.theme-icon-dark {
 		display: none;
 	}
 }
 
+/* Light mode: show sun icon */
+:root[data-theme="light"] .theme-toggle {
+	.theme-icon-auto,
+	.theme-icon-dark {
+		display: none;
+	}
+	.theme-icon-light {
+		display: inline;
+	}
+}
+
+/* Dark mode: show moon icon */
 :root[data-theme="dark"] .theme-toggle {
+	.theme-icon-auto,
 	.theme-icon-light {
 		display: none;
 	}
-
 	.theme-icon-dark {
-		display: inline-block;
+		display: inline;
 	}
 }

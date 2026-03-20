@@ -71,51 +71,44 @@
         (function() {
             const themeToggle = document.getElementById('theme-toggle');
             const html = document.documentElement;
+            const systemQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-            // Check for saved theme preference or default to system preference
-            const savedTheme = localStorage.getItem('theme');
-            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-            function updateButton(theme) {
-                if (themeToggle) {
-                    themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
-                    themeToggle.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+            // Get effective theme (resolved value)
+            function getEffectiveTheme(stored) {
+                if (stored === 'auto' || !stored) {
+                    return systemQuery.matches ? 'dark' : 'light';
                 }
+                return stored;
             }
 
-            // Initialize theme
-            let currentTheme;
-            if (savedTheme) {
-                currentTheme = savedTheme;
-            } else {
-                currentTheme = systemPrefersDark ? 'dark' : 'light';
+            // Apply theme to document
+            function applyTheme(effectiveTheme) {
+                html.setAttribute('data-theme', effectiveTheme);
             }
 
-            if (currentTheme === 'dark') {
-                html.setAttribute('data-theme', 'dark');
-            } else {
-                html.setAttribute('data-theme', 'light');
-            }
-            updateButton(currentTheme);
+            // Get saved preference
+            const savedTheme = localStorage.getItem('theme') || 'auto';
+            let currentMode = savedTheme; // 'auto', 'light', or 'dark'
 
-            // Toggle theme on click
+            // Initialize
+            applyTheme(getEffectiveTheme(currentMode));
+
+            // Toggle: auto -> light -> dark -> auto
             if (themeToggle) {
                 themeToggle.addEventListener('click', function() {
-                    const currentTheme = html.getAttribute('data-theme');
-                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                    const modes = ['auto', 'light', 'dark'];
+                    const nextIndex = (modes.indexOf(currentMode) + 1) % modes.length;
+                    currentMode = modes[nextIndex];
 
-                    html.setAttribute('data-theme', newTheme);
-                    localStorage.setItem('theme', newTheme);
-                    updateButton(newTheme);
+                    localStorage.setItem('theme', currentMode);
+                    applyTheme(getEffectiveTheme(currentMode));
                 });
             }
 
             // Listen for system theme changes
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-                if (!localStorage.getItem('theme')) {
-                    const newTheme = e.matches ? 'dark' : 'light';
-                    html.setAttribute('data-theme', newTheme);
-                    updateButton(newTheme);
+            systemQuery.addEventListener('change', function(e) {
+                if (currentMode === 'auto') {
+                    applyTheme(e.matches ? 'dark' : 'light');
                 }
             });
         })();
