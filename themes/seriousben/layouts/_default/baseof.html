@@ -66,6 +66,60 @@
     {{ end }}
 
     {{ partial "footer_extra"  . }}
+
+    <script>
+        (function() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const html = document.documentElement;
+
+            // Check for saved theme preference or default to system preference
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            function updateButton(theme) {
+                if (themeToggle) {
+                    themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+                    themeToggle.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+                }
+            }
+
+            // Initialize theme
+            let currentTheme;
+            if (savedTheme) {
+                currentTheme = savedTheme;
+            } else {
+                currentTheme = systemPrefersDark ? 'dark' : 'light';
+            }
+
+            if (currentTheme === 'dark') {
+                html.setAttribute('data-theme', 'dark');
+            } else {
+                html.setAttribute('data-theme', 'light');
+            }
+            updateButton(currentTheme);
+
+            // Toggle theme on click
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function() {
+                    const currentTheme = html.getAttribute('data-theme');
+                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+                    html.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+                    updateButton(newTheme);
+                });
+            }
+
+            // Listen for system theme changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+                if (!localStorage.getItem('theme')) {
+                    const newTheme = e.matches ? 'dark' : 'light';
+                    html.setAttribute('data-theme', newTheme);
+                    updateButton(newTheme);
+                }
+            });
+        })();
+    </script>
 </body>
 
 </html>
