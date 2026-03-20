@@ -21,6 +21,10 @@ github = "seriousben"
 linkedin = "boudreaubenjamin"
 highlightjs = true
 
+[markup]
+  [markup.highlight]
+    style = "github"
+
   [[menu.primary]]
     name = "Posts"
     url = "/posts/"

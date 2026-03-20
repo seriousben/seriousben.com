@@ -66,6 +66,53 @@
     {{ end }}
 
     {{ partial "footer_extra"  . }}
+
+    <script>
+        (function() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const html = document.documentElement;
+            const systemQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+            // Get effective theme (resolved value)
+            function getEffectiveTheme(stored) {
+                if (stored === 'auto' || !stored) {
+                    return systemQuery.matches ? 'dark' : 'light';
+                }
+                return stored;
+            }
+
+            // Apply theme to document
+            function applyTheme(effectiveTheme) {
+                html.setAttribute('data-theme', effectiveTheme);
+            }
+
+            // Get saved preference
+            const savedTheme = localStorage.getItem('theme') || 'auto';
+            let currentMode = savedTheme; // 'auto', 'light', or 'dark'
+
+            // Initialize
+            applyTheme(getEffectiveTheme(currentMode));
+
+            // Toggle: auto -> light -> dark -> auto
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function() {
+                    const modes = ['auto', 'light', 'dark'];
+                    const nextIndex = (modes.indexOf(currentMode) + 1) % modes.length;
+                    currentMode = modes[nextIndex];
+
+                    localStorage.setItem('theme', currentMode);
+                    applyTheme(getEffectiveTheme(currentMode));
+                });
+            }
+
+            // Listen for system theme changes
+            systemQuery.addEventListener('change', function(e) {
+                if (currentMode === 'auto') {
+                    applyTheme(e.matches ? 'dark' : 'light');
+                }
+            });
+        })();
+    </script>
 </body>
 
 </html>
