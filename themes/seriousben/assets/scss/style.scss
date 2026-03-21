@@ -390,8 +390,20 @@ li code, p code {
 	}
 }
 
+/* Auto mode: show auto icon (default behavior) */
+:root[data-theme-mode="auto"] .theme-toggle,
+:root:not([data-theme-mode]) .theme-toggle {
+	.theme-icon-auto {
+		display: inline;
+	}
+	.theme-icon-light,
+	.theme-icon-dark {
+		display: none;
+	}
+}
+
 /* Light mode: show sun icon */
-:root[data-theme="light"] .theme-toggle {
+:root[data-theme-mode="light"] .theme-toggle {
 	.theme-icon-auto,
 	.theme-icon-dark {
 		display: none;
@@ -402,7 +414,7 @@ li code, p code {
 }
 
 /* Dark mode: show moon icon */
-:root[data-theme="dark"] .theme-toggle {
+:root[data-theme-mode="dark"] .theme-toggle {
 	.theme-icon-auto,
 	.theme-icon-light {
 		display: none;
