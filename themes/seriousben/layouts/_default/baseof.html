@@ -46,6 +46,27 @@
     <link rel="shortcut icon" href="{{"favicon.ico" | relURL}}">
 
     <link href='{{ with .OutputFormats.Get "RSS" }}{{ .RelPermalink }}{{ end }}' rel="alternate" type="application/rss+xml" title="{{ .Site.Title }}" />
+
+    <!-- Theme initialization - runs before render to prevent flash -->
+    <script>
+        (function() {
+            const systemQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            const savedTheme = localStorage.getItem('theme') || 'auto';
+            
+            // Get effective theme for colors
+            function getEffectiveTheme(mode) {
+                if (mode === 'auto') {
+                    return systemQuery.matches ? 'dark' : 'light';
+                }
+                return mode;
+            }
+            
+            // Apply theme immediately to prevent flash
+            const effectiveTheme = getEffectiveTheme(savedTheme);
+            document.documentElement.setAttribute('data-theme', effectiveTheme);
+            document.documentElement.setAttribute('data-theme-mode', savedTheme);
+        })();
+    </script>
 </head>
 
 <body>
@@ -73,25 +94,23 @@
             const html = document.documentElement;
             const systemQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-            // Get effective theme (resolved value)
-            function getEffectiveTheme(stored) {
-                if (stored === 'auto' || !stored) {
+            // Get effective theme (resolved value for colors)
+            function getEffectiveTheme(mode) {
+                if (mode === 'auto') {
                     return systemQuery.matches ? 'dark' : 'light';
                 }
-                return stored;
+                return mode;
             }
 
             // Apply theme to document
-            function applyTheme(effectiveTheme) {
+            function applyTheme(mode) {
+                const effectiveTheme = getEffectiveTheme(mode);
                 html.setAttribute('data-theme', effectiveTheme);
+                html.setAttribute('data-theme-mode', mode);
             }
 
             // Get saved preference
-            const savedTheme = localStorage.getItem('theme') || 'auto';
-            let currentMode = savedTheme; // 'auto', 'light', or 'dark'
-
-            // Initialize
-            applyTheme(getEffectiveTheme(currentMode));
+            let currentMode = localStorage.getItem('theme') || 'auto';
 
             // Toggle: auto -> light -> dark -> auto
             if (themeToggle) {
@@ -101,14 +120,15 @@
                     currentMode = modes[nextIndex];
 
                     localStorage.setItem('theme', currentMode);
-                    applyTheme(getEffectiveTheme(currentMode));
+                    applyTheme(currentMode);
                 });
             }
 
             // Listen for system theme changes
             systemQuery.addEventListener('change', function(e) {
                 if (currentMode === 'auto') {
-                    applyTheme(e.matches ? 'dark' : 'light');
+                    const effectiveTheme = e.matches ? 'dark' : 'light';
+                    html.setAttribute('data-theme', effectiveTheme);
                 }
             });
         })();
