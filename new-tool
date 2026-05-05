@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ $# -lt 1 ]; then
+    echo "Usage: new-tool <name>"
+    echo "  e.g. new-tool color-picker"
+    exit 1
+fi
+
+NAME="$1"
+SLUG="$(echo "$NAME" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')"
+POST="content/tools/${SLUG}.md"
+DIR="static/tools/${SLUG}"
+
+if [ -f "$POST" ]; then
+    echo "Error: ${POST} already exists" >&2
+    exit 1
+fi
+
+if [ -d "$DIR" ]; then
+    echo "Error: ${DIR} already exists" >&2
+    exit 1
+fi
+
+DATE="$(date +%Y-%m-%d)"
+TITLE="$(echo "$NAME" | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')"
+
+cat > "$POST" <<EOF
+---
+title: "${TITLE}"
+date: ${DATE}
+summary: ""
+tags: []
+toolUrl: "/tools/${SLUG}/"
+---
+EOF
+
+mkdir -p "$DIR"
+cat > "${DIR}/index.html" <<EOF
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>${TITLE}</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <h1>${TITLE}</h1>
+    <script src="./script.js"></script>
+</body>
+</html>
+EOF
+
+touch "${DIR}/style.css"
+touch "${DIR}/script.js"
+
+echo "Created:"
+echo "  ${POST}"
+echo "  ${DIR}/index.html"
+echo "  ${DIR}/style.css"
+echo "  ${DIR}/script.js"

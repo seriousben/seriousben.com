@@ -6,6 +6,7 @@ title = "Benjamin Boudreau"
 copyright = "Copyright © Benjamin Boudreau 2017-2020"
 theme = "seriousben"
 rssLimit = 100
+enableGitInfo = true
 enableEmoji = true
 [author]
   name = "Benjamin Boudreau"
@@ -31,6 +32,11 @@ highlightjs = true
     weight = 10
 
   [[menu.primary]]
+    name = "Tools"
+    url = "/tools/"
+    weight = 20
+
+  [[menu.primary]]
     name = "Curated Links"
     url = "/links/"
-    weight = 20
+    weight = 30
