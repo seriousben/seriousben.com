@@ -8,7 +8,43 @@
 </head>
 <body>
     <h1>Multi-term Mortgage Calculator</h1>
-    <p><em>Placeholder — full tool coming soon.</em></p>
+    <p class="subtitle">Compare mortgage terms side by side</p>
+
+    <div class="input-section">
+        <div class="field">
+            <label for="principal">Loan Amount</label>
+            <div class="input-wrap">
+                <span class="prefix">$</span>
+                <input type="number" id="principal" value="300000" min="0" step="1000">
+            </div>
+        </div>
+        <div class="field">
+            <label for="rate">Annual Interest Rate</label>
+            <div class="input-wrap">
+                <input type="number" id="rate" value="6.5" min="0" max="30" step="0.125">
+                <span class="suffix">%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="terms-section">
+        <label>Mortgage Terms</label>
+        <div class="term-toggles">
+            <button class="term-toggle" data-term="10" aria-pressed="false">10 yr</button>
+            <button class="term-toggle active" data-term="15" aria-pressed="true">15 yr</button>
+            <button class="term-toggle active" data-term="20" aria-pressed="true">20 yr</button>
+            <button class="term-toggle active" data-term="25" aria-pressed="true">25 yr</button>
+            <button class="term-toggle active" data-term="30" aria-pressed="true">30 yr</button>
+        </div>
+    </div>
+
+    <div id="results" class="results"></div>
+
+    <div id="chart-section" class="chart-section">
+        <h2>Balance Over Time</h2>
+        <canvas id="balanceChart"></canvas>
+    </div>
+
     <script src="./script.js"></script>
 </body>
 </html>
