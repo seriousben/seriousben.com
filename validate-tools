@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Validate that every tool content file with toolUrl has a matching static folder
+# and that every static/tool/ folder has a matching content file.
+
+ERRORS=0
+
+for md in content/tools/*.md; do
+    [ -f "$md" ] || continue
+    [ "$(basename "$md")" = "_index.md" ] && continue
+
+    TOOL_URL="$(grep -oP 'toolUrl:\s*"([^"]+)"' "$md" | head -1 | sed 's/toolUrl: *"//;s/"$//' | sed 's:/$::')"
+    if [ -z "$TOOL_URL" ]; then
+        echo "WARN: $(basename "$md") has no toolUrl"
+        continue
+    fi
+
+    STATIC_DIR="static${TOOL_URL}"
+    if [ ! -d "$STATIC_DIR" ]; then
+        echo "ERROR: $(basename "$md") references ${TOOL_URL}/ but ${STATIC_DIR} does not exist"
+        ERRORS=$((ERRORS + 1))
+    elif [ ! -f "${STATIC_DIR}/index.html" ]; then
+        echo "ERROR: ${STATIC_DIR}/index.html missing"
+        ERRORS=$((ERRORS + 1))
+    fi
+done
+
+for dir in static/tool/*/; do
+    [ -d "$dir" ] || continue
+    SLUG="$(basename "$dir")"
+    if [ ! -f "content/tools/${SLUG}.md" ]; then
+        echo "ERROR: ${dir} has no matching content/tools/${SLUG}.md"
+        ERRORS=$((ERRORS + 1))
+    fi
+done
+
+if [ "$ERRORS" -gt 0 ]; then
+    echo ""
+    echo "Validation failed with ${ERRORS} error(s)"
+    exit 1
+fi
+
+echo "All tools validated OK"

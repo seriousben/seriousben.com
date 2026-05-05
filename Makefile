@@ -2,7 +2,7 @@ HUGO_VERSION := 0.155.2
 DOCKER_IMAGE := hugomods/hugo:$(HUGO_VERSION)
 DOCKER_RUN := docker run --rm -v "$(PWD):/src" -w /src
 
-.PHONY: build serve stop clean
+.PHONY: build serve stop clean validate-tools new-tool
 
 build:
 	$(DOCKER_RUN) $(DOCKER_IMAGE) hugo --minify
@@ -15,6 +15,15 @@ serve:
 
 stop:
 	docker stop hugo-server
+
+validate-tools:
+	./validate-tools
+
+new-tool:
+	@./new-tool $(filter-out $@,$(MAKECMDGOALS))
+
+%:
+	@:
 
 clean:
 	rm -rf public resources
