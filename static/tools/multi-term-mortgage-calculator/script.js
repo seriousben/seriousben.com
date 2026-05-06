@@ -172,17 +172,6 @@
         return "monthly";
     }
 
-    // Canadian mortgage: effective monthly rate from semi-annual compounding
-    // rate_semi = annualRate/2, effective monthly = (1 + rate_semi)^^(2/12) - 1
-    function effectiveMonthlyRate(annualRate, compounding) {
-        if (compounding === "semi-annual") {
-            var semiRate = annualRate / 100 / 2;
-            return Math.pow(1 + semiRate, 1 / 6) - 1;
-        }
-        // US: monthly compounding
-        return annualRate / 100 / 12;
-    }
-
     function calcBasePayment(principal, annualRate, amortYears, schedule, compounding) {
         var ppy = schedulePaymentsPerYear(schedule);
         var n = amortYears * ppy;
