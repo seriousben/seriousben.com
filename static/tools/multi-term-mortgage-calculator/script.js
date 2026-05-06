@@ -1062,6 +1062,9 @@
             };
         });
 
+        // Store base scenario ID for tooltip delta calculation
+        var baseId = scenarios.find(function (s) { return s.id === "base"; }) ? "base" : null;
+
         chartInstances[canvasId] = new Chart(canvas, {
             type: "line",
             data: { datasets: datasets },
@@ -1090,6 +1093,24 @@
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
+                            afterBody: function (items) {
+                                if (!baseId || items.length <= 1) return [];
+                                var baseVal = null;
+                                items.forEach(function (item) {
+                                    var sc = visibleScenarios[item.datasetIndex];
+                                    if (sc && sc.id === baseId) baseVal = item.parsed.y;
+                                });
+                                if (baseVal === null) return [];
+                                var lines = [];
+                                items.forEach(function (item) {
+                                    var sc = visibleScenarios[item.datasetIndex];
+                                    if (!sc || sc.id === baseId) return;
+                                    var delta = item.parsed.y - baseVal;
+                                    var sign = delta >= 0 ? "+" : "";
+                                    lines.push(sc.label + " " + sign + fmt(delta) + " vs Base");
+                                });
+                                return lines;
+                            },
                             label: function (ctx) { return ctx.dataset.label + ": " + fmt(ctx.parsed.y); },
                         },
                     },
@@ -1143,6 +1164,8 @@
             };
         });
 
+        var baseId = scenarios.find(function (s) { return s.id === "base"; }) ? "base" : null;
+
         chartInstances["paymentChart"] = new Chart(canvas, {
             type: "line",
             data: { datasets: datasets },
@@ -1168,6 +1191,24 @@
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
+                            afterBody: function (items) {
+                                if (!baseId || items.length <= 1) return [];
+                                var baseVal = null;
+                                items.forEach(function (item) {
+                                    var sc = visibleScenarios[item.datasetIndex];
+                                    if (sc && sc.id === baseId) baseVal = item.parsed.y;
+                                });
+                                if (baseVal === null) return [];
+                                var lines = [];
+                                items.forEach(function (item) {
+                                    var sc = visibleScenarios[item.datasetIndex];
+                                    if (!sc || sc.id === baseId) return;
+                                    var delta = item.parsed.y - baseVal;
+                                    var sign = delta >= 0 ? "+" : "";
+                                    lines.push(sc.label + " " + sign + fmtFull(delta) + " vs Base");
+                                });
+                                return lines;
+                            },
                             label: function (ctx) { return ctx.dataset.label + ": " + fmtFull(ctx.parsed.y) + freqSuffix(); },
                         },
                     },
@@ -1452,6 +1493,27 @@
         a.download = "mortgage-amortization.csv";
         a.click();
         URL.revokeObjectURL(url);
+    });
+
+    $("btn-png").addEventListener("click", function () {
+        // Export the currently visible chart panel as PNG
+        var panels = ["balance", "cumulative", "payment", "ip"];
+        var visibleCanvas = null;
+        for (var i = 0; i < panels.length; i++) {
+            var panel = $("panel-" + panels[i]);
+            if (panel && panel.classList.contains("visible")) {
+                visibleCanvas = panel.querySelector("canvas");
+                break;
+            }
+        }
+        if (!visibleCanvas) return;
+        var chartInstance = Chart.getChart(visibleCanvas);
+        if (!chartInstance) return;
+        var dataUrl = chartInstance.toBase64Image("image/png", 1);
+        var a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = "mortgage-chart.png";
+        a.click();
     });
 
     // ===== URL STATE =====
