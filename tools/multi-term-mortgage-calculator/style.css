@@ -73,11 +73,6 @@ body {
     color: var(--text);
     background: var(--bg);
     -webkit-font-smoothing: antialiased;
-    color-scheme: light;
-}
-
-:root[data-theme="dark"] body {
-    color-scheme: dark;
 }
 
 /* Hook */
@@ -211,16 +206,6 @@ body {
     font-size: 0.75rem;
     line-height: 1.55;
     color: var(--text-2);
-}
-
-.country-info-label {
-    display: inline-block;
-    font-size: 0.625rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-3);
-    margin-bottom: 0.35rem;
 }
 
 .country-info ul {
@@ -713,22 +698,13 @@ select:focus {
     color: var(--bg);
 }
 
-/* Dark mode: inputs */
-:root[data-theme="dark"] .input-wrap input {
-    background: transparent;
-    color: var(--text);
-    caret-color: var(--text);
-}
-
-:root[data-theme="dark"] .input-wrap input[readonly] {
-    color: var(--text-3);
-}
-
+/* Dark mode: select styling */
 :root[data-theme="dark"] select {
     background: var(--surface);
     color: var(--text);
 }
 
+/* Dark mode: input autofill */
 :root[data-theme="dark"] .input-wrap input:-webkit-autofill {
     -webkit-box-shadow: 0 0 0 30px #242424 inset;
     -webkit-text-fill-color: var(--text);
