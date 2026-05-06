@@ -35,15 +35,16 @@
     var btnClear = document.getElementById("btn-clear");
     var hookLoan = document.getElementById("hook-loan");
     var hookInterest = document.getElementById("hook-interest");
+    var rateOptimisticInput = document.getElementById("rate-optimistic");
+    var ratePessimisticInput = document.getElementById("rate-pessimistic");
 
     // Collapsible sections
     var collapsibles = {
         prepay: { toggle: document.getElementById("toggle-prepay"), body: document.getElementById("body-prepay"), arrow: document.getElementById("arrow-prepay") },
-        costs:  { toggle: document.getElementById("toggle-costs"),  body: document.getElementById("body-costs"),  arrow: document.getElementById("arrow-arrow-costs") },
+        costs:  { toggle: document.getElementById("toggle-costs"),  body: document.getElementById("body-costs"),  arrow: document.getElementById("arrow-costs") },
+        scenarios: { toggle: document.getElementById("toggle-scenarios"), body: document.getElementById("body-scenarios"), arrow: document.getElementById("arrow-scenarios") },
         date:   { toggle: document.getElementById("toggle-date"),   body: document.getElementById("body-date"),   arrow: document.getElementById("arrow-date") },
     };
-    // Fix arrow-costs id
-    collapsibles.costs.arrow = document.getElementById("arrow-costs");
 
     // Collapsible toggle handlers
     Object.keys(collapsibles).forEach(function (key) {
@@ -172,39 +173,30 @@
         return "monthly";
     }
 
-    // Canadian mortgage: effective monthly rate from semi-annual compounding
-    // rate_semi = annualRate/2, effective monthly = (1 + rate_semi)^^(2/12) - 1
-    function effectiveMonthlyRate(annualRate, compounding) {
-        if (compounding === "semi-annual") {
-            var semiRate = annualRate / 100 / 2;
-            return Math.pow(1 + semiRate, 1 / 6) - 1;
-        }
-        // US: monthly compounding
-        return annualRate / 100 / 12;
-    }
-
     function calcBasePayment(principal, annualRate, amortYears, schedule, compounding) {
         var ppy = schedulePaymentsPerYear(schedule);
         var n = amortYears * ppy;
         if (principal <= 0 || n <= 0) return 0;
 
-        var r;
-        if (compounding === "semi-annual") {
-            // For Canadian mortgages, convert to effective period rate
-            var monthlyRate = effectiveMonthlyRate(annualRate, "semi-annual");
-            if (schedule === "monthly") {
-                r = monthlyRate;
-            } else if (schedule === "biweekly") {
-                r = Math.pow(1 + monthlyRate, 1 / 2) - 1;
-            } else {
-                r = Math.pow(1 + monthlyRate, 1 / 4) - 1;
-            }
-        } else {
-            r = annualRate / 100 / ppy;
-        }
+        var r = effectivePeriodRate(annualRate, schedule, compounding);
 
         if (r === 0) return principal / n;
         return principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+    }
+
+    function effectivePeriodRate(annualRate, schedule, compounding) {
+        if (compounding === "semi-annual") {
+            // Canadian: semi-annual compounding
+            // Semi rate = annualRate/2, then derive period rate from half-year
+            // Monthly: 6 periods per half-year → (1+semiRate)^(1/6) - 1
+            // Bi-weekly: 13 periods per half-year → (1+semiRate)^(1/13) - 1
+            // Weekly: 26 periods per half-year → (1+semiRate)^(1/26) - 1
+            var semiRate = annualRate / 100 / 2;
+            var periodsPerHalfYear = schedule === "monthly" ? 6 : schedule === "biweekly" ? 13 : 26;
+            return Math.pow(1 + semiRate, 1 / periodsPerHalfYear) - 1;
+        }
+        // US: monthly compounding
+        return annualRate / 100 / schedulePaymentsPerYear(schedule);
     }
 
     function addCommas(n) {
@@ -227,13 +219,6 @@
         return val.toFixed(1) + "%";
     }
 
-    function fmtShort(val) {
-        if (Math.abs(val) >= 1000000) {
-            return "$" + (val / 1000000).toFixed(1) + "M";
-        }
-        return fmt(val);
-    }
-
     // --- Local storage ---
 
     function saveState() {
@@ -252,6 +237,9 @@
                 pmi: pmiInput.value,
                 startMonth: startMonthInput.value,
                 startYear: startYearInput.value,
+                scheduleMode: scheduleMode,
+                rateOptimistic: rateOptimisticInput.value,
+                ratePessimistic: ratePessimisticInput.value,
                 terms: terms,
             };
             localStorage.setItem(LS_KEY, JSON.stringify(state));
@@ -294,6 +282,13 @@
         if (s.pmi !== undefined) pmiInput.value = s.pmi;
         if (s.startMonth !== undefined) startMonthInput.value = s.startMonth;
         if (s.startYear !== undefined) startYearInput.value = s.startYear;
+        if (s.scheduleMode !== undefined) {
+            scheduleMode = s.scheduleMode;
+            btnMonthly.classList.toggle("active", scheduleMode === "monthly");
+            btnAnnual.classList.toggle("active", scheduleMode === "annual");
+        }
+        if (s.rateOptimistic !== undefined) rateOptimisticInput.value = s.rateOptimistic;
+        if (s.ratePessimistic !== undefined) ratePessimisticInput.value = s.ratePessimistic;
         if (s.terms && Array.isArray(s.terms) && s.terms.length > 0) {
             terms = s.terms;
         }
@@ -489,20 +484,7 @@
             var term = termDefs[ti];
             var ppy = schedulePaymentsPerYear(term.schedule);
 
-            // Effective period rate
-            var r;
-            if (compounding === "semi-annual") {
-                var monthlyRate = effectiveMonthlyRate(term.rate, "semi-annual");
-                if (term.schedule === "monthly") {
-                    r = monthlyRate;
-                } else if (term.schedule === "biweekly") {
-                    r = Math.pow(1 + monthlyRate, 1 / 2) - 1;
-                } else {
-                    r = Math.pow(1 + monthlyRate, 1 / 4) - 1;
-                }
-            } else {
-                r = term.rate / 100 / ppy;
-            }
+            var r = effectivePeriodRate(term.rate, term.schedule, compounding);
 
             var termPayments = term.years * ppy;
 
@@ -681,7 +663,7 @@
             var biweeklyAnnual = biweeklyPay * 26;
             var monthlyAnnual = monthlyPay * 12;
             var extraPerYear = biweeklyAnnual - monthlyAnnual;
-            html += '<div class="biweekly-compare">Switch to bi-weekly payments of <strong>' + fmtFull(biweeklyPay) + '</strong>? That equals <strong>' + fmt(extraPerYear) + ' extra/year</strong> going to principal, cutting years off your mortgage.</div>';
+            html += '<div class="biweekly-compare">Switch to bi-weekly payments of <strong>' + fmtFull(biweeklyPay) + '</strong>? That puts <strong>' + fmt(extraPerYear) + ' extra/year</strong> toward your mortgage, cutting years off the amortization.</div>';
         }
 
         // Per-term breakdown
@@ -700,6 +682,44 @@
                 '</dl>' +
                 '</div>';
         });
+
+        // Scenario comparison
+        var optOffset = parseFloat(rateOptimisticInput.value) || 0;
+        var pessOffset = parseFloat(ratePessimisticInput.value) || 0;
+        if (optOffset !== 0 || pessOffset !== 0) {
+            var optTerms = terms.map(function (t) { return { years: t.years, rate: Math.max(0, t.rate + optOffset), schedule: t.schedule }; });
+            var pessTerms = terms.map(function (t) { return { years: t.years, rate: t.rate + pessOffset, schedule: t.schedule }; });
+            var simOpt = simulateMortgage(principal, amort, optTerms, annualIncrease, lumpAnnual, lumpTerm, annualTax, annualInsurance, monthlyHOA, annualPMI, startMonth, startYear);
+            var simPess = simulateMortgage(principal, amort, pessTerms, annualIncrease, lumpAnnual, lumpTerm, annualTax, annualInsurance, monthlyHOA, annualPMI, startMonth, startYear);
+
+            html +=
+                '<div class="scenario-compare">' +
+                '<table class="scenario-table">' +
+                '<thead><tr><th></th>' +
+                '<th><span class="scenario-label opt">Optimistic ' + fmtPct(optOffset) + '</span></th>' +
+                '<th>Base</th>' +
+                '<th><span class="scenario-label pess">Pessimistic +' + fmtPct(pessOffset) + '</span></th>' +
+                '</tr></thead><tbody>' +
+                '<tr><td>Monthly Payment</td><td>' + fmtFull(simOpt.termResults[0].basePayment) + '</td><td>' + fmtFull(sim.termResults[0].basePayment) + '</td><td>' + fmtFull(simPess.termResults[0].basePayment) + '</td></tr>' +
+                '<tr><td>Total Interest</td><td>' + fmt(simOpt.totalInterest) + '</td><td>' + fmt(sim.totalInterest) + '</td><td>' + fmt(simPess.totalInterest) + '</td></tr>' +
+                '<tr><td>Total Cost</td><td>' + fmt(simOpt.totalAllIn) + '</td><td>' + fmt(sim.totalAllIn) + '</td><td>' + fmt(simPess.totalAllIn) + '</td></tr>' +
+                '<tr><td>Interest Share</td><td>' + fmtPct(simOpt.totalPaid > 0 ? simOpt.totalInterest / simOpt.totalPaid * 100 : 0) + '</td><td>' + fmtPct(sim.totalPaid > 0 ? sim.totalInterest / sim.totalPaid * 100 : 0) + '</td><td>' + fmtPct(simPess.totalPaid > 0 ? simPess.totalInterest / simPess.totalPaid * 100 : 0) + '</td></tr>' +
+                '<tr><td>Paid Off</td><td>' + (simOpt.paidOff ? 'Yes' : 'No') + '</td><td>' + (sim.paidOff ? 'Yes' : 'No') + '</td><td>' + (simPess.paidOff ? 'Yes' : 'No') + '</td></tr>' +
+                '</tbody></table></div>';
+        }
+
+        // Missing years to amortization
+        var totalTermYears = 0;
+        terms.forEach(function (t) { totalTermYears += t.years; });
+        var missingYears = amort - totalTermYears;
+        if (missingYears > 0) {
+            var remainingBalance = sim.paidOff ? 0 : sim.termResults[sim.termResults.length - 1].balanceAtEnd;
+            html += '<div class="missing-years">' +
+                'Defined terms cover <strong>' + totalTermYears + ' of ' + amort + ' years</strong> of the amortization. ' +
+                '<strong>' + missingYears + ' years</strong> remain after the last term with a balance of <strong>' + fmt(remainingBalance) + '</strong>. ' +
+                'You will need to renew at whatever rate is available then.' +
+                '</div>';
+        }
 
         if (!sim.paidOff) {
             html += '<p class="hint" style="margin-top:0.5rem;color:#c0392b;font-size:0.8125rem;font-weight:600;">Mortgage not fully paid after all terms. Remaining balance: ' + fmt(sim.termResults[sim.termResults.length - 1].balanceAtEnd) + '</p>';
@@ -871,7 +891,6 @@
         ctx.fillText(fmt(total), cx, cy - 6);
         ctx.font = '600 9px -apple-system, system-ui, sans-serif';
         ctx.fillStyle = "#888";
-        ctx.letterSpacing = "0.05em";
         ctx.fillText("TOTAL COST", cx, cy + 8);
 
         // Legend
@@ -981,7 +1000,8 @@
     // --- Event bindings ---
 
     [amortInput, paymentIncreaseInput, lumpSumAnnualInput, lumpSumTermInput,
-     propertyTaxInput, homeInsuranceInput, hoaInput, pmiInput, startYearInput].forEach(function (el) {
+     propertyTaxInput, homeInsuranceInput, hoaInput, pmiInput, startYearInput,
+     rateOptimisticInput, ratePessimisticInput].forEach(function (el) {
         el.addEventListener("input", render);
     });
 
@@ -1032,6 +1052,8 @@
         pmiInput.value = 0;
         startMonthInput.value = 5;
         startYearInput.value = 2026;
+        rateOptimisticInput.value = -1;
+        ratePessimisticInput.value = 2;
 
         terms = cfg.defaultTerms.map(function (t) { return { years: t.years, rate: t.rate, schedule: t.schedule }; });
 
