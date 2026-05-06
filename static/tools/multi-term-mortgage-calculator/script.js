@@ -444,17 +444,20 @@
             termsList.appendChild(card);
         });
 
+        var termInputHandler = function () {
+            var idx = parseInt(this.dataset.idx, 10);
+            var field = this.dataset.field;
+            if (field === "schedule") {
+                terms[idx][field] = this.value;
+            } else {
+                terms[idx][field] = parseFloat(this.value) || 0;
+            }
+            render();
+        };
+
         termsList.querySelectorAll("input, select").forEach(function (el) {
-            el.addEventListener("input", function () {
-                var idx = parseInt(el.dataset.idx, 10);
-                var field = el.dataset.field;
-                if (field === "schedule") {
-                    terms[idx][field] = el.value;
-                } else {
-                    terms[idx][field] = parseFloat(el.value) || 0;
-                }
-                render();
-            });
+            el.addEventListener("input", termInputHandler);
+            el.addEventListener("change", termInputHandler);
         });
 
         termsList.querySelectorAll(".remove-term").forEach(function (btn) {
@@ -955,7 +958,7 @@
                 "<th>Tax</th><th>Ins.</th><th>" + (country === "ca" ? "Condo" : "HOA") + "</th><th>Balance</th></tr>";
 
             var html = "";
-            var prevTerm = -1;
+            var prevTerm = yearRows.length > 0 ? yearRows[0].termIndex : -1;
             yearRows.forEach(function (r) {
                 var cls = r.termIndex !== prevTerm ? ' class="term-boundary"' : "";
                 prevTerm = r.termIndex;
@@ -978,7 +981,7 @@
                 "<th>Balance</th></tr>";
 
             var html = "";
-            var prevTerm = -1;
+            var prevTerm = rows.length > 0 ? rows[0].termIndex : -1;
             rows.forEach(function (r) {
                 var cls = r.termIndex !== prevTerm ? ' class="term-boundary"' : "";
                 prevTerm = r.termIndex;
