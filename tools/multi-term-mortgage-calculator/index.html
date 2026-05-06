@@ -9,7 +9,7 @@
 <body>
     <!-- Hook -->
     <div id="hook" class="hook">
-        <div class="hook-line">A <span class="hook-value" id="hook-loan">$400,000</span> mortgage costs <span class="hook-value hook-emphasis" id="hook-interest">$XXX</span> in interest alone</div>
+        <div class="hook-line">A <span class="hook-value" id="hook-loan">$400,000</span> mortgage costs <span class="hook-value hook-emphasis" id="hook-interest">$0</span> in interest alone</div>
         <div class="hook-sub">See the full picture before you sign</div>
     </div>
 
@@ -57,6 +57,33 @@
         </div>
         <div id="terms-list" class="terms-list"></div>
         <button id="add-term" class="btn-link">+ Add another term</button>
+    </div>
+
+    <!-- Expandable: scenarios -->
+    <div class="section collapsible">
+        <button class="section-toggle" id="toggle-scenarios">
+            <span class="section-title">Scenarios</span>
+            <span class="toggle-arrow" id="arrow-scenarios"></span>
+        </button>
+        <div class="section-body collapsed" id="body-scenarios">
+            <p class="scenario-hint">Adjust term rates by a fixed offset to model optimistic (rates fall) or pessimistic (rates rise) outcomes.</p>
+            <div class="input-row">
+                <div class="field">
+                    <label for="rate-optimistic">Optimistic</label>
+                    <div class="input-wrap">
+                        <input type="number" id="rate-optimistic" value="-1" min="-10" max="0" step="0.25">
+                        <span class="suffix">%</span>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="rate-pessimistic">Pessimistic</label>
+                    <div class="input-wrap">
+                        <input type="number" id="rate-pessimistic" value="2" min="0" max="10" step="0.25">
+                        <span class="suffix">%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Expandable: prepayments -->
