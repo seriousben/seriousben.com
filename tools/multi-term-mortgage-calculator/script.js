@@ -100,8 +100,20 @@
         },
     };
 
-    var termColors = ["#111", "#4a4a4a", "#7a7a7a", "#a5a5a5", "#c5c5c5", "#333", "#5a5a5a", "#8a8a8a"];
-    var pieColors = ["#111", "#4a4a4a", "#7a7a7a", "#a5a5a5", "#c5c5c5", "#ddd"];
+    var termColorsLight = ["#111", "#4a4a4a", "#7a7a7a", "#a5a5a5", "#c5c5c5", "#333", "#5a5a5a", "#8a8a8a"];
+    var termColorsDark = ["#e0e0e0", "#b0b0b0", "#888888", "#666666", "#444444", "#ccc", "#999", "#777"];
+    var pieColorsLight = ["#111", "#4a4a4a", "#7a7a7a", "#a5a5a5", "#c5c5c5", "#ddd"];
+    var pieColorsDark = ["#e0e0e0", "#b0b0b0", "#888888", "#666666", "#444444", "#333"];
+
+    function termColors() {
+        var dark = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() !== '#fafafa';
+        return dark ? termColorsDark : termColorsLight;
+    }
+
+    function pieColors() {
+        var dark = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() !== '#fafafa';
+        return dark ? pieColorsDark : pieColorsLight;
+    }
     var monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
     // --- Country presets ---
@@ -432,17 +444,20 @@
             termsList.appendChild(card);
         });
 
+        var termInputHandler = function () {
+            var idx = parseInt(this.dataset.idx, 10);
+            var field = this.dataset.field;
+            if (field === "schedule") {
+                terms[idx][field] = this.value;
+            } else {
+                terms[idx][field] = parseFloat(this.value) || 0;
+            }
+            render();
+        };
+
         termsList.querySelectorAll("input, select").forEach(function (el) {
-            el.addEventListener("input", function () {
-                var idx = parseInt(el.dataset.idx, 10);
-                var field = el.dataset.field;
-                if (field === "schedule") {
-                    terms[idx][field] = el.value;
-                } else {
-                    terms[idx][field] = parseFloat(el.value) || 0;
-                }
-                render();
-            });
+            el.addEventListener("input", termInputHandler);
+            el.addEventListener("change", termInputHandler);
         });
 
         termsList.querySelectorAll(".remove-term").forEach(function (btn) {
@@ -475,7 +490,6 @@
         var totalPMI = 0;
         var termResults = [];
         var schedule = [];
-        var currentYear = 0;
         var globalMonth = 0;
         var compounding = countryConfig[country].compounding;
         var pmiIsOngoing = country === "us"; // US: ongoing PMI, CA: upfront CMHC (already in loan)
@@ -490,7 +504,6 @@
 
             var basePayment = calcBasePayment(balance, term.rate, remainingAmort, term.schedule, compounding);
             var payment = basePayment;
-            var yearInMortgage = currentYear;
             var paymentsThisYear = 0;
             var termPrincipal = 0;
             var termInterest = 0;
@@ -503,7 +516,6 @@
                 // Annual payment increase
                 if (p > 0 && p % ppy === 0) {
                     payment += annualIncrease;
-                    yearInMortgage++;
                     paymentsThisYear = 0;
                 }
 
@@ -597,7 +609,6 @@
                 pmiLabel: insuranceLabel,
             });
 
-            currentYear += term.years;
         }
 
         return {
@@ -696,11 +707,11 @@
                 '<div class="scenario-compare">' +
                 '<table class="scenario-table">' +
                 '<thead><tr><th></th>' +
-                '<th><span class="scenario-label opt">Optimistic ' + fmtPct(optOffset) + '</span></th>' +
+                '<th><span class="scenario-label opt">Optimistic (' + fmtPct(optOffset) + ')</span></th>' +
                 '<th>Base</th>' +
-                '<th><span class="scenario-label pess">Pessimistic +' + fmtPct(pessOffset) + '</span></th>' +
+                '<th><span class="scenario-label pess">Pessimistic (+' + fmtPct(pessOffset) + ')</span></th>' +
                 '</tr></thead><tbody>' +
-                '<tr><td>Monthly Payment</td><td>' + fmtFull(simOpt.termResults[0].basePayment) + '</td><td>' + fmtFull(sim.termResults[0].basePayment) + '</td><td>' + fmtFull(simPess.termResults[0].basePayment) + '</td></tr>' +
+                '<tr><td>' + scheduleLabel(terms[0].schedule).charAt(0).toUpperCase() + scheduleLabel(terms[0].schedule).slice(1) + ' Payment</td><td>' + fmtFull(simOpt.termResults[0].basePayment) + '</td><td>' + fmtFull(sim.termResults[0].basePayment) + '</td><td>' + fmtFull(simPess.termResults[0].basePayment) + '</td></tr>' +
                 '<tr><td>Total Interest</td><td>' + fmt(simOpt.totalInterest) + '</td><td>' + fmt(sim.totalInterest) + '</td><td>' + fmt(simPess.totalInterest) + '</td></tr>' +
                 '<tr><td>Total Cost</td><td>' + fmt(simOpt.totalAllIn) + '</td><td>' + fmt(sim.totalAllIn) + '</td><td>' + fmt(simPess.totalAllIn) + '</td></tr>' +
                 '<tr><td>Interest Share</td><td>' + fmtPct(simOpt.totalPaid > 0 ? simOpt.totalInterest / simOpt.totalPaid * 100 : 0) + '</td><td>' + fmtPct(sim.totalPaid > 0 ? sim.totalInterest / sim.totalPaid * 100 : 0) + '</td><td>' + fmtPct(simPess.totalPaid > 0 ? simPess.totalInterest / simPess.totalPaid * 100 : 0) + '</td></tr>' +
@@ -722,7 +733,7 @@
         }
 
         if (!sim.paidOff) {
-            html += '<p class="hint" style="margin-top:0.5rem;color:#c0392b;font-size:0.8125rem;font-weight:600;">Mortgage not fully paid after all terms. Remaining balance: ' + fmt(sim.termResults[sim.termResults.length - 1].balanceAtEnd) + '</p>';
+            html += '<p class="hint warning">Mortgage not fully paid after all terms. Remaining balance: ' + fmt(sim.termResults[sim.termResults.length - 1].balanceAtEnd) + '</p>';
         }
 
         resultsEl.innerHTML = html;
@@ -739,6 +750,10 @@
     }
 
     // --- Interest per term bar chart ---
+
+    function cssVar(name) {
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
 
     function drawInterestChart(sim) {
         var canvas = document.getElementById("interestChart");
@@ -771,10 +786,10 @@
         var barWidth = Math.min(barGroupWidth * 0.55, 60);
 
         // Grid
-        ctx.strokeStyle = "#e2e2e2";
+        ctx.strokeStyle = cssVar("--chart-line");
         ctx.lineWidth = 1;
         ctx.font = '10px "SF Mono", "Roboto Mono", Menlo, monospace';
-        ctx.fillStyle = "#888";
+        ctx.fillStyle = cssVar("--chart-text");
         ctx.textAlign = "right";
         ctx.textBaseline = "middle";
 
@@ -794,23 +809,23 @@
             var x = cx - barWidth / 2;
             var bHeight = (t.interestPaid / niceMax) * plotH;
 
-            ctx.fillStyle = termColors[i % termColors.length];
+            ctx.fillStyle = termColors()[i % termColors().length];
             ctx.fillRect(x, pad.top + plotH - bHeight, barWidth, bHeight);
 
             // Value on top
-            ctx.fillStyle = "#555";
+            ctx.fillStyle = cssVar("--text-2");
             ctx.textAlign = "center";
             ctx.textBaseline = "bottom";
             ctx.font = '10px "SF Mono", "Roboto Mono", Menlo, monospace';
             ctx.fillText(fmt(t.interestPaid), cx, pad.top + plotH - bHeight - 4);
 
             // Term label
-            ctx.fillStyle = "#555";
+            ctx.fillStyle = cssVar("--text-2");
             ctx.textBaseline = "top";
             ctx.font = '600 10px -apple-system, system-ui, sans-serif';
             ctx.fillText("TERM " + (i + 1), cx, pad.top + plotH + 6);
             ctx.font = '10px "SF Mono", "Roboto Mono", Menlo, monospace';
-            ctx.fillStyle = "#888";
+            ctx.fillStyle = cssVar("--text-3");
             ctx.fillText(t.years + "yr @ " + t.rate + "%", cx, pad.top + plotH + 20);
         });
 
@@ -818,7 +833,7 @@
         ctx.save();
         ctx.translate(14, pad.top + plotH / 2);
         ctx.rotate(-Math.PI / 2);
-        ctx.fillStyle = "#888";
+        ctx.fillStyle = cssVar("--chart-text");
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.font = '600 10px -apple-system, system-ui, sans-serif';
@@ -841,16 +856,17 @@
         var H = rect.height;
         ctx.clearRect(0, 0, W, H);
 
+        var pc = pieColors();
         var slices = [
-            { label: "Principal", value: sim.totalPrincipalPaid, color: pieColors[0] },
-            { label: "Interest", value: sim.totalInterest, color: pieColors[1] },
-            { label: "Property Tax", value: sim.totalTax, color: pieColors[2] },
-            { label: "Insurance", value: sim.totalInsurance, color: pieColors[3] },
-            { label: country === "ca" ? "Condo Fees" : "HOA", value: sim.totalHOA, color: pieColors[4] },
+            { label: "Principal", value: sim.totalPrincipalPaid, color: pc[0] },
+            { label: "Interest", value: sim.totalInterest, color: pc[1] },
+            { label: "Property Tax", value: sim.totalTax, color: pc[2] },
+            { label: "Insurance", value: sim.totalInsurance, color: pc[3] },
+            { label: country === "ca" ? "Condo Fees" : "HOA", value: sim.totalHOA, color: pc[4] },
         ];
 
         if (sim.totalPMI > 0) {
-            slices.push({ label: sim.pmiLabel, value: sim.totalPMI, color: pieColors[5] });
+            slices.push({ label: sim.pmiLabel, value: sim.totalPMI, color: pc[5] });
         }
 
         slices = slices.filter(function (s) { return s.value > 0; });
@@ -880,17 +896,17 @@
         // Inner circle for donut
         ctx.beginPath();
         ctx.arc(cx, cy, radius * 0.52, 0, Math.PI * 2);
-        ctx.fillStyle = "#fafafa";
+        ctx.fillStyle = cssVar("--bg");
         ctx.fill();
 
         // Center text
-        ctx.fillStyle = "#111";
+        ctx.fillStyle = cssVar("--text");
         ctx.font = '600 13px "SF Mono", "Roboto Mono", Menlo, monospace';
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(fmt(total), cx, cy - 6);
         ctx.font = '600 9px -apple-system, system-ui, sans-serif';
-        ctx.fillStyle = "#888";
+        ctx.fillStyle = cssVar("--chart-text");
         ctx.fillText("TOTAL COST", cx, cy + 8);
 
         // Legend
@@ -905,10 +921,10 @@
             ctx.fillStyle = s.color;
             ctx.fillRect(legendX, ly - 5, 12, 10);
 
-            ctx.fillStyle = "#111";
+            ctx.fillStyle = cssVar("--text");
             ctx.fillText(s.label, legendX + 18, ly);
 
-            ctx.fillStyle = "#888";
+            ctx.fillStyle = cssVar("--chart-text");
             ctx.font = '10px "SF Mono", "Roboto Mono", Menlo, monospace';
             ctx.fillText(fmt(s.value) + " (" + (s.value / total * 100).toFixed(1) + "%)", legendX + 18, ly + 13);
             ctx.font = '600 10px -apple-system, system-ui, sans-serif';
@@ -942,7 +958,7 @@
                 "<th>Tax</th><th>Ins.</th><th>" + (country === "ca" ? "Condo" : "HOA") + "</th><th>Balance</th></tr>";
 
             var html = "";
-            var prevTerm = -1;
+            var prevTerm = yearRows.length > 0 ? yearRows[0].termIndex : -1;
             yearRows.forEach(function (r) {
                 var cls = r.termIndex !== prevTerm ? ' class="term-boundary"' : "";
                 prevTerm = r.termIndex;
@@ -965,7 +981,7 @@
                 "<th>Balance</th></tr>";
 
             var html = "";
-            var prevTerm = -1;
+            var prevTerm = rows.length > 0 ? rows[0].termIndex : -1;
             rows.forEach(function (r) {
                 var cls = r.termIndex !== prevTerm ? ' class="term-boundary"' : "";
                 prevTerm = r.termIndex;
@@ -1012,6 +1028,14 @@
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function () { if (lastSimResult) render(); }, 150);
     });
+
+    // Re-render charts when theme changes (canvas doesn't respond to CSS)
+    new MutationObserver(function () {
+        if (lastSimResult) {
+            drawInterestChart(lastSimResult);
+            drawPieChart(lastSimResult);
+        }
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
     // --- Init ---
 
