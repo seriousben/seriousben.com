@@ -195,7 +195,7 @@
             return Math.pow(1 + semiRate, 1 / periodsPerHalfYear) - 1;
         }
         // US: monthly compounding
-        return annualRate / 100 / ppy;
+        return annualRate / 100 / schedulePaymentsPerYear(schedule);
     }
 
     function addCommas(n) {
