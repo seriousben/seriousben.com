@@ -1106,7 +1106,7 @@
     //   C — Monthly Payment Over Time (step chart, steps at term renewals)
     //   D — Annual Interest vs Principal Split (stacked area, per-scenario selector)
     //
-    // Plus: Interest Paid Per Term bar chart.
+    // Plus: Interest Paid Per Term line chart.
     //
     // All charts use Chart.js with the annotation plugin for vertical dashed
     // lines at term renewal boundaries, labelled with term number and rate.
@@ -1448,15 +1448,31 @@
         if (tr.length === 0) return;
 
         var tc = getTermColors();
+        // Build cumulative year labels for each term boundary
+        var cumYear = 0;
+        var labels = tr.map(function (t, i) {
+            cumYear += t.years;
+            return "Yr " + cumYear;
+        });
+        var midPoints = tr.map(function (t, i) {
+            var start = cumYear - t.years;
+            return start + t.years / 2;
+        });
+
         chartInstances["interestBarChart"] = new Chart(canvas, {
-            type: "bar",
+            type: "line",
             data: {
-                labels: tr.map(function (t, i) { return "Term " + (i + 1); }),
+                labels: labels,
                 datasets: [{
                     label: "Interest Paid",
                     data: tr.map(function (t) { return t.interestPaid; }),
-                    backgroundColor: tr.map(function (t, i) { return tc[i % tc.length]; }),
-                    borderWidth: 0,
+                    borderColor: tc[0],
+                    backgroundColor: tc[0] + "20",
+                    borderWidth: 2,
+                    fill: true,
+                    pointRadius: 4,
+                    pointBackgroundColor: tc.map(function (c, i) { return tc[i % tc.length]; }),
+                    tension: 0.2,
                 }],
             },
             options: {
@@ -1495,6 +1511,15 @@
             $("charts-container").querySelectorAll(".chart-panel").forEach(function (p) { p.classList.remove("visible"); });
             var panel = $("panel-" + tab.dataset.chart);
             if (panel) panel.classList.add("visible");
+            // Resize the chart now that its panel is visible (charts created
+            // while hidden render at 0x0 and won't display)
+            if (panel) {
+                var canvas = panel.querySelector("canvas");
+                if (canvas) {
+                    var chart = Chart.getChart(canvas);
+                    if (chart) chart.resize();
+                }
+            }
         });
     });
 
