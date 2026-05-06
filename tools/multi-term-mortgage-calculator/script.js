@@ -311,7 +311,8 @@
     function renderCountryInfo() {
         var info = countryInfo[country];
         if (!info) { countryInfoEl.innerHTML = ""; return; }
-        var html = "<ul>";
+        var label = country === "ca" ? "Canada" : "United States";
+        var html = "<span class=\"country-info-label\">" + label + "</span><ul>";
         info.bullets.forEach(function (b) { html += "<li>" + b + "</li>"; });
         html += "</ul>";
         countryInfoEl.innerHTML = html;

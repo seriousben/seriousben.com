@@ -213,6 +213,16 @@ body {
     color: var(--text-2);
 }
 
+.country-info-label {
+    display: inline-block;
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 0.35rem;
+}
+
 .country-info ul {
     list-style: none;
     padding: 0;
