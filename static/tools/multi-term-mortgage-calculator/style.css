@@ -73,6 +73,11 @@ body {
     color: var(--text);
     background: var(--bg);
     -webkit-font-smoothing: antialiased;
+    color-scheme: light;
+}
+
+:root[data-theme="dark"] body {
+    color-scheme: dark;
 }
 
 /* Hook */
@@ -698,13 +703,22 @@ select:focus {
     color: var(--bg);
 }
 
-/* Dark mode: select styling */
+/* Dark mode: inputs */
+:root[data-theme="dark"] .input-wrap input {
+    background: transparent;
+    color: var(--text);
+    caret-color: var(--text);
+}
+
+:root[data-theme="dark"] .input-wrap input[readonly] {
+    color: var(--text-3);
+}
+
 :root[data-theme="dark"] select {
     background: var(--surface);
     color: var(--text);
 }
 
-/* Dark mode: input autofill */
 :root[data-theme="dark"] .input-wrap input:-webkit-autofill {
     -webkit-box-shadow: 0 0 0 30px #242424 inset;
     -webkit-text-fill-color: var(--text);
