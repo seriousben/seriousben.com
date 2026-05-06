@@ -7,8 +7,196 @@
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-    <h1>Multi-term Mortgage Calculator</h1>
-    <p><em>Placeholder — full tool coming soon.</em></p>
+    <!-- Hook -->
+    <div id="hook" class="hook">
+        <div class="hook-line">A <span class="hook-value" id="hook-loan">$400,000</span> mortgage costs <span class="hook-value hook-emphasis" id="hook-interest">$XXX</span> in interest alone</div>
+        <div class="hook-sub">See the full picture before you sign</div>
+    </div>
+
+    <div class="header-row">
+        <div class="country-toggle">
+            <button id="btn-ca" class="country-btn active" data-country="ca">Canada</button>
+            <button id="btn-us" class="country-btn" data-country="us">United States</button>
+        </div>
+        <button id="btn-clear" class="clear-btn" title="Reset all values">Clear</button>
+    </div>
+
+    <div id="country-info" class="country-info"></div>
+
+    <!-- Core inputs: always visible -->
+    <div class="section">
+        <div class="input-row core-row">
+            <div class="field">
+                <label for="home-value">Home Value</label>
+                <div class="input-wrap">
+                    <span class="prefix">$</span>
+                    <input type="number" id="home-value" value="500000" min="0" step="1000">
+                </div>
+            </div>
+            <div class="field">
+                <label for="down-payment">Down Payment</label>
+                <div class="input-wrap">
+                    <input type="number" id="down-payment" value="100000" min="0" step="1000">
+                    <span class="suffix" id="down-pct">20%</span>
+                </div>
+            </div>
+            <div class="field">
+                <label for="loan-amount">Loan Amount</label>
+                <div class="input-wrap">
+                    <span class="prefix">$</span>
+                    <input type="number" id="loan-amount" value="400000" min="0" step="1000" readonly>
+                </div>
+            </div>
+            <div class="field">
+                <label for="amortization">Amortization</label>
+                <div class="input-wrap">
+                    <input type="number" id="amortization" value="25" min="1" max="40" step="1">
+                    <span class="suffix">yr</span>
+                </div>
+            </div>
+        </div>
+        <div id="terms-list" class="terms-list"></div>
+        <button id="add-term" class="btn-link">+ Add another term</button>
+    </div>
+
+    <!-- Expandable: prepayments -->
+    <div class="section collapsible">
+        <button class="section-toggle" id="toggle-prepay">
+            <span class="section-title">Prepayments</span>
+            <span class="toggle-arrow" id="arrow-prepay"></span>
+        </button>
+        <div class="section-body collapsed" id="body-prepay">
+            <div class="input-row">
+                <div class="field">
+                    <label for="payment-increase">Increase Payment / Year</label>
+                    <div class="input-wrap">
+                        <span class="prefix">$</span>
+                        <input type="number" id="payment-increase" value="0" min="0" step="25">
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="lump-sum-annual">Lump Sum / Year</label>
+                    <div class="input-wrap">
+                        <span class="prefix">$</span>
+                        <input type="number" id="lump-sum-annual" value="0" min="0" step="500">
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="lump-sum-term">Lump Sum at Renewal</label>
+                    <div class="input-wrap">
+                        <span class="prefix">$</span>
+                        <input type="number" id="lump-sum-term" value="0" min="0" step="1000">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expandable: recurring costs -->
+    <div class="section collapsible">
+        <button class="section-toggle" id="toggle-costs">
+            <span class="section-title">Recurring Costs</span>
+            <span class="toggle-arrow" id="arrow-costs"></span>
+        </button>
+        <div class="section-body collapsed" id="body-costs">
+            <div class="input-row">
+                <div class="field">
+                    <label for="property-tax" id="property-tax-label">Property Tax / Year</label>
+                    <div class="input-wrap">
+                        <span class="prefix">$</span>
+                        <input type="number" id="property-tax" value="3500" min="0" step="100">
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="home-insurance">Home Insurance / Year</label>
+                    <div class="input-wrap">
+                        <span class="prefix">$</span>
+                        <input type="number" id="home-insurance" value="1200" min="0" step="100">
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="hoa" id="hoa-label">HOA / Month</label>
+                    <div class="input-wrap">
+                        <span class="prefix">$</span>
+                        <input type="number" id="hoa" value="0" min="0" step="25">
+                    </div>
+                </div>
+            </div>
+            <div class="pmi-row" id="pmi-row" style="display:none;">
+                <div class="field">
+                    <label for="pmi" id="pmi-label">Mortgage Insurance</label>
+                    <div class="input-wrap">
+                        <input type="number" id="pmi" value="0" min="0" step="0.01">
+                        <span class="suffix">%/yr</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hint" id="pmi-hint"></div>
+        </div>
+    </div>
+
+    <!-- Expandable: start date -->
+    <div class="section collapsible">
+        <button class="section-toggle" id="toggle-date">
+            <span class="section-title">Start Date</span>
+            <span class="toggle-arrow" id="arrow-date"></span>
+        </button>
+        <div class="section-body collapsed" id="body-date">
+            <div class="input-row">
+                <div class="field">
+                    <label for="start-month">Month</label>
+                    <select id="start-month">
+                        <option value="0">January</option><option value="1">February</option><option value="2">March</option>
+                        <option value="3">April</option><option value="4">May</option><option value="5" selected>June</option>
+                        <option value="6">July</option><option value="7">August</option><option value="8">September</option>
+                        <option value="9">October</option><option value="10">November</option><option value="11">December</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="start-year">Year</label>
+                    <div class="input-wrap">
+                        <input type="number" id="start-year" value="2026" min="2000" max="2050" step="1">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="section results-section"></div>
+
+    <!-- Charts -->
+    <div id="chart-section" class="section chart-section">
+        <h2 class="section-title">Interest Paid Per Term</h2>
+        <canvas id="interestChart"></canvas>
+    </div>
+
+    <div id="pie-section" class="section chart-section">
+        <h2 class="section-title">Total Cost Breakdown</h2>
+        <canvas id="pieChart"></canvas>
+    </div>
+
+    <!-- Amortization schedule -->
+    <div id="schedule-section" class="section">
+        <h2 class="section-title">
+            Amortization Schedule
+            <div class="schedule-toggle">
+                <button id="btn-monthly" class="toggle-btn">Monthly</button>
+                <button id="btn-annual" class="toggle-btn active">Annual</button>
+            </div>
+        </h2>
+        <div class="table-wrap">
+            <table id="schedule-table">
+                <thead></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer class="tool-footer">
+        <p>Nothing you enter leaves your browser. All calculations run locally. No data is sent to any server, stored in any database, or shared with third parties. Values saved in your browser&rsquo;s local storage can be cleared with the button above.</p>
+    </footer>
+
     <script src="./script.js"></script>
 </body>
 </html>
