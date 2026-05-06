@@ -182,24 +182,20 @@
 
     <!-- Charts -->
     <div id="charts-container" class="section charts-container" style="display:none">
-        <div class="chart-tabs">
-            <button class="chart-tab active" data-chart="balance">Balance Over Time</button>
-            <button class="chart-tab" data-chart="cumulative">Cumulative Interest</button>
-            <button class="chart-tab" data-chart="total-paid">Cumulative Total Paid</button>
-            <button class="chart-tab" data-chart="payment">Payment Over Time</button>
-            <button class="chart-tab" data-chart="ip">Interest vs Principal</button>
-            <button class="chart-tab" data-chart="interest-bar">Interest Per Term</button>
-        </div>
-        <div class="chart-panel visible" id="panel-balance">
+        <div class="chart-panel" id="panel-balance">
+            <h3 class="section-title">Balance Over Time</h3>
             <canvas id="balanceChart"></canvas>
         </div>
         <div class="chart-panel" id="panel-cumulative">
+            <h3 class="section-title">Cumulative Interest</h3>
             <canvas id="cumulativeInterestChart"></canvas>
         </div>
         <div class="chart-panel" id="panel-total-paid">
+            <h3 class="section-title">Cumulative Total Paid</h3>
             <canvas id="totalPaidChart"></canvas>
         </div>
         <div class="chart-panel" id="panel-payment">
+            <h3 class="section-title">Payment Over Time</h3>
             <canvas id="paymentChart"></canvas>
         </div>
         <div class="chart-panel" id="panel-ip">
@@ -208,8 +204,6 @@
             </div>
             <canvas id="ipSplitChart"></canvas>
         </div>
-
-        <!-- Interest per term line chart -->
         <div class="chart-panel" id="panel-interest-bar">
             <h3 class="section-title">Interest Paid Per Term</h3>
             <canvas id="interestBarChart"></canvas>

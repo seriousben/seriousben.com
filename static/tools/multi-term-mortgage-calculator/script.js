@@ -1502,27 +1502,6 @@
         });
     }
 
-    // ===== CHART TABS =====
-
-    $("charts-container").querySelectorAll(".chart-tab").forEach(function (tab) {
-        tab.addEventListener("click", function () {
-            $("charts-container").querySelectorAll(".chart-tab").forEach(function (t) { t.classList.remove("active"); });
-            tab.classList.add("active");
-            $("charts-container").querySelectorAll(".chart-panel").forEach(function (p) { p.classList.remove("visible"); });
-            var panel = $("panel-" + tab.dataset.chart);
-            if (panel) panel.classList.add("visible");
-            // Resize the chart now that its panel is visible (charts created
-            // while hidden render at 0x0 and won't display)
-            if (panel) {
-                var canvas = panel.querySelector("canvas");
-                if (canvas) {
-                    var chart = Chart.getChart(canvas);
-                    if (chart) chart.resize();
-                }
-            }
-        });
-    });
-
     // ===== AMORTIZATION SCHEDULE =====
 
     function renderSchedule(sim) {
@@ -1669,18 +1648,10 @@
     });
 
     $("btn-png").addEventListener("click", function () {
-        // Export the currently visible chart panel as PNG
-        var panels = ["balance", "cumulative", "total-paid", "payment", "ip"];
-        var visibleCanvas = null;
-        for (var i = 0; i < panels.length; i++) {
-            var panel = $("panel-" + panels[i]);
-            if (panel && panel.classList.contains("visible")) {
-                visibleCanvas = panel.querySelector("canvas");
-                break;
-            }
-        }
-        if (!visibleCanvas) return;
-        var chartInstance = Chart.getChart(visibleCanvas);
+        // Export the balance chart as PNG (all charts are always visible)
+        var canvas = $("balanceChart");
+        if (!canvas) return;
+        var chartInstance = Chart.getChart(canvas);
         if (!chartInstance) return;
         var dataUrl = chartInstance.toBase64Image("image/png", 1);
         var a = document.createElement("a");
