@@ -236,6 +236,7 @@
                 pmi: pmiInput.value,
                 startMonth: startMonthInput.value,
                 startYear: startYearInput.value,
+                scheduleMode: scheduleMode,
                 terms: terms,
             };
             localStorage.setItem(LS_KEY, JSON.stringify(state));
@@ -278,6 +279,11 @@
         if (s.pmi !== undefined) pmiInput.value = s.pmi;
         if (s.startMonth !== undefined) startMonthInput.value = s.startMonth;
         if (s.startYear !== undefined) startYearInput.value = s.startYear;
+        if (s.scheduleMode !== undefined) {
+            scheduleMode = s.scheduleMode;
+            btnMonthly.classList.toggle("active", scheduleMode === "monthly");
+            btnAnnual.classList.toggle("active", scheduleMode === "annual");
+        }
         if (s.terms && Array.isArray(s.terms) && s.terms.length > 0) {
             terms = s.terms;
         }
