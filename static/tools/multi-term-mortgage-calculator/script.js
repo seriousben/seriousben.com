@@ -1,5 +1,11 @@
 (function () {
     // ===== CONSTANTS =====
+    //
+    // SCOPE: Mortgage principal + interest only.
+    // Property tax, home insurance, HOA/condo fees, and PMI are explicitly
+    // out of scope. Canada gets auto-calculated CMHC (one-time premium).
+    // See: https://seriousben.com/tools/multi-term-mortgage-calculator/
+    //
     var LS_KEY = "mortgage-calc-v2";
     var LS_COLLAPSED_KEY = "mortgage-calc-v2-collapsed";
     var monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -86,12 +92,38 @@
         return isDark() ? termColorsDark : termColorsLight;
     }
 
+    // Derive the periodic interest rate from the quoted annual rate.
+    //
+    // Canada (fixed-rate): The Interest Act mandates semi-annual compounding.
+    //   effectiveAnnualRate = (1 + nominalRate/2)^2 - 1
+    //   periodicRate        = (1 + effectiveAnnualRate)^(1/ppy) - 1
+    // which simplifies to:  (1 + semiRate)^(2/ppy) - 1
+    //
+    //   Monthly: (1 + rate/2)^(1/6) - 1   (NOT rate/12)
+    //   At 5%, monthly rate = 0.41246% (US rate/12 gives 0.41667%, ~$9/mo wrong)
+    //
+    // Sources:
+    //   - Canada.ca FCAC: https://www.canada.ca/en/financial-consumer-agency/services/mortgages/interest-on-mortgages.html
+    //   - WOWA.ca: https://wowa.ca/how-is-mortgage-interest-calculated
+    //   - First Foundation: https://www.firstfoundation.ca/mortgage-glossary/compound-period/
+    //
+    //   Verified against Canada.ca unit test values ($300k, 25yr):
+    //     2.5% -> $1,343.90,  4.0% -> $1,578.06,
+    //     5.0% -> $1,744.81,  5.2% -> $1,779.13
+    //
+    // US: Simple monthly compounding. periodicRate = annualRate / n.
+    //
+    // Note: Variable-rate mortgages may compound monthly (lender-dependent).
+    // If a per-term rate-type toggle is added, branch here: semi-annual for
+    // fixed, monthly for variable.
+    //
     function effectivePeriodRate(annualRate, frequency, compounding) {
         var ppy = frequencyConfig[frequency].ppy;
         if (compounding === "semi-annual") {
             var semiRate = annualRate / 100 / 2;
             return Math.pow(1 + semiRate, 2 / ppy) - 1;
         }
+        // US: rate / payments-per-year
         return annualRate / 100 / ppy;
     }
 
@@ -103,6 +135,19 @@
         return principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
     }
 
+    // Convert monthly payment to the periodic payment for a given frequency.
+    //
+    // Non-accelerated frequencies produce the same total annual payment as monthly:
+    //   semi-monthly: monthly / 2          (24 payments = 12 monthly payments)
+    //   bi-weekly:    (monthly * 12) / 26  (26 payments = 12 monthly payments)
+    //   weekly:       (monthly * 12) / 52  (52 payments = 12 monthly payments)
+    //
+    // Accelerated frequencies keep the "half/quarter of monthly" amount but
+    // collect more frequently, producing ~1 extra monthly payment per year:
+    //   accelerated bi-weekly: monthly / 2  (26 payments = 13 monthly payments/year)
+    //   accelerated weekly:   monthly / 4  (52 payments = 13 monthly payments/year)
+    //
+    // This typically shaves 2-4 years off a 25-year amortization.
     function calcPeriodicPayment(principal, annualRate, remainingAmortYears, frequency, compounding) {
         var monthlyPmt = calcMonthlyPayment(principal, annualRate, remainingAmortYears, compounding);
         switch (frequency) {
@@ -116,10 +161,27 @@
         }
     }
 
-    // ===== CMHC =====
+    // ===== CMHC (Canada Mortgage and Housing Corporation) =====
+    //
+    // CMHC default insurance is a ONE-TIME premium added to the mortgage
+    // principal, not an annual charge. This is fundamentally different from
+    // US PMI (ongoing monthly cost), which is out of scope for this calculator.
+    //
+    // The premium is a percentage of the LOAN AMOUNT (not purchase price).
+    // Example: $500k home, 5% down -> mortgage $475k -> 4% premium = $19k
+    //   -> starting principal = $494,000 (premium amortized as part of the loan)
+    //
+    // Sources:
+    //   - WOWA.ca: https://wowa.ca/calculators/cmhc-insurance
+    //   - Ratehub.ca: https://www.ratehub.ca/cmhc-mortgage-insurance
 
     function cmhcRate(downPct) {
-        if (downPct < 5) return 4.0;
+        // Premium schedule (percentage of mortgage amount):
+        //   5.00% -  9.99% down -> 4.00%
+        //  10.00% - 14.99% down -> 3.10%
+        //  15.00% - 19.99% down -> 2.80%
+        //  >= 20%                -> 0% (no insurance required)
+        if (downPct < 5) return 4.0;   // edge case: below minimum down payment
         if (downPct < 10) return 4.0;
         if (downPct < 15) return 3.1;
         if (downPct < 20) return 2.8;
@@ -130,6 +192,15 @@
         if (downPct >= 20) return 0;
         return loanAmount * cmhcRate(downPct) / 100;
     }
+
+    // CMHC eligibility rules (effective December 15, 2024):
+    //   - Unavailable if purchase price >= $1,500,000
+    //   - Max 25yr amortization, UNLESS first-time buyer or new build (then 30yr)
+    //   - Never available above 30yr amortization
+    //
+    // Sources:
+    //   - Canada.ca FCAC: https://www.canada.ca/en/financial-consumer-agency/services/mortgages/mortgage-terms-amortization.html
+    //   - Canada.ca Finance: https://www.canada.ca/en/department-finance/news/2024/09/government-announces-boldest-mortgage-reforms-in-decades-to-unlock-homeownership-for-more-canadians.html
 
     function getCmhcWarnings(homeValue, downPct, amortYears) {
         var warnings = [];
@@ -216,6 +287,8 @@
         } catch (e) { return null; }
     }
 
+    // Migrate v1 localStorage (hard-coded Optimistic/Pessimistic offsets)
+    // to v2 scenario manager format. Preserves existing user data on upgrade.
     function migrateState(old) {
         if (!old) return null;
         if (old.v === 2) return old;
@@ -237,6 +310,7 @@
             terms: (old.terms || []).map(function (t) { return { years: t.years, rate: t.rate }; }),
             scenarios: [{ id: "base", label: "Base", locked: true, color: baseColor, visible: true }],
         };
+        // Convert old Optimistic/Pessimistic offsets to named scenarios
         var optOffset = parseFloat(old.rateOptimistic) || 0;
         var pessOffset = parseFloat(old.ratePessimistic) || 0;
         if (optOffset !== 0) {
@@ -430,6 +504,14 @@
     });
 
     // ===== SCENARIO MANAGER =====
+    //
+    // Replaces the old hard-coded Optimistic/Pessimistic offset fields.
+    // Supports up to 5 named scenarios with two modes:
+    //   offset — single +/- shift applied to all term rates
+    //   custom — independent rate per term
+    //
+    // Base scenario is always locked to the main term inputs.
+    // Colour-coded chips double as chart legend toggles.
 
     function initScenarios() {
         scenarios = [
@@ -610,6 +692,19 @@
     });
 
     // ===== SIMULATION =====
+    //
+    // Core amortization engine. Takes a set of term definitions and produces:
+    //   - Per-period schedule (payment, principal, interest, balance)
+    //   - Annual snapshots for charts (balance, cumulative interest, I vs P split)
+    //   - Per-term summary (balance at end, cumulative interest, remaining amort)
+    //
+    // Prepayments:
+    //   - Annual increase: added to payment at each year boundary within a term
+    //   - Lump sum / year: applied after the last payment of each year
+    //   - Lump sum at renewal: applied at the end of each term
+    //
+    // All scenarios share the same principal, amortization, and prepayments.
+    // Only term rates differ between scenarios.
 
     function simulateMortgage(principal, amortYears, termDefs, freq, annualIncrease, lumpAnnual, lumpTerm, startMonth, startYear) {
         var balance = principal;
@@ -983,6 +1078,20 @@
     }
 
     // ===== CHARTS =====
+    //
+    // Four multi-scenario charts driven by the amortization data:
+    //   A — Outstanding Balance Over Time (area chart, one line per scenario)
+    //   B — Cumulative Interest Paid Over Time (line chart)
+    //   C — Monthly Payment Over Time (step chart, steps at term renewals)
+    //   D — Annual Interest vs Principal Split (stacked area, per-scenario selector)
+    //
+    // Plus: Interest Paid Per Term bar chart.
+    //
+    // All charts use Chart.js with the annotation plugin for vertical dashed
+    // lines at term renewal boundaries, labelled with term number and rate.
+    //
+    // Tooltips show delta-vs-base for non-base scenarios.
+    // Colour-coded scenario chips toggle line visibility across all charts.
 
     function renderCharts(results) {
         var container = $("charts-container");
