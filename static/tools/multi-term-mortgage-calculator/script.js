@@ -652,7 +652,7 @@
             var biweeklyAnnual = biweeklyPay * 26;
             var monthlyAnnual = monthlyPay * 12;
             var extraPerYear = biweeklyAnnual - monthlyAnnual;
-            html += '<div class="biweekly-compare">Switch to bi-weekly payments of <strong>' + fmtFull(biweeklyPay) + '</strong>? That equals <strong>' + fmt(extraPerYear) + ' extra/year</strong> going to principal, cutting years off your mortgage.</div>';
+            html += '<div class="biweekly-compare">Switch to bi-weekly payments of <strong>' + fmtFull(biweeklyPay) + '</strong>? That puts <strong>' + fmt(extraPerYear) + ' extra/year</strong> toward your mortgage, cutting years off the amortization.</div>';
         }
 
         // Per-term breakdown
