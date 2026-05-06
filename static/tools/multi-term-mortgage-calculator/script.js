@@ -632,6 +632,8 @@
             var r = effectivePeriodRate(term.rate, freq, compounding);
             var termPeriods = term.years * ppy;
             var basePayment = calcPeriodicPayment(balance, term.rate, remainingAmort, freq, compounding);
+            // Fix initial snapshot payment now that we know the first term's payment
+            if (ti === 0) annualSnapshots[0].payment = basePayment;
             var payment = basePayment;
             var paymentsThisYear = 0;
             var termPrincipal = 0;
@@ -806,9 +808,11 @@
         var html =
             '<div class="result-summary">' +
             '<div class="summary-card"><div class="label">Total Paid</div><div class="value">' + fmt(sim.totalPaid) + '</div></div>' +
+            '<div class="summary-card"><div class="label">Total Principal</div><div class="value">' + fmt(sim.totalPrincipalPaid) + '</div></div>' +
             '<div class="summary-card"><div class="label">Total Interest</div><div class="value">' + fmt(sim.totalInterest) + '</div></div>' +
-            '<div class="summary-card accent"><div class="label">Interest / Payments</div><div class="value">' + fmtPct(sim.totalPaid > 0 ? sim.totalInterest / sim.totalPaid * 100 : 0) + '</div></div>' +
-            '</div>';
+            '</div>' +
+            '<div class="result-summary" style="margin-bottom:1.25rem">' +
+            '<div class="summary-card accent"><div class="label">Interest / Payments</div><div class="value">' + fmtPct(sim.totalPaid > 0 ? sim.totalInterest / sim.totalPaid * 100 : 0) + '</div></div>';
 
         // CMHC premium card
         var hv = parseFloat($("home-value").value) || 0;
@@ -829,7 +833,9 @@
         sim.termResults.forEach(function (tr, i) {
             var remainingText = "";
             if (tr.balanceAtEnd > 0.01) {
-                remainingText = '<div class="term-remaining">' + tr.remainingYears + ' yr remaining on amortization</div>';
+                var ry = tr.remainingYears;
+                var rm = tr.remainingMonths;
+                remainingText = '<div class="term-remaining">' + ry + (ry === 1 ? ' yr' : ' yrs') + (rm > 0 ? ' ' + rm + (rm === 1 ? ' mo' : ' mos') : '') + ' remaining on amortization</div>';
             }
             html +=
                 '<div class="term-result">' +
@@ -949,13 +955,17 @@
             var interestDelta = scSim.totalInterest - sim.totalInterest;
             var baseMonths = sim.totalPeriods;
             var scMonths = scSim.totalPeriods;
-            var monthDelta = scMonths - baseMonths;
+            // Convert payment periods to calendar months
+            var ppy = frequencyConfig[paymentFrequency].ppy;
+            var baseCalMonths = Math.round(baseMonths * 12 / ppy);
+            var scCalMonths = Math.round(scMonths * 12 / ppy);
+            var monthDelta = scCalMonths - baseCalMonths;
             var balanceAtFirstRenewal = sim.termResults.length > 0 ? sim.termResults[0].balanceAtEnd : 0;
             var scBalanceAtFirstRenewal = scSim.termResults.length > 0 ? scSim.termResults[0].balanceAtEnd : 0;
             var balanceDelta = scBalanceAtFirstRenewal - balanceAtFirstRenewal;
 
             var interestClass = interestDelta < 0 ? "negative" : "positive";
-            var paidOffText = monthDelta < 0 ? Math.abs(monthDelta) + " periods early" : monthDelta > 0 ? monthDelta + " periods late" : "same";
+            var paidOffText = monthDelta < 0 ? Math.abs(monthDelta) + " mo early" : monthDelta > 0 ? monthDelta + " mo late" : "same";
             var balanceClass = balanceDelta < 0 ? "negative" : balanceDelta > 0 ? "positive" : "";
 
             html +=
@@ -1155,7 +1165,7 @@
                 borderDash: [4, 4],
                 label: {
                     display: true,
-                    content: tb.label,
+                    content: tb.label + " (" + tb.rate + "%)",
                     position: "start",
                     font: { size: 10 },
                     backgroundColor: "transparent",
@@ -1241,19 +1251,25 @@
         var labels = snapshots.map(function (s) { return s.year; });
 
         chartInstances["ipSplitChart"] = new Chart(canvas, {
-            type: "bar",
+            type: "line",
             data: {
                 labels: labels,
                 datasets: [
                     {
                         label: "Principal",
                         data: snapshots.map(function (s) { return s.annualPrincipal; }),
-                        backgroundColor: isDark() ? "#b0b0b0" : "#4a4a4a",
+                        backgroundColor: isDark() ? "rgba(176,176,176,0.5)" : "rgba(74,74,74,0.5)",
+                        borderColor: isDark() ? "#b0b0b0" : "#4a4a4a",
+                        borderWidth: 1,
+                        fill: true,
                     },
                     {
                         label: "Interest",
                         data: snapshots.map(function (s) { return s.annualInterest; }),
-                        backgroundColor: isDark() ? "#666" : "#c5c5c5",
+                        backgroundColor: isDark() ? "rgba(102,102,102,0.5)" : "rgba(197,197,197,0.5)",
+                        borderColor: isDark() ? "#666" : "#c5c5c5",
+                        borderWidth: 1,
+                        fill: true,
                     },
                 ],
             },
@@ -1462,15 +1478,14 @@
 
     $("btn-csv").addEventListener("click", function () {
         if (!lastSimResults) return;
-        var lines = ["Scenario,Year,Period,Payment,Principal,Interest,Balance"];
-        var ppy = frequencyConfig[paymentFrequency].ppy;
+        var lines = ["Year,Month,Scenario,Payment,Principal,Interest,Balance"];
 
         function addScenarioRows(label, sim) {
             sim.schedule.forEach(function (r) {
                 lines.push(
-                    label + "," +
                     r.year + "," +
-                    (r.periodInYear + 1) + "," +
+                    (r.month + 1) + "," +
+                    '"' + label + '",' +
                     r.payment.toFixed(2) + "," +
                     r.principal.toFixed(2) + "," +
                     r.interest.toFixed(2) + "," +
