@@ -740,6 +740,10 @@
 
     // --- Interest per term bar chart ---
 
+    function cssVar(name) {
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
     function drawInterestChart(sim) {
         var canvas = document.getElementById("interestChart");
         var dpr = window.devicePixelRatio || 1;
@@ -771,10 +775,10 @@
         var barWidth = Math.min(barGroupWidth * 0.55, 60);
 
         // Grid
-        ctx.strokeStyle = "#e2e2e2";
+        ctx.strokeStyle = cssVar("--chart-line");
         ctx.lineWidth = 1;
         ctx.font = '10px "SF Mono", "Roboto Mono", Menlo, monospace';
-        ctx.fillStyle = "#888";
+        ctx.fillStyle = cssVar("--chart-text");
         ctx.textAlign = "right";
         ctx.textBaseline = "middle";
 
@@ -798,19 +802,19 @@
             ctx.fillRect(x, pad.top + plotH - bHeight, barWidth, bHeight);
 
             // Value on top
-            ctx.fillStyle = "#555";
+            ctx.fillStyle = cssVar("--text-2");
             ctx.textAlign = "center";
             ctx.textBaseline = "bottom";
             ctx.font = '10px "SF Mono", "Roboto Mono", Menlo, monospace';
             ctx.fillText(fmt(t.interestPaid), cx, pad.top + plotH - bHeight - 4);
 
             // Term label
-            ctx.fillStyle = "#555";
+            ctx.fillStyle = cssVar("--text-2");
             ctx.textBaseline = "top";
             ctx.font = '600 10px -apple-system, system-ui, sans-serif';
             ctx.fillText("TERM " + (i + 1), cx, pad.top + plotH + 6);
             ctx.font = '10px "SF Mono", "Roboto Mono", Menlo, monospace';
-            ctx.fillStyle = "#888";
+            ctx.fillStyle = cssVar("--text-3");
             ctx.fillText(t.years + "yr @ " + t.rate + "%", cx, pad.top + plotH + 20);
         });
 
@@ -818,7 +822,7 @@
         ctx.save();
         ctx.translate(14, pad.top + plotH / 2);
         ctx.rotate(-Math.PI / 2);
-        ctx.fillStyle = "#888";
+        ctx.fillStyle = cssVar("--chart-text");
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.font = '600 10px -apple-system, system-ui, sans-serif';
@@ -880,17 +884,17 @@
         // Inner circle for donut
         ctx.beginPath();
         ctx.arc(cx, cy, radius * 0.52, 0, Math.PI * 2);
-        ctx.fillStyle = "#fafafa";
+        ctx.fillStyle = cssVar("--bg");
         ctx.fill();
 
         // Center text
-        ctx.fillStyle = "#111";
+        ctx.fillStyle = cssVar("--text");
         ctx.font = '600 13px "SF Mono", "Roboto Mono", Menlo, monospace';
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(fmt(total), cx, cy - 6);
         ctx.font = '600 9px -apple-system, system-ui, sans-serif';
-        ctx.fillStyle = "#888";
+        ctx.fillStyle = cssVar("--chart-text");
         ctx.fillText("TOTAL COST", cx, cy + 8);
 
         // Legend
@@ -905,10 +909,10 @@
             ctx.fillStyle = s.color;
             ctx.fillRect(legendX, ly - 5, 12, 10);
 
-            ctx.fillStyle = "#111";
+            ctx.fillStyle = cssVar("--text");
             ctx.fillText(s.label, legendX + 18, ly);
 
-            ctx.fillStyle = "#888";
+            ctx.fillStyle = cssVar("--chart-text");
             ctx.font = '10px "SF Mono", "Roboto Mono", Menlo, monospace';
             ctx.fillText(fmt(s.value) + " (" + (s.value / total * 100).toFixed(1) + "%)", legendX + 18, ly + 13);
             ctx.font = '600 10px -apple-system, system-ui, sans-serif';
@@ -1012,6 +1016,14 @@
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function () { if (lastSimResult) render(); }, 150);
     });
+
+    // Re-render charts when theme changes (canvas doesn't respond to CSS)
+    new MutationObserver(function () {
+        if (lastSimResult) {
+            drawInterestChart(lastSimResult);
+            drawPieChart(lastSimResult);
+        }
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
     // --- Init ---
 

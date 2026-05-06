@@ -44,16 +44,151 @@ cat > "${DIR}/index.html" <<EOF
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${TITLE}</title>
     <link rel="stylesheet" href="./style.css">
+    <script>
+        (function() {
+            var q = window.matchMedia('(prefers-color-scheme: dark)');
+            var saved = localStorage.getItem('theme') || 'auto';
+            function resolve(m) { return m === 'auto' ? (q.matches ? 'dark' : 'light') : m; }
+            document.documentElement.setAttribute('data-theme', resolve(saved));
+            document.documentElement.setAttribute('data-theme-mode', saved);
+        })();
+    </script>
 </head>
 <body>
+    <div class="header-row">
+        <button id="theme-toggle" class="theme-toggle" title="Toggle theme">
+            <span class="theme-icon theme-icon-auto">Auto</span>
+            <span class="theme-icon theme-icon-light">Light</span>
+            <span class="theme-icon theme-icon-dark">Dark</span>
+        </button>
+    </div>
     <h1>${TITLE}</h1>
+    <script>
+        (function() {
+            var toggle = document.getElementById('theme-toggle');
+            var html = document.documentElement;
+            var q = window.matchMedia('(prefers-color-scheme: dark)');
+            function resolve(m) { return m === 'auto' ? (q.matches ? 'dark' : 'light') : m; }
+            function apply(m) {
+                html.setAttribute('data-theme', resolve(m));
+                html.setAttribute('data-theme-mode', m);
+            }
+            var mode = localStorage.getItem('theme') || 'auto';
+            if (toggle) {
+                toggle.addEventListener('click', function() {
+                    var modes = ['auto', 'light', 'dark'];
+                    mode = modes[(modes.indexOf(mode) + 1) % 3];
+                    localStorage.setItem('theme', mode);
+                    apply(mode);
+                });
+            }
+            q.addEventListener('change', function(e) {
+                if (mode === 'auto') html.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+            });
+        })();
+    </script>
     <script src="./script.js"></script>
 </body>
 </html>
 EOF
 
-touch "${DIR}/style.css"
 touch "${DIR}/script.js"
+
+cat > "${DIR}/style.css" <<CSSEOF
+:root {
+    --bg: #fafafa;
+    --surface: #fff;
+    --text: #111;
+    --text-2: #555;
+    --text-3: #888;
+    --border: #e2e2e2;
+    --border-focus: #111;
+    --accent: #111;
+    --accent-soft: #f3f3f3;
+    --radius: 2px;
+    --mono: "SF Mono", "Roboto Mono", "Menlo", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #1a1a1a;
+        --surface: #242424;
+        --text: #e0e0e0;
+        --text-2: #aaa;
+        --text-3: #777;
+        --border: #444;
+        --border-focus: #999;
+        --accent: #e0e0e0;
+        --accent-soft: #2d2d2d;
+    }
+}
+
+:root[data-theme="dark"] {
+    --bg: #1a1a1a;
+    --surface: #242424;
+    --text: #e0e0e0;
+    --text-2: #aaa;
+    --text-3: #777;
+    --border: #444;
+    --border-focus: #999;
+    --accent: #e0e0e0;
+    --accent-soft: #2d2d2d;
+}
+
+:root[data-theme="light"] {
+    --bg: #fafafa;
+    --surface: #fff;
+    --text: #111;
+    --text-2: #555;
+    --text-3: #888;
+    --border: #e2e2e2;
+    --border-focus: #111;
+    --accent: #111;
+    --accent-soft: #f3f3f3;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+    line-height: 1.55;
+    color: var(--text);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+}
+
+.header-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+.theme-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.3rem 0.75rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    cursor: pointer;
+    transition: all 0.1s;
+}
+
+.theme-toggle:hover {
+    border-color: var(--text);
+    color: var(--text);
+}
+
+.theme-icon { display: none; }
+:root[data-theme-mode="auto"] .theme-icon-auto,
+:root:not([data-theme-mode]) .theme-icon-auto { display: inline; }
+:root[data-theme-mode="light"] .theme-icon-light { display: inline; }
+:root[data-theme-mode="dark"] .theme-icon-dark { display: inline; }
+CSSEOF
 
 echo "Created:"
 echo "  ${POST}"
