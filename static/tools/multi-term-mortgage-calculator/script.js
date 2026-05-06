@@ -188,23 +188,25 @@
         var n = amortYears * ppy;
         if (principal <= 0 || n <= 0) return 0;
 
-        var r;
-        if (compounding === "semi-annual") {
-            // For Canadian mortgages, convert to effective period rate
-            var monthlyRate = effectiveMonthlyRate(annualRate, "semi-annual");
-            if (schedule === "monthly") {
-                r = monthlyRate;
-            } else if (schedule === "biweekly") {
-                r = Math.pow(1 + monthlyRate, 1 / 2) - 1;
-            } else {
-                r = Math.pow(1 + monthlyRate, 1 / 4) - 1;
-            }
-        } else {
-            r = annualRate / 100 / ppy;
-        }
+        var r = effectivePeriodRate(annualRate, schedule, compounding);
 
         if (r === 0) return principal / n;
         return principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+    }
+
+    function effectivePeriodRate(annualRate, schedule, compounding) {
+        if (compounding === "semi-annual") {
+            // Canadian: semi-annual compounding
+            // Semi rate = annualRate/2, then derive period rate from half-year
+            // Monthly: 6 periods per half-year → (1+semiRate)^(1/6) - 1
+            // Bi-weekly: 13 periods per half-year → (1+semiRate)^(1/13) - 1
+            // Weekly: 26 periods per half-year → (1+semiRate)^(1/26) - 1
+            var semiRate = annualRate / 100 / 2;
+            var periodsPerHalfYear = schedule === "monthly" ? 6 : schedule === "biweekly" ? 13 : 26;
+            return Math.pow(1 + semiRate, 1 / periodsPerHalfYear) - 1;
+        }
+        // US: monthly compounding
+        return annualRate / 100 / ppy;
     }
 
     function addCommas(n) {
@@ -489,20 +491,7 @@
             var term = termDefs[ti];
             var ppy = schedulePaymentsPerYear(term.schedule);
 
-            // Effective period rate
-            var r;
-            if (compounding === "semi-annual") {
-                var monthlyRate = effectiveMonthlyRate(term.rate, "semi-annual");
-                if (term.schedule === "monthly") {
-                    r = monthlyRate;
-                } else if (term.schedule === "biweekly") {
-                    r = Math.pow(1 + monthlyRate, 1 / 2) - 1;
-                } else {
-                    r = Math.pow(1 + monthlyRate, 1 / 4) - 1;
-                }
-            } else {
-                r = term.rate / 100 / ppy;
-            }
+            var r = effectivePeriodRate(term.rate, term.schedule, compounding);
 
             var termPayments = term.years * ppy;
 
