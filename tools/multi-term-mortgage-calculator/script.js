@@ -717,7 +717,7 @@
         var compounding = countryConfig[country].compounding;
         var ppy = frequencyConfig[freq].ppy;
         var cumulativeInterest = 0;
-        var annualSnapshots = [{ year: 0, balance: principal, cumulativeInterest: 0, annualPrincipal: 0, annualInterest: 0, termIndex: 0, payment: 0 }];
+        var annualSnapshots = [{ year: 0, balance: principal, cumulativeInterest: 0, cumulativePaid: 0, annualPrincipal: 0, annualInterest: 0, termIndex: 0, payment: 0 }];
         var yearPrincipal = 0;
         var yearInterest = 0;
         var currentPaymentYear = 0;
@@ -745,6 +745,7 @@
                         year: currentPaymentYear,
                         balance: Math.max(0, balance),
                         cumulativeInterest: cumulativeInterest,
+                        cumulativePaid: cumulativeInterest + (principal - Math.max(0, balance)),
                         annualPrincipal: yearPrincipal,
                         annualInterest: yearInterest,
                         termIndex: ti,
@@ -925,9 +926,8 @@
             '<div class="summary-card"><div class="label">Total Paid</div><div class="value">' + fmt(sim.totalPaid) + '</div></div>' +
             '<div class="summary-card"><div class="label">Total Principal</div><div class="value">' + fmt(sim.totalPrincipalPaid) + '</div></div>' +
             '<div class="summary-card"><div class="label">Total Interest</div><div class="value">' + fmt(sim.totalInterest) + '</div></div>' +
-            '</div>' +
-            '<div class="result-summary" style="margin-bottom:1.25rem">' +
-            '<div class="summary-card accent"><div class="label">Interest / Payments</div><div class="value">' + fmtPct(sim.totalPaid > 0 ? sim.totalInterest / sim.totalPaid * 100 : 0) + '</div></div>';
+            '<div class="summary-card accent"><div class="label">Interest / Payments</div><div class="value">' + fmtPct(sim.totalPaid > 0 ? sim.totalInterest / sim.totalPaid * 100 : 0) + '</div></div>' +
+            '</div>';
 
         // CMHC premium card
         var hv = parseFloat($("home-value").value) || 0;
@@ -1099,9 +1099,10 @@
 
     // ===== CHARTS =====
     //
-    // Four multi-scenario charts driven by the amortization data:
+    // Five charts driven by the amortization data:
     //   A — Outstanding Balance Over Time (area chart, one line per scenario)
     //   B — Cumulative Interest Paid Over Time (line chart)
+    //   B2 — Cumulative Total Paid Over Time (line chart, interest + principal)
     //   C — Monthly Payment Over Time (step chart, steps at term renewals)
     //   D — Annual Interest vs Principal Split (stacked area, per-scenario selector)
     //
@@ -1141,6 +1142,9 @@
 
         // Chart B: Cumulative Interest
         drawLineChart("cumulativeInterestChart", results, visibleScenarios, "cumulativeInterest", "Cumulative Interest", "Interest ($)", gridColor, textColor, termBoundaries);
+
+        // Chart B2: Cumulative Total Paid (interest + principal)
+        drawLineChart("totalPaidChart", results, visibleScenarios, "cumulativePaid", "Cumulative Total Paid", "Total Paid ($)", gridColor, textColor, termBoundaries);
 
         // Chart C: Payment Over Time (step chart)
         drawPaymentChart(results, visibleScenarios, gridColor, textColor, termBoundaries);
@@ -1641,7 +1645,7 @@
 
     $("btn-png").addEventListener("click", function () {
         // Export the currently visible chart panel as PNG
-        var panels = ["balance", "cumulative", "payment", "ip"];
+        var panels = ["balance", "cumulative", "total-paid", "payment", "ip"];
         var visibleCanvas = null;
         for (var i = 0; i < panels.length; i++) {
             var panel = $("panel-" + panels[i]);

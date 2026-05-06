@@ -662,7 +662,7 @@ select:focus {
 
 .result-summary {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
     gap: 0.375rem;
     margin-bottom: 1.25rem;
 }
@@ -673,6 +673,8 @@ select:focus {
     border-radius: var(--radius);
     padding: 0.75rem 0.9rem;
     text-align: left;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .summary-card .label {
@@ -682,6 +684,9 @@ select:focus {
     text-transform: uppercase;
     color: var(--text-3);
     margin-bottom: 0.2rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .summary-card .value {
@@ -690,6 +695,8 @@ select:focus {
     font-family: var(--mono);
     letter-spacing: -0.02em;
     color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .summary-card.accent {
@@ -750,6 +757,7 @@ select:focus {
     grid-template-columns: 1fr 1fr 1fr;
     gap: 0.3rem 0.75rem;
     font-size: 0.8125rem;
+    min-width: 0;
 }
 
 .term-result-grid dt {
@@ -757,6 +765,9 @@ select:focus {
     font-size: 0.6875rem;
     font-weight: 500;
     letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .term-result-grid dd {
@@ -766,6 +777,8 @@ select:focus {
     letter-spacing: -0.01em;
     margin-left: 0;
     color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .term-remaining {
@@ -852,7 +865,7 @@ select:focus {
 
 .savings-card {
     flex: 1;
-    min-width: 200px;
+    min-width: 0;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -1137,6 +1150,8 @@ select:focus {
     .term-fields { grid-template-columns: 1fr 1fr; }
     .result-summary { grid-template-columns: 1fr 1fr; }
     .term-result-grid { grid-template-columns: 1fr 1fr; }
+    .term-result-grid dd { font-size: 0.75rem; }
+    .summary-card .value { font-size: 0.9375rem; }
     .savings-cards-row { flex-direction: column; }
     .chart-tab { font-size: 0.5625rem; padding: 0.3rem 0.45rem; }
 }

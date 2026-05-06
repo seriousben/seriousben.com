@@ -185,6 +185,7 @@
         <div class="chart-tabs">
             <button class="chart-tab active" data-chart="balance">Balance Over Time</button>
             <button class="chart-tab" data-chart="cumulative">Cumulative Interest</button>
+            <button class="chart-tab" data-chart="total-paid">Cumulative Total Paid</button>
             <button class="chart-tab" data-chart="payment">Payment Over Time</button>
             <button class="chart-tab" data-chart="ip">Interest vs Principal</button>
             <button class="chart-tab" data-chart="interest-bar">Interest Per Term</button>
@@ -194,6 +195,9 @@
         </div>
         <div class="chart-panel" id="panel-cumulative">
             <canvas id="cumulativeInterestChart"></canvas>
+        </div>
+        <div class="chart-panel" id="panel-total-paid">
+            <canvas id="totalPaidChart"></canvas>
         </div>
         <div class="chart-panel" id="panel-payment">
             <canvas id="paymentChart"></canvas>
