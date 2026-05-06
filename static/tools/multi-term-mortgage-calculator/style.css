@@ -271,6 +271,14 @@ select:focus {
     outline: none;
 }
 
+/* Scenario hint */
+.scenario-hint {
+    font-size: 0.6875rem;
+    color: var(--text-3);
+    margin-bottom: 0.5rem;
+    line-height: 1.45;
+}
+
 /* Collapsible sections */
 .section-toggle {
     display: flex;
@@ -513,6 +521,85 @@ select:focus {
     letter-spacing: -0.01em;
     margin-left: 0;
     color: var(--text);
+}
+
+/* Scenario comparison */
+.scenario-compare {
+    margin-bottom: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.scenario-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.scenario-table th {
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    padding: 0.5rem 0.7rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--accent-soft);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.scenario-table th:first-child {
+    text-align: left;
+}
+
+.scenario-table td {
+    padding: 0.4rem 0.7rem;
+    border-bottom: 1px solid var(--border);
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 0.8125rem;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+}
+
+.scenario-table td:first-child {
+    text-align: left;
+    font-family: -apple-system, system-ui, sans-serif;
+    color: var(--text-2);
+}
+
+.scenario-table tr:last-child td {
+    border-bottom: none;
+}
+
+.scenario-label {
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.scenario-label.opt { color: #2a7a4a; }
+.scenario-label.pess { color: #a83232; }
+
+/* Missing years */
+.missing-years {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.65rem 0.9rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.8125rem;
+    color: var(--text-2);
+    line-height: 1.55;
+}
+
+.missing-years strong {
+    color: var(--text);
+    font-weight: 600;
+    font-family: var(--mono);
 }
 
 /* Charts */
