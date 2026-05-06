@@ -849,7 +849,6 @@
         ctx.fillText(fmt(total), cx, cy - 6);
         ctx.font = '600 9px -apple-system, system-ui, sans-serif';
         ctx.fillStyle = "#888";
-        ctx.letterSpacing = "0.05em";
         ctx.fillText("TOTAL COST", cx, cy + 8);
 
         // Legend
