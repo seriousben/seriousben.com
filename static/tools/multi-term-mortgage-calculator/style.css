@@ -419,6 +419,17 @@ select:focus {
     line-height: 1.45;
 }
 
+.hint.warning {
+    color: #c0392b;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+:root[data-theme="dark"] .hint.warning {
+    color: #e85555;
+}
+
 /* Term cards */
 .terms-list {
     margin-bottom: 0.375rem;
@@ -806,7 +817,7 @@ canvas {
 }
 
 #schedule-table tbody tr.term-boundary td {
-    border-top: 1px solid var(--text);
+    border-top: 2px solid var(--text-3);
 }
 
 /* Footer */
