@@ -311,7 +311,8 @@
     function renderCountryInfo() {
         var info = countryInfo[country];
         if (!info) { countryInfoEl.innerHTML = ""; return; }
-        var html = "<ul>";
+        var label = country === "ca" ? "Canada" : "United States";
+        var html = "<span class=\"country-info-label\">" + label + "</span><ul>";
         info.bullets.forEach(function (b) { html += "<li>" + b + "</li>"; });
         html += "</ul>";
         countryInfoEl.innerHTML = html;
@@ -354,7 +355,7 @@
 
         renderTerms();
         syncLoan();
-        render();
+        try { render(); } catch (e) { /* continue */ }
         renderCountryInfo();
 
         // Auto-expand recurring costs if insurance is relevant
@@ -783,7 +784,7 @@
         if (niceMax === 0) niceMax = 5000;
 
         var barGroupWidth = plotW / tr.length;
-        var barWidth = Math.min(barGroupWidth * 0.55, 60);
+        var barWidth = Math.max(1, Math.min(barGroupWidth * 0.55, 60));
 
         // Grid
         ctx.strokeStyle = cssVar("--chart-line");
@@ -879,7 +880,7 @@
 
         var cx = W * 0.35;
         var cy = H / 2;
-        var radius = Math.min(cx - 20, cy - 15, 100);
+        var radius = Math.max(1, Math.min(cx - 20, cy - 15, 100));
         var startAngle = -Math.PI / 2;
 
         slices.forEach(function (s) {
