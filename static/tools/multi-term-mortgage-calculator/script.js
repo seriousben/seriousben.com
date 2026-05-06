@@ -1,52 +1,285 @@
 (function () {
-    // --- DOM refs ---
-    var homeValueInput = document.getElementById("home-value");
-    var downPaymentInput = document.getElementById("down-payment");
-    var loanAmountInput = document.getElementById("loan-amount");
-    var downPctEl = document.getElementById("down-pct");
-    var amortInput = document.getElementById("amortization");
-    var paymentIncreaseInput = document.getElementById("payment-increase");
-    var lumpSumAnnualInput = document.getElementById("lump-sum-annual");
-    var lumpSumTermInput = document.getElementById("lump-sum-term");
-    var propertyTaxInput = document.getElementById("property-tax");
-    var homeInsuranceInput = document.getElementById("home-insurance");
-    var hoaInput = document.getElementById("hoa");
-    var pmiInput = document.getElementById("pmi");
-    var pmiRow = document.getElementById("pmi-row");
-    var pmiHint = document.getElementById("pmi-hint");
-    var pmiLabel = document.getElementById("pmi-label");
-    var hoaLabel = document.getElementById("hoa-label");
-    var propertyTaxLabel = document.getElementById("property-tax-label");
-    var startMonthInput = document.getElementById("start-month");
-    var startYearInput = document.getElementById("start-year");
-    var termsList = document.getElementById("terms-list");
-    var addTermBtn = document.getElementById("add-term");
-    var resultsEl = document.getElementById("results");
-    var chartSection = document.getElementById("chart-section");
-    var pieSection = document.getElementById("pie-section");
-    var scheduleSection = document.getElementById("schedule-section");
-    var scheduleTableBody = document.querySelector("#schedule-table tbody");
-    var scheduleTableHead = document.querySelector("#schedule-table thead");
-    var btnMonthly = document.getElementById("btn-monthly");
-    var btnAnnual = document.getElementById("btn-annual");
-    var btnCA = document.getElementById("btn-ca");
-    var btnUS = document.getElementById("btn-us");
-    var countryInfoEl = document.getElementById("country-info");
-    var btnClear = document.getElementById("btn-clear");
-    var hookLoan = document.getElementById("hook-loan");
-    var hookInterest = document.getElementById("hook-interest");
-    var rateOptimisticInput = document.getElementById("rate-optimistic");
-    var ratePessimisticInput = document.getElementById("rate-pessimistic");
+    // ===== CONSTANTS =====
+    var LS_KEY = "mortgage-calc-v2";
+    var LS_COLLAPSED_KEY = "mortgage-calc-v2-collapsed";
+    var monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-    // Collapsible sections
-    var collapsibles = {
-        prepay: { toggle: document.getElementById("toggle-prepay"), body: document.getElementById("body-prepay"), arrow: document.getElementById("arrow-prepay") },
-        costs:  { toggle: document.getElementById("toggle-costs"),  body: document.getElementById("body-costs"),  arrow: document.getElementById("arrow-costs") },
-        scenarios: { toggle: document.getElementById("toggle-scenarios"), body: document.getElementById("body-scenarios"), arrow: document.getElementById("arrow-scenarios") },
-        date:   { toggle: document.getElementById("toggle-date"),   body: document.getElementById("body-date"),   arrow: document.getElementById("arrow-date") },
+    var countryInfo = {
+        ca: {
+            bullets: [
+                "<strong>Semi-annual compounding.</strong> Interest compounds twice a year, so the effective monthly rate is lower than rate/12.",
+                "<strong>CMHC default insurance</strong> required when down payment is under 20%. Premium is a one-time cost added to the mortgage principal.",
+                "<strong>Term vs amortization.</strong> Typical terms are 1-5 years at a fixed rate; the amortization is 25-30 years. Rate renegotiated at each renewal.",
+                "<strong>Prepayment limits.</strong> Most lenders allow 10-20% lump sum per year and payment increases up to double. Penalties apply beyond that.",
+            ],
+        },
+        us: {
+            bullets: [
+                "<strong>Monthly compounding.</strong> Interest is calculated at rate/12 each month. The quoted rate equals the effective rate.",
+                "<strong>30-year fixed</strong> is the most common mortgage. You lock the rate for the entire loan. No renewals.",
+                "<strong>No CMHC.</strong> PMI is out of scope for this calculator.",
+            ],
+        },
     };
 
-    // Collapsible toggle handlers
+    var countryConfig = {
+        ca: {
+            defaultAmort: 25,
+            maxAmort: 30,
+            defaultTerms: [
+                { years: 5, rate: 4.99 },
+                { years: 5, rate: 4.49 },
+                { years: 5, rate: 4.19 },
+                { years: 5, rate: 3.99 },
+                { years: 5, rate: 3.79 },
+            ],
+            compounding: "semi-annual",
+            newTermDuration: 5,
+        },
+        us: {
+            defaultAmort: 30,
+            maxAmort: 40,
+            defaultTerms: [
+                { years: 30, rate: 6.5 },
+            ],
+            compounding: "monthly",
+            newTermDuration: 5,
+        },
+    };
+
+    var frequencyConfig = {
+        monthly:              { ppy: 12, label: "Monthly", suffix: "/mo" },
+        semimonthly:          { ppy: 24, label: "Semi-monthly", suffix: "/semi-mo" },
+        biweekly:             { ppy: 26, label: "Bi-weekly", suffix: "/bi-wk" },
+        accelerated_biweekly: { ppy: 26, label: "Accelerated bi-weekly", suffix: "/bi-wk" },
+        weekly:               { ppy: 52, label: "Weekly", suffix: "/wk" },
+        accelerated_weekly:   { ppy: 52, label: "Accelerated weekly", suffix: "/wk" },
+    };
+
+    var scenarioPresetColors = ["#2ecc71", "#e74c3c", "#f39c12", "#9b59b6", "#1abc9c"];
+    var baseColor = "#4f86c6";
+    var termColorsLight = ["#111", "#4a4a4a", "#7a7a7a", "#a5a5a5", "#c5c5c5", "#333", "#5a5a5a", "#8a8a8a"];
+    var termColorsDark  = ["#e0e0e0", "#b0b0b0", "#888888", "#666666", "#444444", "#ccc", "#999", "#777"];
+
+    // ===== STATE =====
+    var country = "ca";
+    var terms = [];
+    var scenarios = [];
+    var paymentFrequency = "monthly";
+    var firstTimeBuyer = false;
+    var newBuild = false;
+    var scheduleMode = "annual";
+    var lastSimResults = null; // { base: sim, scenarios: { id: sim } }
+    var chartInstances = {};
+    var editingScenarioId = null;
+
+    // ===== DOM HELPERS =====
+    function $(id) { return document.getElementById(id); }
+
+    // ===== MATH HELPERS =====
+
+    function isDark() {
+        return getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() !== "#fafafa";
+    }
+
+    function getTermColors() {
+        return isDark() ? termColorsDark : termColorsLight;
+    }
+
+    function effectivePeriodRate(annualRate, frequency, compounding) {
+        var ppy = frequencyConfig[frequency].ppy;
+        if (compounding === "semi-annual") {
+            var semiRate = annualRate / 100 / 2;
+            return Math.pow(1 + semiRate, 2 / ppy) - 1;
+        }
+        return annualRate / 100 / ppy;
+    }
+
+    function calcMonthlyPayment(principal, annualRate, amortYears, compounding) {
+        var r = effectivePeriodRate(annualRate, "monthly", compounding);
+        var n = amortYears * 12;
+        if (principal <= 0 || n <= 0) return 0;
+        if (r === 0) return principal / n;
+        return principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+    }
+
+    function calcPeriodicPayment(principal, annualRate, remainingAmortYears, frequency, compounding) {
+        var monthlyPmt = calcMonthlyPayment(principal, annualRate, remainingAmortYears, compounding);
+        switch (frequency) {
+            case "monthly": return monthlyPmt;
+            case "semimonthly": return monthlyPmt / 2;
+            case "biweekly": return (monthlyPmt * 12) / 26;
+            case "accelerated_biweekly": return monthlyPmt / 2;
+            case "weekly": return (monthlyPmt * 12) / 52;
+            case "accelerated_weekly": return monthlyPmt / 4;
+            default: return monthlyPmt;
+        }
+    }
+
+    // ===== CMHC =====
+
+    function cmhcRate(downPct) {
+        if (downPct < 5) return 4.0;
+        if (downPct < 10) return 4.0;
+        if (downPct < 15) return 3.1;
+        if (downPct < 20) return 2.8;
+        return 0;
+    }
+
+    function calcCmhcPremium(loanAmount, downPct) {
+        if (downPct >= 20) return 0;
+        return loanAmount * cmhcRate(downPct) / 100;
+    }
+
+    function getCmhcWarnings(homeValue, downPct, amortYears) {
+        var warnings = [];
+        if (downPct >= 20) return warnings;
+        if (homeValue >= 1500000) {
+            warnings.push("CMHC not available above $1.5M. 20% minimum down payment required.");
+        }
+        if (amortYears > 25 && !firstTimeBuyer && !newBuild) {
+            warnings.push("CMHC requires maximum 25-year amortization. Check \"First-time buyer\" or \"New build\" for 30-year eligibility.");
+        }
+        if (amortYears > 30) {
+            warnings.push("CMHC not available with amortization over 30 years.");
+        }
+        return warnings;
+    }
+
+    // ===== FORMATTING =====
+
+    function addCommas(n) {
+        var parts = n.toString().split(".");
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        return parts.join(".");
+    }
+
+    function fmt(val) {
+        return "$" + addCommas(Math.round(val));
+    }
+
+    function fmtFull(val) {
+        var sign = val < 0 ? "-" : "";
+        var abs = Math.abs(val);
+        var rounded = Math.round(abs * 100) / 100;
+        var parts = rounded.toFixed(2).split(".");
+        return sign + "$" + addCommas(parseInt(parts[0])) + "." + parts[1];
+    }
+
+    function fmtPct(val) {
+        return val.toFixed(1) + "%";
+    }
+
+    function cssVar(name) {
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    function freqSuffix() {
+        return frequencyConfig[paymentFrequency] ? frequencyConfig[paymentFrequency].suffix : "/mo";
+    }
+
+    function freqLabel() {
+        return frequencyConfig[paymentFrequency] ? frequencyConfig[paymentFrequency].label : "Monthly";
+    }
+
+    // ===== LOCAL STORAGE =====
+
+    function saveState() {
+        try {
+            var state = {
+                v: 2,
+                country: country,
+                homeValue: $("home-value").value,
+                downPayment: $("down-payment").value,
+                amortization: $("amortization").value,
+                paymentIncrease: $("payment-increase").value,
+                lumpSumAnnual: $("lump-sum-annual").value,
+                lumpSumTerm: $("lump-sum-term").value,
+                startMonth: $("start-month").value,
+                startYear: $("start-year").value,
+                scheduleMode: scheduleMode,
+                paymentFrequency: paymentFrequency,
+                firstTimeBuyer: firstTimeBuyer,
+                newBuild: newBuild,
+                scenarios: scenarios,
+                terms: terms,
+            };
+            localStorage.setItem(LS_KEY, JSON.stringify(state));
+        } catch (e) {}
+    }
+
+    function loadState() {
+        try {
+            var raw = localStorage.getItem(LS_KEY);
+            if (!raw) return null;
+            return JSON.parse(raw);
+        } catch (e) { return null; }
+    }
+
+    function migrateState(old) {
+        if (!old) return null;
+        if (old.v === 2) return old;
+        var s = {
+            v: 2,
+            country: old.country || "ca",
+            homeValue: old.homeValue || "500000",
+            downPayment: old.downPayment || "100000",
+            amortization: old.amortization || "25",
+            paymentIncrease: old.paymentIncrease || "0",
+            lumpSumAnnual: old.lumpSumAnnual || "0",
+            lumpSumTerm: old.lumpSumTerm || "0",
+            startMonth: old.startMonth || "5",
+            startYear: old.startYear || "2026",
+            scheduleMode: old.scheduleMode || "annual",
+            paymentFrequency: "monthly",
+            firstTimeBuyer: false,
+            newBuild: false,
+            terms: (old.terms || []).map(function (t) { return { years: t.years, rate: t.rate }; }),
+            scenarios: [{ id: "base", label: "Base", locked: true, color: baseColor, visible: true }],
+        };
+        var optOffset = parseFloat(old.rateOptimistic) || 0;
+        var pessOffset = parseFloat(old.ratePessimistic) || 0;
+        if (optOffset !== 0) {
+            s.scenarios.push({ id: "s1", label: "Optimistic", mode: "offset", offset: optOffset, color: "#2ecc71", visible: true });
+        }
+        if (pessOffset !== 0) {
+            s.scenarios.push({ id: "s2", label: "Pessimistic", mode: "offset", offset: pessOffset, color: "#e74c3c", visible: true });
+        }
+        return s;
+    }
+
+    function clearState() {
+        try { localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_COLLAPSED_KEY); } catch (e) {}
+    }
+
+    function applyState(s) {
+        if (!s) return false;
+        country = s.country || "ca";
+        if (s.terms && s.terms.length > 0) terms = s.terms;
+        if (s.scenarios && s.scenarios.length > 0) scenarios = s.scenarios;
+        if (s.paymentFrequency) paymentFrequency = s.paymentFrequency;
+        if (s.firstTimeBuyer !== undefined) firstTimeBuyer = s.firstTimeBuyer;
+        if (s.newBuild !== undefined) newBuild = s.newBuild;
+        if (s.scheduleMode) scheduleMode = s.scheduleMode;
+        $("home-value").value = s.homeValue || "500000";
+        $("down-payment").value = s.downPayment || "100000";
+        $("amortization").value = s.amortization || "25";
+        $("payment-increase").value = s.paymentIncrease || "0";
+        $("lump-sum-annual").value = s.lumpSumAnnual || "0";
+        $("lump-sum-term").value = s.lumpSumTerm || "0";
+        $("start-month").value = s.startMonth || "5";
+        $("start-year").value = s.startYear || "2026";
+        return true;
+    }
+
+    // ===== COLLAPSIBLES =====
+
+    var collapsibles = {
+        scenarios: { toggle: $("toggle-scenarios"), body: $("body-scenarios"), arrow: $("arrow-scenarios") },
+        prepay:    { toggle: $("toggle-prepay"),    body: $("body-prepay"),    arrow: $("arrow-prepay") },
+        date:      { toggle: $("toggle-date"),      body: $("body-date"),      arrow: $("arrow-date") },
+    };
+
     Object.keys(collapsibles).forEach(function (key) {
         var c = collapsibles[key];
         c.toggle.addEventListener("click", function () {
@@ -63,13 +296,13 @@
             Object.keys(collapsibles).forEach(function (key) {
                 state[key] = collapsibles[key].body.classList.contains("collapsed");
             });
-            localStorage.setItem(LS_KEY + "-collapsed", JSON.stringify(state));
+            localStorage.setItem(LS_COLLAPSED_KEY, JSON.stringify(state));
         } catch (e) {}
     }
 
     function loadCollapsedState() {
         try {
-            var raw = localStorage.getItem(LS_KEY + "-collapsed");
+            var raw = localStorage.getItem(LS_COLLAPSED_KEY);
             if (!raw) return;
             var state = JSON.parse(raw);
             Object.keys(state).forEach(function (key) {
@@ -81,352 +314,78 @@
         } catch (e) {}
     }
 
-    var countryInfo = {
-        ca: {
-            bullets: [
-                "<strong>Semi-annual compounding.</strong> Interest compounds twice a year, so the effective monthly rate is lower than rate/12.",
-                "<strong>CMHC default insurance</strong> required when down payment is under 20%. Premium is a one-time cost (0.6% to 4% of loan) added to the mortgage.",
-                "<strong>Term vs amortization.</strong> Typical terms are 1-5 years at a fixed rate; the amortization is 25-30 years. Rate renegotiated at each renewal.",
-                "<strong>Prepayment limits.</strong> Most lenders allow 10-20% lump sum per year and payment increases up to double. Penalties apply beyond that.",
-            ],
-        },
-        us: {
-            bullets: [
-                "<strong>Monthly compounding.</strong> Interest is calculated at rate/12 each month. The quoted rate equals the effective rate.",
-                "<strong>PMI</strong> required when down payment is under 20%. Ongoing monthly cost that cancels automatically at 78-80% LTV.",
-                "<strong>30-year fixed</strong> is the most common mortgage. You lock the rate for the entire loan. No renewals.",
-                "<strong>HOA</strong> (Homeowners Association) fees are common for condos and planned communities. Typically paid monthly.",
-            ],
-        },
-    };
-
-    var termColorsLight = ["#111", "#4a4a4a", "#7a7a7a", "#a5a5a5", "#c5c5c5", "#333", "#5a5a5a", "#8a8a8a"];
-    var termColorsDark = ["#e0e0e0", "#b0b0b0", "#888888", "#666666", "#444444", "#ccc", "#999", "#777"];
-    var pieColorsLight = ["#111", "#4a4a4a", "#7a7a7a", "#a5a5a5", "#c5c5c5", "#ddd"];
-    var pieColorsDark = ["#e0e0e0", "#b0b0b0", "#888888", "#666666", "#444444", "#333"];
-
-    function termColors() {
-        var dark = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() !== '#fafafa';
-        return dark ? termColorsDark : termColorsLight;
-    }
-
-    function pieColors() {
-        var dark = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() !== '#fafafa';
-        return dark ? pieColorsDark : pieColorsLight;
-    }
-    var monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
-    // --- Country presets ---
-    var countryConfig = {
-        ca: {
-            defaultAmort: 25,
-            maxAmort: 30,
-            defaultTerms: [
-                { years: 5, rate: 4.99, schedule: "monthly" },
-                { years: 5, rate: 4.49, schedule: "monthly" },
-                { years: 5, rate: 4.19, schedule: "monthly" },
-                { years: 5, rate: 3.99, schedule: "monthly" },
-                { years: 5, rate: 3.79, schedule: "monthly" },
-            ],
-            compounding: "semi-annual", // Canadian fixed mortgages compound semi-annually
-            insuranceLabel: "Default Insurance (CMHC)",
-            hoaLabel: "Condo Fees / Month",
-            taxLabel: "Property Tax / Year",
-            newTermDuration: 5,
-            pmiEstimate: function (downPct) {
-                // CMHC rates: 4% for 5-9.99%, 3.1% for 10-14.99%, 2.4% for 15-19.99%
-                if (downPct < 5) return 4.0;
-                if (downPct < 10) return 3.1;
-                if (downPct < 15) return 2.4;
-                if (downPct < 20) return 1.8;
-                return 0;
-            },
-            pmiIsUpfront: true, // CMHC is a one-time premium added to loan
-        },
-        us: {
-            defaultAmort: 30,
-            maxAmort: 40,
-            defaultTerms: [
-                { years: 30, rate: 6.5, schedule: "monthly" },
-            ],
-            compounding: "monthly",
-            insuranceLabel: "PMI",
-            hoaLabel: "HOA / Month",
-            taxLabel: "Property Tax / Year",
-            newTermDuration: 5,
-            pmiEstimate: function (downPct) {
-                if (downPct < 5) return 1.5;
-                if (downPct < 10) return 1.0;
-                if (downPct < 15) return 0.6;
-                if (downPct < 20) return 0.3;
-                return 0;
-            },
-            pmiIsUpfront: false, // PMI is ongoing monthly
-        },
-    };
-
-    var country = "ca";
-    var terms = [];
-    var scheduleMode = "annual";
-    var lastSimResult = null;
-    var LS_KEY = "mortgage-calc-v1";
-
-    // --- Helpers ---
-
-    function schedulePaymentsPerYear(schedule) {
-        if (schedule === "biweekly") return 26;
-        if (schedule === "weekly") return 52;
-        return 12;
-    }
-
-    function scheduleLabel(schedule) {
-        if (schedule === "biweekly") return "bi-weekly";
-        if (schedule === "weekly") return "weekly";
-        return "monthly";
-    }
-
-    function calcBasePayment(principal, annualRate, amortYears, schedule, compounding) {
-        var ppy = schedulePaymentsPerYear(schedule);
-        var n = amortYears * ppy;
-        if (principal <= 0 || n <= 0) return 0;
-
-        var r = effectivePeriodRate(annualRate, schedule, compounding);
-
-        if (r === 0) return principal / n;
-        return principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
-    }
-
-    function effectivePeriodRate(annualRate, schedule, compounding) {
-        if (compounding === "semi-annual") {
-            // Canadian: semi-annual compounding
-            // Semi rate = annualRate/2, then derive period rate from half-year
-            // Monthly: 6 periods per half-year → (1+semiRate)^(1/6) - 1
-            // Bi-weekly: 13 periods per half-year → (1+semiRate)^(1/13) - 1
-            // Weekly: 26 periods per half-year → (1+semiRate)^(1/26) - 1
-            var semiRate = annualRate / 100 / 2;
-            var periodsPerHalfYear = schedule === "monthly" ? 6 : schedule === "biweekly" ? 13 : 26;
-            return Math.pow(1 + semiRate, 1 / periodsPerHalfYear) - 1;
-        }
-        // US: monthly compounding
-        return annualRate / 100 / schedulePaymentsPerYear(schedule);
-    }
-
-    function addCommas(n) {
-        var parts = n.toString().split(".");
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        return parts.join(".");
-    }
-
-    function fmt(val) {
-        return "$" + addCommas(Math.round(val));
-    }
-
-    function fmtFull(val) {
-        var rounded = Math.round(val * 100) / 100;
-        var parts = rounded.toFixed(2).split(".");
-        return "$" + addCommas(parseInt(parts[0])) + "." + parts[1];
-    }
-
-    function fmtPct(val) {
-        return val.toFixed(1) + "%";
-    }
-
-    // --- Local storage ---
-
-    function saveState() {
-        try {
-            var state = {
-                country: country,
-                homeValue: homeValueInput.value,
-                downPayment: downPaymentInput.value,
-                amortization: amortInput.value,
-                paymentIncrease: paymentIncreaseInput.value,
-                lumpSumAnnual: lumpSumAnnualInput.value,
-                lumpSumTerm: lumpSumTermInput.value,
-                propertyTax: propertyTaxInput.value,
-                homeInsurance: homeInsuranceInput.value,
-                hoa: hoaInput.value,
-                pmi: pmiInput.value,
-                startMonth: startMonthInput.value,
-                startYear: startYearInput.value,
-                scheduleMode: scheduleMode,
-                rateOptimistic: rateOptimisticInput.value,
-                ratePessimistic: ratePessimisticInput.value,
-                terms: terms,
-            };
-            localStorage.setItem(LS_KEY, JSON.stringify(state));
-        } catch (e) { /* storage full or unavailable */ }
-    }
-
-    function loadState() {
-        try {
-            var raw = localStorage.getItem(LS_KEY);
-            if (!raw) return null;
-            return JSON.parse(raw);
-        } catch (e) { return null; }
-    }
-
-    function clearState() {
-        try { localStorage.removeItem(LS_KEY); } catch (e) {}
-    }
-
-    function applyState(s) {
-        if (!s) return false;
-        if (s.country && countryConfig[s.country]) {
-            country = s.country;
-            btnCA.classList.toggle("active", country === "ca");
-            btnUS.classList.toggle("active", country === "us");
-            var cfg = countryConfig[country];
-            pmiLabel.textContent = cfg.insuranceLabel;
-            hoaLabel.textContent = cfg.hoaLabel;
-            propertyTaxLabel.textContent = cfg.taxLabel;
-            amortInput.max = cfg.maxAmort;
-        }
-        if (s.homeValue !== undefined) homeValueInput.value = s.homeValue;
-        if (s.downPayment !== undefined) downPaymentInput.value = s.downPayment;
-        if (s.amortization !== undefined) amortInput.value = s.amortization;
-        if (s.paymentIncrease !== undefined) paymentIncreaseInput.value = s.paymentIncrease;
-        if (s.lumpSumAnnual !== undefined) lumpSumAnnualInput.value = s.lumpSumAnnual;
-        if (s.lumpSumTerm !== undefined) lumpSumTermInput.value = s.lumpSumTerm;
-        if (s.propertyTax !== undefined) propertyTaxInput.value = s.propertyTax;
-        if (s.homeInsurance !== undefined) homeInsuranceInput.value = s.homeInsurance;
-        if (s.hoa !== undefined) hoaInput.value = s.hoa;
-        if (s.pmi !== undefined) pmiInput.value = s.pmi;
-        if (s.startMonth !== undefined) startMonthInput.value = s.startMonth;
-        if (s.startYear !== undefined) startYearInput.value = s.startYear;
-        if (s.scheduleMode !== undefined) {
-            scheduleMode = s.scheduleMode;
-            btnMonthly.classList.toggle("active", scheduleMode === "monthly");
-            btnAnnual.classList.toggle("active", scheduleMode === "annual");
-        }
-        if (s.rateOptimistic !== undefined) rateOptimisticInput.value = s.rateOptimistic;
-        if (s.ratePessimistic !== undefined) ratePessimisticInput.value = s.ratePessimistic;
-        if (s.terms && Array.isArray(s.terms) && s.terms.length > 0) {
-            terms = s.terms;
-        }
-        renderCountryInfo();
-        return true;
-    }
+    // ===== COUNTRY SWITCHING =====
 
     function renderCountryInfo() {
         var info = countryInfo[country];
-        if (!info) { countryInfoEl.innerHTML = ""; return; }
+        if (!info) { $("country-info").innerHTML = ""; return; }
         var label = country === "ca" ? "Canada" : "United States";
         var html = "<span class=\"country-info-label\">" + label + "</span><ul>";
         info.bullets.forEach(function (b) { html += "<li>" + b + "</li>"; });
         html += "</ul>";
-        countryInfoEl.innerHTML = html;
+        $("country-info").innerHTML = html;
     }
-
-    // --- Country switching ---
 
     function switchCountry(c) {
         country = c;
-        btnCA.classList.toggle("active", c === "ca");
-        btnUS.classList.toggle("active", c === "us");
-
+        $("btn-ca").classList.toggle("active", c === "ca");
+        $("btn-us").classList.toggle("active", c === "us");
         var cfg = countryConfig[country];
-
-        // Update labels
-        pmiLabel.textContent = cfg.insuranceLabel;
-        hoaLabel.textContent = cfg.hoaLabel;
-        propertyTaxLabel.textContent = cfg.taxLabel;
-
-        // Update amortization
-        amortInput.max = cfg.maxAmort;
-        amortInput.value = cfg.defaultAmort;
-
-        // Reset terms to country defaults
-        terms = cfg.defaultTerms.map(function (t) { return { years: t.years, rate: t.rate, schedule: t.schedule }; });
-
-        // Reset PMI — syncLoan will re-estimate based on new country
-        pmiInput.value = 0;
-
-        // Set country-specific defaults for recurring costs
-        if (c === "ca") {
-            propertyTaxInput.value = 3500;
-            homeInsuranceInput.value = 1200;
-            hoaInput.value = 0;
-        } else {
-            propertyTaxInput.value = 5500;
-            homeInsuranceInput.value = 2000;
-            hoaInput.value = 0;
-        }
-
+        $("amortization").max = cfg.maxAmort;
+        $("amortization").value = cfg.defaultAmort;
+        terms = cfg.defaultTerms.map(function (t) { return { years: t.years, rate: t.rate }; });
+        paymentFrequency = "monthly";
+        $("payment-frequency").value = "monthly";
+        firstTimeBuyer = false;
+        newBuild = false;
+        $("first-time-buyer").checked = false;
+        $("new-build").checked = false;
         renderTerms();
         syncLoan();
-        try { render(); } catch (e) { /* continue */ }
         renderCountryInfo();
-
-        // Auto-expand recurring costs if insurance is relevant
-        var downPct = (parseFloat(homeValueInput.value) || 0) > 0
-            ? (parseFloat(downPaymentInput.value) || 0) / (parseFloat(homeValueInput.value) || 0) * 100
-            : 100;
-        if (downPct < 20) {
-            collapsibles.costs.body.classList.remove("collapsed");
-            collapsibles.costs.arrow.classList.add("open");
-        }
-
+        render();
         saveState();
     }
 
-    btnCA.addEventListener("click", function () { switchCountry("ca"); });
-    btnUS.addEventListener("click", function () { switchCountry("us"); });
+    $("btn-ca").addEventListener("click", function () { switchCountry("ca"); });
+    $("btn-us").addEventListener("click", function () { switchCountry("us"); });
 
-    // --- Down payment / loan amount sync ---
+    // ===== LOAN SYNC =====
 
     function syncLoan() {
-        var hv = parseFloat(homeValueInput.value) || 0;
-        var dp = parseFloat(downPaymentInput.value) || 0;
-        if (dp > hv) {
-            dp = hv;
-            downPaymentInput.value = dp;
-        }
+        var hv = parseFloat($("home-value").value) || 0;
+        var dp = parseFloat($("down-payment").value) || 0;
+        if (dp > hv) { dp = hv; $("down-payment").value = dp; }
         var loan = hv - dp;
-        var cfg = countryConfig[country];
-
-        // Canada: CMHC premium added to loan if down payment < 20%
-        var cmhcPremium = 0;
-        if (country === "ca" && loan > 0) {
-            var downPct = hv > 0 ? dp / hv * 100 : 0;
-            if (downPct < 20) {
-                var cmhcRate = cfg.pmiEstimate(downPct);
-                cmhcPremium = loan * cmhcRate / 100;
-                // CMHC premium can be added to the mortgage
-                loan += cmhcPremium;
-            }
-        }
-
-        loanAmountInput.value = Math.round(loan);
         var pct = hv > 0 ? (dp / hv * 100) : 0;
-        downPctEl.textContent = pct.toFixed(0) + "%";
+        $("down-pct").textContent = pct.toFixed(0) + "%";
 
-        // Insurance visibility
-        if (pct < 20 && (hv - dp) > 0) {
-            pmiRow.style.display = "block";
-            if (country === "ca") {
-                if (parseFloat(pmiInput.value) === 0) {
-                    pmiInput.value = cfg.pmiEstimate(pct);
-                }
-                pmiHint.textContent = "CMHC premium of " + fmt(cmhcPremium) + " added to loan. Down payment under 20% requires default insurance.";
-            } else {
-                if (parseFloat(pmiInput.value) === 0) {
-                    pmiInput.value = cfg.pmiEstimate(pct);
-                }
-                pmiHint.textContent = "Down payment under 20%: PMI typically required until 78-80% LTV. Adjust rate as needed.";
-            }
+        var cmhcPremium = 0;
+        var cmhcRow = $("cmhc-row");
+        if (country === "ca" && loan > 0 && pct < 20) {
+            cmhcPremium = calcCmhcPremium(loan, pct);
+            loan += cmhcPremium;
+            $("cmhc-amount").textContent = "CMHC insurance: " + fmt(cmhcPremium) + " added to principal";
+            cmhcRow.style.display = "block";
+            $("cmhc-eligibility").style.display = "flex";
+            var warnings = getCmhcWarnings(hv, pct, parseInt($("amortization").value) || 25);
+            var warnHtml = "";
+            warnings.forEach(function (w) { warnHtml += "<div class=\"warning-text\">" + w + "</div>"; });
+            $("cmhc-warnings").innerHTML = warnHtml;
         } else {
-            pmiRow.style.display = "none";
-            pmiHint.textContent = "";
+            cmhcRow.style.display = "none";
         }
+
+        $("loan-amount").value = Math.round(loan);
     }
 
-    homeValueInput.addEventListener("input", syncLoan);
-    downPaymentInput.addEventListener("input", syncLoan);
+    $("home-value").addEventListener("input", syncLoan);
+    $("down-payment").addEventListener("input", syncLoan);
 
-    // --- Term UI ---
+    // ===== TERMS UI =====
 
     function renderTerms() {
+        var termsList = $("terms-list");
         termsList.innerHTML = "";
         terms.forEach(function (term, i) {
             var maxDuration = country === "ca" ? 10 : 40;
@@ -440,25 +399,17 @@
                 '<div class="term-fields">' +
                 '<div class="field"><label>Duration</label><div class="input-wrap"><input type="number" data-idx="' + i + '" data-field="years" value="' + term.years + '" min="1" max="' + maxDuration + '" step="1"><span class="suffix">yr</span></div></div>' +
                 '<div class="field"><label>Rate</label><div class="input-wrap"><input type="number" data-idx="' + i + '" data-field="rate" value="' + term.rate + '" min="0" max="30" step="0.01"><span class="suffix">%</span></div></div>' +
-                '<div class="field"><label>Schedule</label><select data-idx="' + i + '" data-field="schedule"><option value="monthly"' + (term.schedule === "monthly" ? " selected" : "") + '>Monthly</option><option value="biweekly"' + (term.schedule === "biweekly" ? " selected" : "") + '>Bi-weekly</option><option value="weekly"' + (term.schedule === "weekly" ? " selected" : "") + '>Weekly</option></select></div>' +
                 '</div>';
             termsList.appendChild(card);
         });
 
-        var termInputHandler = function () {
-            var idx = parseInt(this.dataset.idx, 10);
-            var field = this.dataset.field;
-            if (field === "schedule") {
-                terms[idx][field] = this.value;
-            } else {
+        termsList.querySelectorAll("input").forEach(function (el) {
+            el.addEventListener("input", function () {
+                var idx = parseInt(this.dataset.idx, 10);
+                var field = this.dataset.field;
                 terms[idx][field] = parseFloat(this.value) || 0;
-            }
-            render();
-        };
-
-        termsList.querySelectorAll("input, select").forEach(function (el) {
-            el.addEventListener("input", termInputHandler);
-            el.addEventListener("change", termInputHandler);
+                render();
+            });
         });
 
         termsList.querySelectorAll(".remove-term").forEach(function (btn) {
@@ -470,98 +421,273 @@
         });
     }
 
-    addTermBtn.addEventListener("click", function () {
+    $("add-term").addEventListener("click", function () {
         var cfg = countryConfig[country];
         var lastRate = terms.length > 0 ? terms[terms.length - 1].rate : 5;
-        terms.push({ years: cfg.newTermDuration, rate: Math.max(0.5, lastRate - 0.2), schedule: "monthly" });
+        terms.push({ years: cfg.newTermDuration, rate: Math.max(0.5, lastRate - 0.2) });
         renderTerms();
         render();
     });
 
-    // --- Simulation ---
+    // ===== SCENARIO MANAGER =====
 
-    function simulateMortgage(principal, amortYears, termDefs, annualIncrease, lumpAnnual, lumpTerm, annualTax, annualInsurance, monthlyHOA, annualPMI, startMonth, startYear) {
+    function initScenarios() {
+        scenarios = [
+            { id: "base", label: "Base", locked: true, color: baseColor, visible: true },
+        ];
+    }
+
+    function renderScenarioChips() {
+        var container = $("scenario-chips");
+        container.innerHTML = "";
+        scenarios.forEach(function (sc) {
+            var chip = document.createElement("span");
+            chip.className = "scenario-chip" + (sc.visible ? " active" : "") + (sc.locked ? " locked" : "");
+            chip.style.borderColor = sc.visible ? sc.color : "";
+            chip.dataset.id = sc.id;
+            chip.innerHTML =
+                '<span class="chip-dot" style="background:' + sc.color + '"></span>' +
+                sc.label +
+                (!sc.locked ?
+                    ' <button class="chip-edit" data-id="' + sc.id + '" title="Edit">&#9998;</button>' +
+                    ' <button class="chip-delete" data-id="' + sc.id + '" title="Delete">&times;</button>'
+                    : '');
+            container.appendChild(chip);
+        });
+
+        container.querySelectorAll(".scenario-chip").forEach(function (el) {
+            el.addEventListener("click", function (e) {
+                if (e.target.classList.contains("chip-edit") || e.target.classList.contains("chip-delete")) return;
+                var id = el.dataset.id;
+                var sc = scenarios.find(function (s) { return s.id === id; });
+                if (sc && !sc.locked) {
+                    sc.visible = !sc.visible;
+                    renderScenarioChips();
+                    render();
+                }
+            });
+        });
+
+        container.querySelectorAll(".chip-edit").forEach(function (btn) {
+            btn.addEventListener("click", function () { showScenarioEditor(btn.dataset.id); });
+        });
+
+        container.querySelectorAll(".chip-delete").forEach(function (btn) {
+            btn.addEventListener("click", function () { deleteScenario(btn.dataset.id); });
+        });
+    }
+
+    function showScenarioEditor(id) {
+        var editor = $("scenario-editor");
+        var sc = id ? scenarios.find(function (s) { return s.id === id; }) : null;
+        editingScenarioId = id || null;
+
+        var label = sc ? sc.label : "Scenario " + scenarios.length;
+        var color = sc ? sc.color : getNextColor();
+        var mode = sc ? (sc.mode || "offset") : "offset";
+        var offset = sc ? (sc.offset || 0) : 0;
+        var termRates = sc && sc.termRates ? sc.termRates.slice() : terms.map(function (t) { return t.rate; });
+
+        var html =
+            '<div class="input-row">' +
+            '<div class="field"><label>Label</label><div class="input-wrap"><input type="text" id="sc-label-input" value="' + label + '"></div></div>' +
+            '<div class="field"><label>Color</label><div class="color-swatches" id="sc-color-swatches">' +
+            scenarioPresetColors.map(function (c) {
+                return '<button class="color-swatch' + (c === color ? " selected" : "") + '" style="background:' + c + '" data-color="' + c + '"></button>';
+            }).join("") +
+            '</div></div>' +
+            '</div>' +
+            '<div class="input-row">' +
+            '<div class="field"><label>Mode</label><select id="sc-mode-select">' +
+            '<option value="offset"' + (mode === "offset" ? " selected" : "") + '>Offset from base</option>' +
+            '<option value="custom"' + (mode === "custom" ? " selected" : "") + '>Custom rates</option>' +
+            '</select></div>' +
+            '<div class="field" id="sc-offset-field"' + (mode !== "offset" ? ' style="display:none"' : '') + '><label>Offset</label><div class="input-wrap"><input type="number" id="sc-offset-input" value="' + offset + '" step="0.25"><span class="suffix">%</span></div></div>' +
+            '</div>' +
+            '<div id="sc-custom-rates"' + (mode !== "custom" ? ' style="display:none"' : '') + '>' +
+            '<div class="custom-rates-list">' +
+            terms.map(function (t, i) {
+                return '<div class="custom-rate-row"><span class="term-label">Term ' + (i + 1) + '</span><div class="input-wrap"><input type="number" class="sc-custom-rate" data-idx="' + i + '" value="' + (termRates[i] !== undefined ? termRates[i] : t.rate) + '" step="0.01"><span class="suffix">%</span></div></div>';
+            }).join("") +
+            '</div></div>' +
+            '<div class="scenario-editor-actions">' +
+            '<button class="btn-link" id="sc-save-btn">Save</button>' +
+            '<button class="btn-link" id="sc-cancel-btn">Cancel</button>' +
+            '</div>';
+
+        editor.innerHTML = html;
+        editor.classList.add("visible");
+
+        $("sc-mode-select").addEventListener("change", function () {
+            var isOffset = this.value === "offset";
+            $("sc-offset-field").style.display = isOffset ? "" : "none";
+            $("sc-custom-rates").style.display = isOffset ? "none" : "";
+        });
+
+        $("sc-color-swatches").querySelectorAll(".color-swatch").forEach(function (sw) {
+            sw.addEventListener("click", function () {
+                $("sc-color-swatches").querySelectorAll(".color-swatch").forEach(function (s) { s.classList.remove("selected"); });
+                sw.classList.add("selected");
+            });
+        });
+
+        $("sc-save-btn").addEventListener("click", saveScenario);
+        $("sc-cancel-btn").addEventListener("click", hideScenarioEditor);
+    }
+
+    function hideScenarioEditor() {
+        $("scenario-editor").innerHTML = "";
+        $("scenario-editor").classList.remove("visible");
+        editingScenarioId = null;
+    }
+
+    function saveScenario() {
+        var label = $("sc-label-input").value || "Scenario";
+        var selectedSwatch = $("sc-color-swatches").querySelector(".color-swatch.selected");
+        var color = selectedSwatch ? selectedSwatch.dataset.color : baseColor;
+        var mode = $("sc-mode-select").value;
+        var offset = parseFloat($("sc-offset-input").value) || 0;
+        var termRates = [];
+        document.querySelectorAll(".sc-custom-rate").forEach(function (inp) {
+            termRates.push(parseFloat(inp.value) || 0);
+        });
+
+        if (editingScenarioId) {
+            var sc = scenarios.find(function (s) { return s.id === editingScenarioId; });
+            if (sc) {
+                sc.label = label;
+                sc.color = color;
+                sc.mode = mode;
+                sc.offset = offset;
+                if (mode === "custom") sc.termRates = termRates;
+                else delete sc.termRates;
+            }
+        } else {
+            if (scenarios.length >= 5) return;
+            var newId = "s" + Date.now();
+            var newSc = { id: newId, label: label, mode: mode, offset: offset, color: color, visible: true };
+            if (mode === "custom") newSc.termRates = termRates;
+            scenarios.push(newSc);
+        }
+
+        hideScenarioEditor();
+        renderScenarioChips();
+        render();
+        saveState();
+    }
+
+    function deleteScenario(id) {
+        scenarios = scenarios.filter(function (s) { return s.id !== id; });
+        renderScenarioChips();
+        render();
+        saveState();
+    }
+
+    function getNextColor() {
+        var usedColors = scenarios.map(function (s) { return s.color; });
+        for (var i = 0; i < scenarioPresetColors.length; i++) {
+            if (usedColors.indexOf(scenarioPresetColors[i]) === -1) return scenarioPresetColors[i];
+        }
+        return scenarioPresetColors[scenarios.length % scenarioPresetColors.length];
+    }
+
+    function getScenarioTermDefs(scenario) {
+        if (scenario.id === "base") return terms;
+        if (scenario.mode === "offset") {
+            return terms.map(function (t) { return { years: t.years, rate: Math.max(0, t.rate + (scenario.offset || 0)) }; });
+        }
+        if (scenario.mode === "custom") {
+            return terms.map(function (t, i) {
+                return { years: t.years, rate: (scenario.termRates && i < scenario.termRates.length) ? scenario.termRates[i] : t.rate };
+            });
+        }
+        return terms;
+    }
+
+    $("add-scenario").addEventListener("click", function () {
+        if (scenarios.length >= 5) return;
+        showScenarioEditor(null);
+    });
+
+    // ===== SIMULATION =====
+
+    function simulateMortgage(principal, amortYears, termDefs, freq, annualIncrease, lumpAnnual, lumpTerm, startMonth, startYear) {
         var balance = principal;
         var remainingAmort = amortYears;
         var totalInterest = 0;
         var totalPrincipalPaid = 0;
-        var totalTax = 0;
-        var totalInsurance = 0;
-        var totalHOA = 0;
-        var totalPMI = 0;
         var termResults = [];
         var schedule = [];
-        var globalMonth = 0;
+        var globalPeriod = 0;
         var compounding = countryConfig[country].compounding;
-        var pmiIsOngoing = country === "us"; // US: ongoing PMI, CA: upfront CMHC (already in loan)
+        var ppy = frequencyConfig[freq].ppy;
+        var cumulativeInterest = 0;
+        var annualSnapshots = [{ year: 0, balance: principal, cumulativeInterest: 0, annualPrincipal: 0, annualInterest: 0, termIndex: 0, payment: 0 }];
+        var yearPrincipal = 0;
+        var yearInterest = 0;
+        var currentPaymentYear = 0;
 
         for (var ti = 0; ti < termDefs.length && balance > 0.01; ti++) {
             var term = termDefs[ti];
-            var ppy = schedulePaymentsPerYear(term.schedule);
-
-            var r = effectivePeriodRate(term.rate, term.schedule, compounding);
-
-            var termPayments = term.years * ppy;
-
-            var basePayment = calcBasePayment(balance, term.rate, remainingAmort, term.schedule, compounding);
+            var r = effectivePeriodRate(term.rate, freq, compounding);
+            var termPeriods = term.years * ppy;
+            var basePayment = calcPeriodicPayment(balance, term.rate, remainingAmort, freq, compounding);
             var payment = basePayment;
             var paymentsThisYear = 0;
             var termPrincipal = 0;
             var termInterest = 0;
-            var termTax = 0;
-            var termInsurance = 0;
-            var termHOA = 0;
-            var termPMI = 0;
 
-            for (var p = 0; p < termPayments && balance > 0.01; p++) {
-                // Annual payment increase
+            for (var p = 0; p < termPeriods && balance > 0.01; p++) {
                 if (p > 0 && p % ppy === 0) {
                     payment += annualIncrease;
-                    paymentsThisYear = 0;
+                    // Emit annual snapshot at year boundary
+                    currentPaymentYear++;
+                    annualSnapshots.push({
+                        year: currentPaymentYear,
+                        balance: Math.max(0, balance),
+                        cumulativeInterest: cumulativeInterest,
+                        annualPrincipal: yearPrincipal,
+                        annualInterest: yearInterest,
+                        termIndex: ti,
+                        payment: payment,
+                    });
+                    yearPrincipal = 0;
+                    yearInterest = 0;
                 }
 
                 var interestPortion = balance * r;
                 var principalPortion = payment - interestPortion;
-                if (principalPortion > balance) {
-                    principalPortion = balance;
-                }
-
-                // PMI (US only: ongoing until 78-80% LTV)
-                var pmiPortion = 0;
-                if (pmiIsOngoing) {
-                    var downPct = principal > 0 ? ((parseFloat(homeValueInput.value) - balance) / parseFloat(homeValueInput.value) * 100) : 100;
-                    if (downPct < 20) {
-                        pmiPortion = (annualPMI / 100 * balance) / ppy;
-                    }
-                }
+                if (principalPortion > balance) principalPortion = balance;
 
                 balance -= principalPortion;
                 termPrincipal += principalPortion;
                 termInterest += interestPortion;
-                termPMI += pmiPortion;
-
+                cumulativeInterest += interestPortion;
+                yearPrincipal += principalPortion;
+                yearInterest += interestPortion;
                 paymentsThisYear++;
 
-                // Schedule row
-                var absMonth = (startMonth + globalMonth) % 12;
-                var absYear = startYear + Math.floor((startMonth + globalMonth) / 12);
+                var periodInYear = globalPeriod % ppy;
+                var yearFromStart = Math.floor(globalPeriod / ppy);
+                var absMonth = (startMonth + Math.floor(globalPeriod * 12 / ppy)) % 12;
+                var absYear = startYear + Math.floor((startMonth + globalPeriod * 12 / ppy) / 12);
+
                 schedule.push({
+                    period: globalPeriod,
+                    periodInYear: periodInYear,
+                    yearFromStart: yearFromStart,
                     month: absMonth,
                     year: absYear,
                     termIndex: ti,
-                    payment: principalPortion + interestPortion + pmiPortion,
+                    payment: principalPortion + interestPortion,
                     principal: principalPortion,
                     interest: interestPortion,
-                    pmi: pmiPortion,
-                    tax: annualTax / ppy,
-                    insurance: annualInsurance / ppy,
-                    hoa: monthlyHOA * 12 / ppy,
                     balance: Math.max(0, balance),
+                    cumulativeInterest: cumulativeInterest,
                 });
 
-                globalMonth++;
+                globalPeriod++;
 
-                // Annual lump sum
                 if (lumpAnnual > 0 && paymentsThisYear === ppy && balance > 0.01) {
                     var lumpApply = Math.min(lumpAnnual, balance);
                     balance -= lumpApply;
@@ -569,158 +695,207 @@
                 }
             }
 
-            // Lump sum at renewal
             if (lumpTerm > 0 && balance > 0.01) {
                 var lumpApplyTerm = Math.min(lumpTerm, balance);
                 balance -= lumpApplyTerm;
                 termPrincipal += lumpApplyTerm;
             }
 
-            var termYears = term.years;
-            termTax = annualTax * termYears;
-            termInsurance = annualInsurance * termYears;
-            termHOA = monthlyHOA * 12 * termYears;
-
             totalInterest += termInterest;
             totalPrincipalPaid += termPrincipal;
-            totalTax += termTax;
-            totalInsurance += termInsurance;
-            totalHOA += termHOA;
-            totalPMI += termPMI;
-
             remainingAmort -= term.years;
             if (remainingAmort < 1) remainingAmort = 1;
 
-            var insuranceLabel = country === "ca" ? "CMHC" : "PMI";
+            var remainingYears = 0;
+            var remainingMonths = 0;
+            if (balance > 0.01) {
+                remainingYears = Math.max(0, remainingAmort);
+                remainingMonths = 0;
+            }
 
             termResults.push({
                 index: ti,
                 years: term.years,
                 rate: term.rate,
-                schedule: term.schedule,
                 basePayment: basePayment,
                 principalPaid: termPrincipal,
                 interestPaid: termInterest,
+                cumulativeInterest: cumulativeInterest,
                 balanceAtEnd: balance,
                 totalPayments: termPrincipal + termInterest,
-                tax: termTax,
-                insurance: termInsurance,
-                hoa: termHOA,
-                pmi: termPMI,
-                pmiLabel: insuranceLabel,
+                remainingYears: remainingYears,
+                remainingMonths: remainingMonths,
             });
+        }
 
+        // Final annual snapshot if there is leftover year data
+        if (yearPrincipal > 0 || yearInterest > 0) {
+            currentPaymentYear++;
+            annualSnapshots.push({
+                year: currentPaymentYear,
+                balance: Math.max(0, balance),
+                cumulativeInterest: cumulativeInterest,
+                annualPrincipal: yearPrincipal,
+                annualInterest: yearInterest,
+                termIndex: termResults.length > 0 ? termResults[termResults.length - 1].index : 0,
+                payment: termResults.length > 0 ? termResults[termResults.length - 1].basePayment : 0,
+            });
         }
 
         return {
             totalInterest: totalInterest,
             totalPrincipalPaid: totalPrincipalPaid,
             totalPaid: totalInterest + totalPrincipalPaid,
-            totalTax: totalTax,
-            totalInsurance: totalInsurance,
-            totalHOA: totalHOA,
-            totalPMI: totalPMI,
-            totalAllIn: totalPrincipalPaid + totalInterest + totalTax + totalInsurance + totalHOA + totalPMI,
             termResults: termResults,
             schedule: schedule,
+            annualSnapshots: annualSnapshots,
             paidOff: balance < 0.01,
             principal: principal,
-            pmiLabel: country === "ca" ? "Default Ins." : "PMI",
+            totalPeriods: globalPeriod,
         };
     }
 
-    // --- Results rendering ---
+    function simulateAllScenarios() {
+        var principal = parseFloat($("loan-amount").value) || 0;
+        var amort = parseInt($("amortization").value, 10) || 25;
+        var annualIncrease = parseFloat($("payment-increase").value) || 0;
+        var lumpAnnual = parseFloat($("lump-sum-annual").value) || 0;
+        var lumpTerm = parseFloat($("lump-sum-term").value) || 0;
+        var startMonth = parseInt($("start-month").value, 10) || 0;
+        var startYear = parseInt($("start-year").value, 10) || 2026;
+
+        var results = { base: null, scenarios: {} };
+
+        // Base scenario
+        results.base = simulateMortgage(principal, amort, terms, paymentFrequency, annualIncrease, lumpAnnual, lumpTerm, startMonth, startYear);
+
+        // Non-base scenarios
+        scenarios.forEach(function (sc) {
+            if (sc.id === "base" || !sc.visible) return;
+            var termDefs = getScenarioTermDefs(sc);
+            results.scenarios[sc.id] = simulateMortgage(principal, amort, termDefs, paymentFrequency, annualIncrease, lumpAnnual, lumpTerm, startMonth, startYear);
+        });
+
+        lastSimResults = results;
+        return results;
+    }
+
+    // ===== RESULTS RENDERING =====
 
     function render() {
-        var principal = parseFloat(loanAmountInput.value) || 0;
-        var amort = parseInt(amortInput.value, 10) || 25;
-        var annualIncrease = parseFloat(paymentIncreaseInput.value) || 0;
-        var lumpAnnual = parseFloat(lumpSumAnnualInput.value) || 0;
-        var lumpTerm = parseFloat(lumpSumTermInput.value) || 0;
-        var annualTax = parseFloat(propertyTaxInput.value) || 0;
-        var annualInsurance = parseFloat(homeInsuranceInput.value) || 0;
-        var monthlyHOA = parseFloat(hoaInput.value) || 0;
-        var annualPMI = parseFloat(pmiInput.value) || 0;
-        var startMonth = parseInt(startMonthInput.value, 10) || 0;
-        var startYear = parseInt(startYearInput.value, 10) || 2026;
+        var principal = parseFloat($("loan-amount").value) || 0;
+        var amort = parseInt($("amortization").value, 10) || 25;
 
         if (principal <= 0 || terms.length === 0) {
-            resultsEl.classList.remove("visible");
-            chartSection.classList.remove("visible");
-            pieSection.classList.remove("visible");
-            scheduleSection.style.display = "none";
+            $("results").classList.remove("visible");
+            $("savings-cards").classList.remove("visible");
+            $("charts-container").classList.remove("visible");
+            $("schedule-section").style.display = "none";
+            $("export-section").classList.remove("visible");
             return;
         }
 
-        var sim = simulateMortgage(principal, amort, terms, annualIncrease, lumpAnnual, lumpTerm, annualTax, annualInsurance, monthlyHOA, annualPMI, startMonth, startYear);
-        lastSimResult = sim;
+        var results = simulateAllScenarios();
+        var sim = results.base;
 
         // Update hook
-        hookLoan.textContent = fmt(principal);
-        hookInterest.textContent = fmt(sim.totalInterest);
+        $("hook-loan").textContent = fmt(principal);
+        $("hook-interest").textContent = fmt(sim.totalInterest);
 
-        // Summary
+        // Summary cards
         var html =
             '<div class="result-summary">' +
-            '<div class="summary-card"><div class="label">Total Cost (All-In)</div><div class="value">' + fmt(sim.totalAllIn) + '</div></div>' +
+            '<div class="summary-card"><div class="label">Total Paid</div><div class="value">' + fmt(sim.totalPaid) + '</div></div>' +
             '<div class="summary-card"><div class="label">Total Interest</div><div class="value">' + fmt(sim.totalInterest) + '</div></div>' +
             '<div class="summary-card accent"><div class="label">Interest / Payments</div><div class="value">' + fmtPct(sim.totalPaid > 0 ? sim.totalInterest / sim.totalPaid * 100 : 0) + '</div></div>' +
             '</div>';
 
-        // Bi-weekly comparison
-        var firstTerm = sim.termResults[0];
-        if (firstTerm && firstTerm.schedule === "monthly") {
-            var monthlyPay = firstTerm.basePayment;
-            var biweeklyPay = monthlyPay / 2;
-            var biweeklyAnnual = biweeklyPay * 26;
-            var monthlyAnnual = monthlyPay * 12;
-            var extraPerYear = biweeklyAnnual - monthlyAnnual;
-            html += '<div class="biweekly-compare">Switch to bi-weekly payments of <strong>' + fmtFull(biweeklyPay) + '</strong>? That puts <strong>' + fmt(extraPerYear) + ' extra/year</strong> toward your mortgage, cutting years off the amortization.</div>';
+        // CMHC premium card
+        var hv = parseFloat($("home-value").value) || 0;
+        var dp = parseFloat($("down-payment").value) || 0;
+        var pct = hv > 0 ? (dp / hv * 100) : 0;
+        if (country === "ca" && pct < 20 && hv > dp) {
+            var cmhcPrem = calcCmhcPremium(hv - dp, pct);
+            html += '<div class="summary-card" style="margin-bottom:1.25rem"><div class="label">CMHC Premium (in principal)</div><div class="value">' + fmt(cmhcPrem) + '</div></div>';
+        }
+
+        // Frequency comparison hint
+        if (paymentFrequency.startsWith("accelerated_")) {
+            var monthlyPmt = calcMonthlyPayment(principal, terms[0].rate, amort, countryConfig[country].compounding);
+            html += '<div class="freq-compare">Accelerated ' + freqLabel().replace("Accelerated ", "").toLowerCase() + ' payments of <strong>' + fmtFull(calcPeriodicPayment(principal, terms[0].rate, amort, paymentFrequency, countryConfig[country].compounding)) + '</strong> put ~1 extra monthly payment per year toward your mortgage.</div>';
         }
 
         // Per-term breakdown
         sim.termResults.forEach(function (tr, i) {
+            var remainingText = "";
+            if (tr.balanceAtEnd > 0.01) {
+                remainingText = '<div class="term-remaining">' + tr.remainingYears + ' yr remaining on amortization</div>';
+            }
             html +=
                 '<div class="term-result">' +
-                '<h4>Term ' + (i + 1) + ' &mdash; ' + tr.years + ' yr @ ' + tr.rate + '% (' + scheduleLabel(tr.schedule) + ')</h4>' +
+                '<h4>Term ' + (i + 1) + ' &mdash; ' + tr.years + ' yr @ ' + tr.rate + '% (' + freqLabel() + ')</h4>' +
                 '<dl class="term-result-grid">' +
-                '<div><dt>Payment</dt><dd>' + fmtFull(tr.basePayment) + '</dd></div>' +
+                '<div><dt>Payment</dt><dd>' + fmtFull(tr.basePayment) + freqSuffix() + '</dd></div>' +
                 '<div><dt>Principal Paid</dt><dd>' + fmt(tr.principalPaid) + '</dd></div>' +
                 '<div><dt>Interest Paid</dt><dd>' + fmt(tr.interestPaid) + '</dd></div>' +
-                '<div><dt>Total P&I</dt><dd>' + fmt(tr.totalPayments) + '</dd></div>' +
                 '<div><dt>Balance at End</dt><dd>' + fmt(tr.balanceAtEnd) + '</dd></div>' +
+                '<div><dt>Cumulative Interest</dt><dd>' + fmt(tr.cumulativeInterest) + '</dd></div>' +
                 '<div><dt>Interest Share</dt><dd>' + fmtPct(tr.totalPayments > 0 ? tr.interestPaid / tr.totalPayments * 100 : 0) + '</dd></div>' +
-                (tr.pmi > 0 ? '<div><dt>' + tr.pmiLabel + '</dt><dd>' + fmt(tr.pmi) + '</dd></div>' : '') +
                 '</dl>' +
+                remainingText +
                 '</div>';
         });
 
-        // Scenario comparison
-        var optOffset = parseFloat(rateOptimisticInput.value) || 0;
-        var pessOffset = parseFloat(ratePessimisticInput.value) || 0;
-        if (optOffset !== 0 || pessOffset !== 0) {
-            var optTerms = terms.map(function (t) { return { years: t.years, rate: Math.max(0, t.rate + optOffset), schedule: t.schedule }; });
-            var pessTerms = terms.map(function (t) { return { years: t.years, rate: t.rate + pessOffset, schedule: t.schedule }; });
-            var simOpt = simulateMortgage(principal, amort, optTerms, annualIncrease, lumpAnnual, lumpTerm, annualTax, annualInsurance, monthlyHOA, annualPMI, startMonth, startYear);
-            var simPess = simulateMortgage(principal, amort, pessTerms, annualIncrease, lumpAnnual, lumpTerm, annualTax, annualInsurance, monthlyHOA, annualPMI, startMonth, startYear);
+        // Scenario comparison table
+        var visibleScenarios = scenarios.filter(function (s) { return s.visible && s.id !== "base"; });
+        if (visibleScenarios.length > 0) {
+            html += '<div class="scenario-compare"><table class="scenario-table"><thead><tr><th></th>';
+            html += '<th><span class="scenario-label"><span class="chip-dot" style="background:' + baseColor + '"></span>Base</span></th>';
+            visibleScenarios.forEach(function (sc) {
+                html += '<th><span class="scenario-label"><span class="chip-dot" style="background:' + sc.color + '"></span>' + sc.label + '</span></th>';
+            });
+            html += '</tr></thead><tbody>';
 
-            html +=
-                '<div class="scenario-compare">' +
-                '<table class="scenario-table">' +
-                '<thead><tr><th></th>' +
-                '<th><span class="scenario-label opt">Optimistic (' + fmtPct(optOffset) + ')</span></th>' +
-                '<th>Base</th>' +
-                '<th><span class="scenario-label pess">Pessimistic (+' + fmtPct(pessOffset) + ')</span></th>' +
-                '</tr></thead><tbody>' +
-                '<tr><td>' + scheduleLabel(terms[0].schedule).charAt(0).toUpperCase() + scheduleLabel(terms[0].schedule).slice(1) + ' Payment</td><td>' + fmtFull(simOpt.termResults[0].basePayment) + '</td><td>' + fmtFull(sim.termResults[0].basePayment) + '</td><td>' + fmtFull(simPess.termResults[0].basePayment) + '</td></tr>' +
-                '<tr><td>Total Interest</td><td>' + fmt(simOpt.totalInterest) + '</td><td>' + fmt(sim.totalInterest) + '</td><td>' + fmt(simPess.totalInterest) + '</td></tr>' +
-                '<tr><td>Total Cost</td><td>' + fmt(simOpt.totalAllIn) + '</td><td>' + fmt(sim.totalAllIn) + '</td><td>' + fmt(simPess.totalAllIn) + '</td></tr>' +
-                '<tr><td>Interest Share</td><td>' + fmtPct(simOpt.totalPaid > 0 ? simOpt.totalInterest / simOpt.totalPaid * 100 : 0) + '</td><td>' + fmtPct(sim.totalPaid > 0 ? sim.totalInterest / sim.totalPaid * 100 : 0) + '</td><td>' + fmtPct(simPess.totalPaid > 0 ? simPess.totalInterest / simPess.totalPaid * 100 : 0) + '</td></tr>' +
-                '<tr><td>Paid Off</td><td>' + (simOpt.paidOff ? 'Yes' : 'No') + '</td><td>' + (sim.paidOff ? 'Yes' : 'No') + '</td><td>' + (simPess.paidOff ? 'Yes' : 'No') + '</td></tr>' +
-                '</tbody></table></div>';
+            var firstTerm = sim.termResults[0];
+            html += '<tr><td>' + freqLabel() + ' Payment</td><td>' + (firstTerm ? fmtFull(firstTerm.basePayment) : "-") + '</td>';
+            visibleScenarios.forEach(function (sc) {
+                var scSim = results.scenarios[sc.id];
+                html += '<td>' + (scSim && scSim.termResults[0] ? fmtFull(scSim.termResults[0].basePayment) : "-") + '</td>';
+            });
+            html += '</tr>';
+
+            html += '<tr><td>Total Interest</td><td>' + fmt(sim.totalInterest) + '</td>';
+            visibleScenarios.forEach(function (sc) {
+                var scSim = results.scenarios[sc.id];
+                html += '<td>' + (scSim ? fmt(scSim.totalInterest) : "-") + '</td>';
+            });
+            html += '</tr>';
+
+            html += '<tr><td>Total Paid</td><td>' + fmt(sim.totalPaid) + '</td>';
+            visibleScenarios.forEach(function (sc) {
+                var scSim = results.scenarios[sc.id];
+                html += '<td>' + (scSim ? fmt(scSim.totalPaid) : "-") + '</td>';
+            });
+            html += '</tr>';
+
+            html += '<tr><td>Interest Share</td><td>' + fmtPct(sim.totalPaid > 0 ? sim.totalInterest / sim.totalPaid * 100 : 0) + '</td>';
+            visibleScenarios.forEach(function (sc) {
+                var scSim = results.scenarios[sc.id];
+                html += '<td>' + (scSim ? fmtPct(scSim.totalPaid > 0 ? scSim.totalInterest / scSim.totalPaid * 100 : 0) : "-") + '</td>';
+            });
+            html += '</tr>';
+
+            html += '<tr><td>Paid Off</td><td>' + (sim.paidOff ? "Yes" : "No") + '</td>';
+            visibleScenarios.forEach(function (sc) {
+                var scSim = results.scenarios[sc.id];
+                html += '<td>' + (scSim ? (scSim.paidOff ? "Yes" : "No") : "-") + '</td>';
+            });
+            html += '</tr>';
+
+            html += '</tbody></table></div>';
         }
 
-        // Missing years to amortization
+        // Missing years
         var totalTermYears = 0;
         terms.forEach(function (t) { totalTermYears += t.years; });
         var missingYears = amort - totalTermYears;
@@ -737,226 +912,424 @@
             html += '<p class="hint warning">Mortgage not fully paid after all terms. Remaining balance: ' + fmt(sim.termResults[sim.termResults.length - 1].balanceAtEnd) + '</p>';
         }
 
-        resultsEl.innerHTML = html;
-        resultsEl.classList.add("visible");
+        $("results").innerHTML = html;
+        $("results").classList.add("visible");
 
-        drawInterestChart(sim);
-        chartSection.classList.add("visible");
+        // Savings cards
+        renderSavingsCards(results);
 
-        drawPieChart(sim);
-        pieSection.classList.add("visible");
+        // Charts
+        renderCharts(results);
 
+        // Schedule
         renderSchedule(sim);
+
+        // Export
+        $("export-section").classList.add("visible");
+
         saveState();
     }
 
-    // --- Interest per term bar chart ---
+    // ===== SAVINGS CARDS =====
 
-    function cssVar(name) {
-        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    function renderSavingsCards(results) {
+        var sim = results.base;
+        var visibleScenarios = scenarios.filter(function (s) { return s.visible && s.id !== "base"; });
+        if (visibleScenarios.length === 0) {
+            $("savings-cards").classList.remove("visible");
+            $("savings-cards").innerHTML = "";
+            return;
+        }
+
+        var html = '<div class="savings-cards-row">';
+        visibleScenarios.forEach(function (sc) {
+            var scSim = results.scenarios[sc.id];
+            if (!scSim) return;
+
+            var interestDelta = scSim.totalInterest - sim.totalInterest;
+            var baseMonths = sim.totalPeriods;
+            var scMonths = scSim.totalPeriods;
+            var monthDelta = scMonths - baseMonths;
+            var balanceAtFirstRenewal = sim.termResults.length > 0 ? sim.termResults[0].balanceAtEnd : 0;
+            var scBalanceAtFirstRenewal = scSim.termResults.length > 0 ? scSim.termResults[0].balanceAtEnd : 0;
+            var balanceDelta = scBalanceAtFirstRenewal - balanceAtFirstRenewal;
+
+            var interestClass = interestDelta < 0 ? "negative" : "positive";
+            var paidOffText = monthDelta < 0 ? Math.abs(monthDelta) + " periods early" : monthDelta > 0 ? monthDelta + " periods late" : "same";
+            var balanceClass = balanceDelta < 0 ? "negative" : balanceDelta > 0 ? "positive" : "";
+
+            html +=
+                '<div class="savings-card">' +
+                '<div class="savings-card-header"><span class="chip-dot" style="background:' + sc.color + '"></span>' + sc.label + '</div>' +
+                '<div class="savings-card-row"><span>Total interest</span><span class="delta ' + interestClass + '">' + (interestDelta >= 0 ? "+" : "") + fmt(interestDelta) + '</span></div>' +
+                '<div class="savings-card-row"><span>Paid off</span><span class="delta ' + (monthDelta <= 0 ? "negative" : "positive") + '">' + paidOffText + '</span></div>' +
+                '<div class="savings-card-row"><span>Balance at first renewal</span><span class="delta ' + balanceClass + '">' + (balanceDelta >= 0 ? "+" : "") + fmt(balanceDelta) + '</span></div>' +
+                '</div>';
+        });
+        html += '</div>';
+
+        $("savings-cards").innerHTML = html;
+        $("savings-cards").classList.add("visible");
     }
 
-    function drawInterestChart(sim) {
-        var canvas = document.getElementById("interestChart");
-        var dpr = window.devicePixelRatio || 1;
-        var rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        var ctx = canvas.getContext("2d");
-        ctx.scale(dpr, dpr);
+    // ===== CHARTS =====
 
-        var W = rect.width;
-        var H = rect.height;
-        var pad = { top: 25, right: 20, bottom: 40, left: 60 };
-        var plotW = W - pad.left - pad.right;
-        var plotH = H - pad.top - pad.bottom;
+    function renderCharts(results) {
+        var container = $("charts-container");
+        container.classList.add("visible");
 
-        ctx.clearRect(0, 0, W, H);
+        if (typeof Chart === "undefined") {
+            container.innerHTML = "<p class='hint'>Charts require an internet connection to load Chart.js.</p>";
+            return;
+        }
+
+        var sim = results.base;
+        var visibleScenarios = scenarios.filter(function (s) { return s.visible; });
+        var dark = isDark();
+        var gridColor = dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+        var textColor = dark ? "#aaa" : "#555";
+
+        // Term boundary years for annotations
+        var termBoundaries = [];
+        var cumYears = 0;
+        terms.forEach(function (t, i) {
+            cumYears += t.years;
+            termBoundaries.push({ year: cumYears, label: "T" + (i + 1), rate: t.rate });
+        });
+
+        // Chart A: Balance Over Time
+        drawLineChart("balanceChart", results, visibleScenarios, "balance", "Balance Over Time", "Balance ($)", gridColor, textColor, termBoundaries);
+
+        // Chart B: Cumulative Interest
+        drawLineChart("cumulativeInterestChart", results, visibleScenarios, "cumulativeInterest", "Cumulative Interest", "Interest ($)", gridColor, textColor, termBoundaries);
+
+        // Chart C: Payment Over Time (step chart)
+        drawPaymentChart(results, visibleScenarios, gridColor, textColor, termBoundaries);
+
+        // Chart D: Interest vs Principal split
+        drawIPSplitChart(results, gridColor, textColor);
+
+        // Interest per term bar chart
+        drawInterestBarChart(sim, gridColor, textColor);
+    }
+
+    function destroyChart(id) {
+        if (chartInstances[id]) {
+            chartInstances[id].destroy();
+            delete chartInstances[id];
+        }
+    }
+
+    function drawLineChart(canvasId, results, visibleScenarios, field, title, yLabel, gridColor, textColor, termBoundaries) {
+        destroyChart(canvasId);
+        var canvas = $(canvasId);
+        if (!canvas) return;
+
+        var datasets = [];
+        visibleScenarios.forEach(function (sc) {
+            var scSim = sc.id === "base" ? results.base : results.scenarios[sc.id];
+            if (!scSim) return;
+            var data = scSim.annualSnapshots.map(function (s) { return { x: s.year, y: s[field] }; });
+            datasets.push({
+                label: sc.label,
+                data: data,
+                borderColor: sc.color,
+                backgroundColor: sc.color + "20",
+                borderWidth: 2,
+                fill: field === "balance",
+                pointRadius: 0,
+                tension: 0.1,
+            });
+        });
+
+        var annotations = {};
+        termBoundaries.forEach(function (tb, i) {
+            annotations["term" + i] = {
+                type: "line",
+                xMin: tb.year,
+                xMax: tb.year,
+                borderColor: textColor,
+                borderWidth: 1,
+                borderDash: [4, 4],
+                label: {
+                    display: true,
+                    content: tb.label + " (" + tb.rate + "%)",
+                    position: "start",
+                    font: { size: 10 },
+                    backgroundColor: "transparent",
+                    color: textColor,
+                },
+            };
+        });
+
+        chartInstances[canvasId] = new Chart(canvas, {
+            type: "line",
+            data: { datasets: datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: "index", intersect: false },
+                scales: {
+                    x: {
+                        type: "linear",
+                        title: { display: true, text: "Year", color: textColor },
+                        grid: { color: gridColor },
+                        ticks: { color: textColor, stepSize: 5 },
+                    },
+                    y: {
+                        title: { display: true, text: yLabel, color: textColor },
+                        grid: { color: gridColor },
+                        ticks: {
+                            color: textColor,
+                            callback: function (v) { return v >= 1000 ? "$" + Math.round(v / 1000) + "k" : "$" + v; },
+                        },
+                    },
+                },
+                plugins: {
+                    annotation: { annotations: annotations },
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function (ctx) { return ctx.dataset.label + ": " + fmt(ctx.parsed.y); },
+                        },
+                    },
+                },
+            },
+        });
+    }
+
+    function drawPaymentChart(results, visibleScenarios, gridColor, textColor, termBoundaries) {
+        destroyChart("paymentChart");
+        var canvas = $("paymentChart");
+        if (!canvas) return;
+
+        var datasets = [];
+        visibleScenarios.forEach(function (sc) {
+            var scSim = sc.id === "base" ? results.base : results.scenarios[sc.id];
+            if (!scSim) return;
+            var data = [];
+            scSim.annualSnapshots.forEach(function (s) {
+                if (s.year > 0) data.push({ x: s.year, y: s.payment });
+            });
+            datasets.push({
+                label: sc.label,
+                data: data,
+                borderColor: sc.color,
+                backgroundColor: sc.color + "20",
+                borderWidth: 2,
+                stepped: "before",
+                fill: false,
+                pointRadius: 0,
+            });
+        });
+
+        var annotations = {};
+        termBoundaries.forEach(function (tb, i) {
+            annotations["term" + i] = {
+                type: "line",
+                xMin: tb.year,
+                xMax: tb.year,
+                borderColor: textColor,
+                borderWidth: 1,
+                borderDash: [4, 4],
+                label: {
+                    display: true,
+                    content: tb.label,
+                    position: "start",
+                    font: { size: 10 },
+                    backgroundColor: "transparent",
+                    color: textColor,
+                },
+            };
+        });
+
+        chartInstances["paymentChart"] = new Chart(canvas, {
+            type: "line",
+            data: { datasets: datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: "index", intersect: false },
+                scales: {
+                    x: {
+                        type: "linear",
+                        title: { display: true, text: "Year", color: textColor },
+                        grid: { color: gridColor },
+                        ticks: { color: textColor, stepSize: 5 },
+                    },
+                    y: {
+                        title: { display: true, text: "Payment (" + freqSuffix().replace("/", "").trim() + ")", color: textColor },
+                        grid: { color: gridColor },
+                        ticks: { color: textColor, callback: function (v) { return fmt(v); } },
+                    },
+                },
+                plugins: {
+                    annotation: { annotations: annotations },
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function (ctx) { return ctx.dataset.label + ": " + fmtFull(ctx.parsed.y) + freqSuffix(); },
+                        },
+                    },
+                },
+            },
+        });
+    }
+
+    function drawIPSplitChart(results, gridColor, textColor) {
+        destroyChart("ipSplitChart");
+        var canvas = $("ipSplitChart");
+        if (!canvas) return;
+
+        // Populate scenario selector
+        var select = $("ip-scenario-select");
+        select.innerHTML = "";
+        scenarios.forEach(function (sc) {
+            if (!sc.visible) return;
+            var opt = document.createElement("option");
+            opt.value = sc.id;
+            opt.textContent = sc.label;
+            select.appendChild(opt);
+        });
+
+        var selectedId = select.value || "base";
+        var sim = selectedId === "base" ? results.base : results.scenarios[selectedId];
+        if (!sim) return;
+
+        var snapshots = sim.annualSnapshots.filter(function (s) { return s.year > 0; });
+        var labels = snapshots.map(function (s) { return s.year; });
+
+        chartInstances["ipSplitChart"] = new Chart(canvas, {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: "Principal",
+                        data: snapshots.map(function (s) { return s.annualPrincipal; }),
+                        backgroundColor: isDark() ? "#b0b0b0" : "#4a4a4a",
+                    },
+                    {
+                        label: "Interest",
+                        data: snapshots.map(function (s) { return s.annualInterest; }),
+                        backgroundColor: isDark() ? "#666" : "#c5c5c5",
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        stacked: true,
+                        title: { display: true, text: "Year", color: textColor },
+                        grid: { color: gridColor },
+                        ticks: { color: textColor },
+                    },
+                    y: {
+                        stacked: true,
+                        title: { display: true, text: "Dollars", color: textColor },
+                        grid: { color: gridColor },
+                        ticks: { color: textColor, callback: function (v) { return v >= 1000 ? "$" + Math.round(v / 1000) + "k" : "$" + v; } },
+                    },
+                },
+                plugins: {
+                    legend: { display: true, labels: { color: textColor, boxWidth: 12 } },
+                    tooltip: {
+                        callbacks: {
+                            label: function (ctx) { return ctx.dataset.label + ": " + fmt(ctx.parsed.y); },
+                        },
+                    },
+                },
+            },
+        });
+
+        select.onchange = function () {
+            drawIPSplitChart(results, gridColor, textColor);
+        };
+    }
+
+    function drawInterestBarChart(sim, gridColor, textColor) {
+        destroyChart("interestBarChart");
+        var canvas = $("interestBarChart");
+        if (!canvas) return;
 
         var tr = sim.termResults;
         if (tr.length === 0) return;
 
-        var maxInterest = 0;
-        tr.forEach(function (t) { if (t.interestPaid > maxInterest) maxInterest = t.interestPaid; });
-        if (maxInterest === 0) return;
-
-        var niceMax = Math.ceil(maxInterest / 5000) * 5000;
-        if (niceMax === 0) niceMax = 5000;
-
-        var barGroupWidth = plotW / tr.length;
-        var barWidth = Math.max(1, Math.min(barGroupWidth * 0.55, 60));
-
-        // Grid
-        ctx.strokeStyle = cssVar("--chart-line");
-        ctx.lineWidth = 1;
-        ctx.font = '10px "SF Mono", "Roboto Mono", Menlo, monospace';
-        ctx.fillStyle = cssVar("--chart-text");
-        ctx.textAlign = "right";
-        ctx.textBaseline = "middle";
-
-        for (var g = 0; g <= 4; g++) {
-            var y = pad.top + (plotH / 4) * g;
-            ctx.beginPath();
-            ctx.moveTo(pad.left, y);
-            ctx.lineTo(pad.left + plotW, y);
-            ctx.stroke();
-            var val = niceMax * (1 - g / 4);
-            ctx.fillText(fmt(val), pad.left - 6, y);
-        }
-
-        // Bars
-        tr.forEach(function (t, i) {
-            var cx = pad.left + barGroupWidth * i + barGroupWidth / 2;
-            var x = cx - barWidth / 2;
-            var bHeight = (t.interestPaid / niceMax) * plotH;
-
-            ctx.fillStyle = termColors()[i % termColors().length];
-            ctx.fillRect(x, pad.top + plotH - bHeight, barWidth, bHeight);
-
-            // Value on top
-            ctx.fillStyle = cssVar("--text-2");
-            ctx.textAlign = "center";
-            ctx.textBaseline = "bottom";
-            ctx.font = '10px "SF Mono", "Roboto Mono", Menlo, monospace';
-            ctx.fillText(fmt(t.interestPaid), cx, pad.top + plotH - bHeight - 4);
-
-            // Term label
-            ctx.fillStyle = cssVar("--text-2");
-            ctx.textBaseline = "top";
-            ctx.font = '600 10px -apple-system, system-ui, sans-serif';
-            ctx.fillText("TERM " + (i + 1), cx, pad.top + plotH + 6);
-            ctx.font = '10px "SF Mono", "Roboto Mono", Menlo, monospace';
-            ctx.fillStyle = cssVar("--text-3");
-            ctx.fillText(t.years + "yr @ " + t.rate + "%", cx, pad.top + plotH + 20);
-        });
-
-        // Y-axis label
-        ctx.save();
-        ctx.translate(14, pad.top + plotH / 2);
-        ctx.rotate(-Math.PI / 2);
-        ctx.fillStyle = cssVar("--chart-text");
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.font = '600 10px -apple-system, system-ui, sans-serif';
-        ctx.fillText("INTEREST PAID", 0, 0);
-        ctx.restore();
-    }
-
-    // --- Pie chart: total cost breakdown ---
-
-    function drawPieChart(sim) {
-        var canvas = document.getElementById("pieChart");
-        var dpr = window.devicePixelRatio || 1;
-        var rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        var ctx = canvas.getContext("2d");
-        ctx.scale(dpr, dpr);
-
-        var W = rect.width;
-        var H = rect.height;
-        ctx.clearRect(0, 0, W, H);
-
-        var pc = pieColors();
-        var slices = [
-            { label: "Principal", value: sim.totalPrincipalPaid, color: pc[0] },
-            { label: "Interest", value: sim.totalInterest, color: pc[1] },
-            { label: "Property Tax", value: sim.totalTax, color: pc[2] },
-            { label: "Insurance", value: sim.totalInsurance, color: pc[3] },
-            { label: country === "ca" ? "Condo Fees" : "HOA", value: sim.totalHOA, color: pc[4] },
-        ];
-
-        if (sim.totalPMI > 0) {
-            slices.push({ label: sim.pmiLabel, value: sim.totalPMI, color: pc[5] });
-        }
-
-        slices = slices.filter(function (s) { return s.value > 0; });
-
-        if (slices.length === 0) return;
-
-        var total = 0;
-        slices.forEach(function (s) { total += s.value; });
-        if (total === 0) return;
-
-        var cx = W * 0.35;
-        var cy = H / 2;
-        var radius = Math.max(1, Math.min(cx - 20, cy - 15, 100));
-        var startAngle = -Math.PI / 2;
-
-        slices.forEach(function (s) {
-            var sliceAngle = (s.value / total) * 2 * Math.PI;
-            ctx.beginPath();
-            ctx.moveTo(cx, cy);
-            ctx.arc(cx, cy, radius, startAngle, startAngle + sliceAngle);
-            ctx.closePath();
-            ctx.fillStyle = s.color;
-            ctx.fill();
-            startAngle += sliceAngle;
-        });
-
-        // Inner circle for donut
-        ctx.beginPath();
-        ctx.arc(cx, cy, radius * 0.52, 0, Math.PI * 2);
-        ctx.fillStyle = cssVar("--bg");
-        ctx.fill();
-
-        // Center text
-        ctx.fillStyle = cssVar("--text");
-        ctx.font = '600 13px "SF Mono", "Roboto Mono", Menlo, monospace';
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(fmt(total), cx, cy - 6);
-        ctx.font = '600 9px -apple-system, system-ui, sans-serif';
-        ctx.fillStyle = cssVar("--chart-text");
-        ctx.fillText("TOTAL COST", cx, cy + 8);
-
-        // Legend
-        var legendX = W * 0.65;
-        var legendY = cy - slices.length * 13;
-        ctx.textAlign = "left";
-        ctx.textBaseline = "middle";
-        ctx.font = '600 10px -apple-system, system-ui, sans-serif';
-
-        slices.forEach(function (s, i) {
-            var ly = legendY + i * 26;
-            ctx.fillStyle = s.color;
-            ctx.fillRect(legendX, ly - 5, 12, 10);
-
-            ctx.fillStyle = cssVar("--text");
-            ctx.fillText(s.label, legendX + 18, ly);
-
-            ctx.fillStyle = cssVar("--chart-text");
-            ctx.font = '10px "SF Mono", "Roboto Mono", Menlo, monospace';
-            ctx.fillText(fmt(s.value) + " (" + (s.value / total * 100).toFixed(1) + "%)", legendX + 18, ly + 13);
-            ctx.font = '600 10px -apple-system, system-ui, sans-serif';
+        var tc = getTermColors();
+        chartInstances["interestBarChart"] = new Chart(canvas, {
+            type: "bar",
+            data: {
+                labels: tr.map(function (t, i) { return "Term " + (i + 1); }),
+                datasets: [{
+                    label: "Interest Paid",
+                    data: tr.map(function (t) { return t.interestPaid; }),
+                    backgroundColor: tr.map(function (t, i) { return tc[i % tc.length]; }),
+                    borderWidth: 0,
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: textColor } },
+                    y: {
+                        grid: { color: gridColor },
+                        ticks: { color: textColor, callback: function (v) { return fmt(v); } },
+                        title: { display: true, text: "Interest Paid", color: textColor },
+                    },
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: function (items) {
+                                var i = items[0].dataIndex;
+                                return "Term " + (i + 1) + " &mdash; " + tr[i].years + "yr @ " + tr[i].rate + "%";
+                            },
+                            label: function (ctx) { return fmt(ctx.parsed.y); },
+                        },
+                    },
+                },
+            },
         });
     }
 
-    // --- Amortization schedule ---
+    // ===== CHART TABS =====
+
+    $("charts-container").querySelectorAll(".chart-tab").forEach(function (tab) {
+        tab.addEventListener("click", function () {
+            $("charts-container").querySelectorAll(".chart-tab").forEach(function (t) { t.classList.remove("active"); });
+            tab.classList.add("active");
+            $("charts-container").querySelectorAll(".chart-panel").forEach(function (p) { p.classList.remove("visible"); });
+            var panel = $("panel-" + tab.dataset.chart);
+            if (panel) panel.classList.add("visible");
+        });
+    });
+
+    // ===== AMORTIZATION SCHEDULE =====
 
     function renderSchedule(sim) {
-        scheduleSection.style.display = "block";
+        $("schedule-section").style.display = "block";
         var rows = sim.schedule;
+        var ppy = frequencyConfig[paymentFrequency].ppy;
+        var startYear = parseInt($("start-year").value, 10) || 2026;
 
         if (scheduleMode === "annual") {
             var byYear = {};
             rows.forEach(function (r) {
-                var key = r.year;
-                if (!byYear[key]) byYear[key] = { year: key, termIndex: r.termIndex, payment: 0, principal: 0, interest: 0, tax: 0, insurance: 0, hoa: 0, pmi: 0, balance: 0 };
+                var key = r.yearFromStart;
+                if (!byYear[key]) byYear[key] = { yearFromStart: key, year: r.year, termIndex: r.termIndex, payment: 0, principal: 0, interest: 0, balance: 0 };
                 byYear[key].payment += r.payment;
                 byYear[key].principal += r.principal;
                 byYear[key].interest += r.interest;
-                byYear[key].tax += r.tax;
-                byYear[key].insurance += r.insurance;
-                byYear[key].hoa += r.hoa;
-                byYear[key].pmi += r.pmi;
                 byYear[key].balance = r.balance;
             });
             var yearRows = Object.keys(byYear).sort(function (a, b) { return a - b; }).map(function (k) { return byYear[k]; });
 
-            scheduleTableHead.innerHTML = "<tr><th>Year</th><th>Payment</th><th>Principal</th><th>Interest</th>" +
-                (sim.totalPMI > 0 ? "<th>" + sim.pmiLabel + "</th>" : "") +
-                "<th>Tax</th><th>Ins.</th><th>" + (country === "ca" ? "Condo" : "HOA") + "</th><th>Balance</th></tr>";
+            $("schedule-table").querySelector("thead").innerHTML =
+                "<tr><th>Year</th><th>Payment</th><th>Principal</th><th>Interest</th><th>Balance</th></tr>";
 
             var html = "";
             var prevTerm = yearRows.length > 0 ? yearRows[0].termIndex : -1;
@@ -968,127 +1341,253 @@
                     "<td>" + fmt(r.payment) + "</td>" +
                     "<td>" + fmt(r.principal) + "</td>" +
                     "<td>" + fmt(r.interest) + "</td>" +
-                    (sim.totalPMI > 0 ? "<td>" + fmt(r.pmi) + "</td>" : "") +
-                    "<td>" + fmt(r.tax) + "</td>" +
-                    "<td>" + fmt(r.insurance) + "</td>" +
-                    "<td>" + fmt(r.hoa) + "</td>" +
                     "<td>" + fmt(r.balance) + "</td>" +
                     "</tr>";
             });
-            scheduleTableBody.innerHTML = html;
+            $("schedule-table").querySelector("tbody").innerHTML = html;
         } else {
-            scheduleTableHead.innerHTML = "<tr><th>Date</th><th>Payment</th><th>Principal</th><th>Interest</th>" +
-                (sim.totalPMI > 0 ? "<th>" + sim.pmiLabel + "</th>" : "") +
-                "<th>Balance</th></tr>";
+            // Detail view
+            $("schedule-table").querySelector("thead").innerHTML =
+                "<tr><th>Period</th><th>Payment</th><th>Principal</th><th>Interest</th><th>Balance</th></tr>";
 
             var html = "";
             var prevTerm = rows.length > 0 ? rows[0].termIndex : -1;
             rows.forEach(function (r) {
                 var cls = r.termIndex !== prevTerm ? ' class="term-boundary"' : "";
                 prevTerm = r.termIndex;
+                var label = paymentFrequency === "monthly"
+                    ? monthNames[r.month] + " " + r.year
+                    : "Y" + (r.yearFromStart + 1) + " P" + (r.periodInYear + 1);
                 html += "<tr" + cls + ">" +
-                    "<td>" + monthNames[r.month] + " " + r.year + "</td>" +
+                    "<td>" + label + "</td>" +
                     "<td>" + fmt(r.payment) + "</td>" +
                     "<td>" + fmt(r.principal) + "</td>" +
                     "<td>" + fmt(r.interest) + "</td>" +
-                    (sim.totalPMI > 0 ? "<td>" + fmt(r.pmi) + "</td>" : "") +
                     "<td>" + fmt(r.balance) + "</td>" +
                     "</tr>";
             });
-            scheduleTableBody.innerHTML = html;
+            $("schedule-table").querySelector("tbody").innerHTML = html;
         }
     }
 
-    // Schedule toggle
-    btnMonthly.addEventListener("click", function () {
-        scheduleMode = "monthly";
-        btnMonthly.classList.add("active");
-        btnAnnual.classList.remove("active");
-        if (lastSimResult) renderSchedule(lastSimResult);
+    $("btn-detail").addEventListener("click", function () {
+        scheduleMode = "detail";
+        $("btn-detail").classList.add("active");
+        $("btn-annual").classList.remove("active");
+        if (lastSimResults) renderSchedule(lastSimResults.base);
     });
 
-    btnAnnual.addEventListener("click", function () {
+    $("btn-annual").addEventListener("click", function () {
         scheduleMode = "annual";
-        btnAnnual.classList.add("active");
-        btnMonthly.classList.remove("active");
-        if (lastSimResult) renderSchedule(lastSimResult);
+        $("btn-annual").classList.add("active");
+        $("btn-detail").classList.remove("active");
+        if (lastSimResults) renderSchedule(lastSimResults.base);
     });
 
-    // --- Event bindings ---
+    // ===== EXPORT/SHARE =====
 
-    [amortInput, paymentIncreaseInput, lumpSumAnnualInput, lumpSumTermInput,
-     propertyTaxInput, homeInsuranceInput, hoaInput, pmiInput, startYearInput,
-     rateOptimisticInput, ratePessimisticInput].forEach(function (el) {
-        el.addEventListener("input", render);
+    function base64Encode(str) {
+        return btoa(unescape(encodeURIComponent(str)));
+    }
+
+    function base64Decode(str) {
+        try { return decodeURIComponent(escape(atob(str))); } catch (e) { return null; }
+    }
+
+    $("btn-share").addEventListener("click", function () {
+        try {
+            var state = {
+                c: country,
+                hv: $("home-value").value,
+                dp: $("down-payment").value,
+                am: $("amortization").value,
+                pi: $("payment-increase").value,
+                la: $("lump-sum-annual").value,
+                lt: $("lump-sum-term").value,
+                pf: paymentFrequency,
+                ftb: firstTimeBuyer,
+                nb: newBuild,
+                t: terms,
+                sc: scenarios.filter(function (s) { return s.id !== "base"; }),
+            };
+            var encoded = base64Encode(JSON.stringify(state));
+            var url = window.location.pathname + "?s=" + encodeURIComponent(encoded);
+            navigator.clipboard.writeText(window.location.origin + url).then(function () {
+                $("btn-share").textContent = "Copied!";
+                setTimeout(function () { $("btn-share").textContent = "Copy shareable link"; }, 2000);
+            });
+        } catch (e) {}
     });
 
-    startMonthInput.addEventListener("change", render);
+    $("btn-csv").addEventListener("click", function () {
+        if (!lastSimResults) return;
+        var lines = ["Scenario,Year,Period,Payment,Principal,Interest,Balance"];
+        var ppy = frequencyConfig[paymentFrequency].ppy;
+
+        function addScenarioRows(label, sim) {
+            sim.schedule.forEach(function (r) {
+                lines.push(
+                    label + "," +
+                    r.year + "," +
+                    (r.periodInYear + 1) + "," +
+                    r.payment.toFixed(2) + "," +
+                    r.principal.toFixed(2) + "," +
+                    r.interest.toFixed(2) + "," +
+                    r.balance.toFixed(2)
+                );
+            });
+        }
+
+        addScenarioRows("Base", lastSimResults.base);
+        Object.keys(lastSimResults.scenarios).forEach(function (id) {
+            var sc = scenarios.find(function (s) { return s.id === id; });
+            if (sc) addScenarioRows(sc.label, lastSimResults.scenarios[id]);
+        });
+
+        var csv = lines.join("\n");
+        var blob = new Blob([csv], { type: "text/csv" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = "mortgage-amortization.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+
+    // ===== URL STATE =====
+
+    function loadUrlState() {
+        try {
+            var params = new URLSearchParams(window.location.search);
+            var encoded = params.get("s");
+            if (!encoded) return null;
+            var json = base64Decode(decodeURIComponent(encoded));
+            if (!json) return null;
+            var state = JSON.parse(json);
+            return {
+                v: 2,
+                country: state.c || "ca",
+                homeValue: state.hv,
+                downPayment: state.dp,
+                amortization: state.am,
+                paymentIncrease: state.pi,
+                lumpSumAnnual: state.la,
+                lumpSumTerm: state.lt,
+                paymentFrequency: state.pf || "monthly",
+                firstTimeBuyer: !!state.ftb,
+                newBuild: !!state.nb,
+                terms: state.t || [],
+                scenarios: [{ id: "base", label: "Base", locked: true, color: baseColor, visible: true }].concat(
+                    (state.sc || []).map(function (s, i) {
+                        s.visible = true;
+                        return s;
+                    })
+                ),
+            };
+        } catch (e) { return null; }
+    }
+
+    // ===== EVENT BINDINGS =====
+
+    [$("amortization"), $("payment-increase"), $("lump-sum-annual"), $("lump-sum-term"), $("start-year")].forEach(function (el) {
+        el.addEventListener("input", function () { syncLoan(); render(); });
+    });
+
+    $("payment-frequency").addEventListener("change", function () {
+        paymentFrequency = this.value;
+        render();
+    });
+
+    $("first-time-buyer").addEventListener("change", function () {
+        firstTimeBuyer = this.checked;
+        syncLoan();
+        render();
+    });
+
+    $("new-build").addEventListener("change", function () {
+        newBuild = this.checked;
+        syncLoan();
+        render();
+    });
+
+    $("start-month").addEventListener("change", render);
 
     var resizeTimer;
     window.addEventListener("resize", function () {
         clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(function () { if (lastSimResult) render(); }, 150);
+        resizeTimer = setTimeout(function () { if (lastSimResults) render(); }, 150);
     });
 
-    // Re-render charts when theme changes (canvas doesn't respond to CSS)
+    // Re-render charts when theme changes
     new MutationObserver(function () {
-        if (lastSimResult) {
-            drawInterestChart(lastSimResult);
-            drawPieChart(lastSimResult);
-        }
+        if (lastSimResults) render();
     }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
-    // --- Init ---
+    // ===== INIT =====
 
+    var urlState = loadUrlState();
     var saved = loadState();
-    if (saved && applyState(saved)) {
-        // Restored from localStorage
+    var migrated = migrateState(saved);
+
+    if (urlState) {
+        applyState(urlState);
+    } else if (migrated && applyState(migrated)) {
+        // Restored
     } else {
-        terms = countryConfig.ca.defaultTerms.map(function (t) { return { years: t.years, rate: t.rate, schedule: t.schedule }; });
+        terms = countryConfig.ca.defaultTerms.map(function (t) { return { years: t.years, rate: t.rate }; });
+        initScenarios();
     }
+
+    // Ensure base scenario exists
+    if (!scenarios.find(function (s) { return s.id === "base"; })) {
+        scenarios.unshift({ id: "base", label: "Base", locked: true, color: baseColor, visible: true });
+    }
+
+    $("payment-frequency").value = paymentFrequency;
+    $("first-time-buyer").checked = firstTimeBuyer;
+    $("new-build").checked = newBuild;
+
     syncLoan();
     renderTerms();
+    renderScenarioChips();
     renderCountryInfo();
     loadCollapsedState();
     render();
 
-    // Clear all button
-    btnClear.addEventListener("click", function () {
+    // Clear button
+    $("btn-clear").addEventListener("click", function () {
         clearState();
-        try { localStorage.removeItem(LS_KEY + "-collapsed"); } catch (e) {}
         country = "ca";
-        btnCA.classList.add("active");
-        btnUS.classList.remove("active");
+        $("btn-ca").classList.add("active");
+        $("btn-us").classList.remove("active");
         var cfg = countryConfig.ca;
-        pmiLabel.textContent = cfg.insuranceLabel;
-        hoaLabel.textContent = cfg.hoaLabel;
-        propertyTaxLabel.textContent = cfg.taxLabel;
-        amortInput.max = cfg.maxAmort;
+        $("amortization").max = cfg.maxAmort;
 
-        homeValueInput.value = 500000;
-        downPaymentInput.value = 100000;
-        amortInput.value = cfg.defaultAmort;
-        paymentIncreaseInput.value = 0;
-        lumpSumAnnualInput.value = 0;
-        lumpSumTermInput.value = 0;
-        propertyTaxInput.value = 3500;
-        homeInsuranceInput.value = 1200;
-        hoaInput.value = 0;
-        pmiInput.value = 0;
-        startMonthInput.value = 5;
-        startYearInput.value = 2026;
-        rateOptimisticInput.value = -1;
-        ratePessimisticInput.value = 2;
+        $("home-value").value = 500000;
+        $("down-payment").value = 100000;
+        $("amortization").value = cfg.defaultAmort;
+        $("payment-increase").value = 0;
+        $("lump-sum-annual").value = 0;
+        $("lump-sum-term").value = 0;
+        $("start-month").value = 5;
+        $("start-year").value = 2026;
+        $("payment-frequency").value = "monthly";
+        paymentFrequency = "monthly";
+        firstTimeBuyer = false;
+        newBuild = false;
+        $("first-time-buyer").checked = false;
+        $("new-build").checked = false;
 
-        terms = cfg.defaultTerms.map(function (t) { return { years: t.years, rate: t.rate, schedule: t.schedule }; });
+        terms = cfg.defaultTerms.map(function (t) { return { years: t.years, rate: t.rate }; });
+        initScenarios();
 
-        // Reset collapsibles to collapsed
         Object.keys(collapsibles).forEach(function (key) {
             collapsibles[key].body.classList.add("collapsed");
             collapsibles[key].arrow.classList.remove("open");
         });
 
         renderTerms();
+        renderScenarioChips();
         syncLoan();
         renderCountryInfo();
         render();

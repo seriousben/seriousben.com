@@ -39,7 +39,7 @@
 
     <div id="country-info" class="country-info"></div>
 
-    <!-- Core inputs: always visible -->
+    <!-- Core inputs -->
     <div class="section">
         <div class="input-row core-row">
             <div class="field">
@@ -63,46 +63,58 @@
                     <input type="number" id="loan-amount" value="400000" min="0" step="1000" readonly>
                 </div>
             </div>
+        </div>
+        <div class="input-row core-row">
             <div class="field">
                 <label for="amortization">Amortization</label>
                 <div class="input-wrap">
-                    <input type="number" id="amortization" value="25" min="1" max="40" step="1">
+                    <input type="number" id="amortization" value="25" min="1" max="30" step="1">
                     <span class="suffix">yr</span>
                 </div>
             </div>
+            <div class="field">
+                <label for="payment-frequency">Payment Frequency</label>
+                <select id="payment-frequency">
+                    <option value="monthly">Monthly</option>
+                    <option value="semimonthly">Semi-monthly</option>
+                    <option value="biweekly">Bi-weekly</option>
+                    <option value="accelerated_biweekly">Accelerated bi-weekly</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="accelerated_weekly">Accelerated weekly</option>
+                </select>
+            </div>
         </div>
+
+        <!-- CMHC display (Canada only) -->
+        <div id="cmhc-row" class="cmhc-row" style="display:none">
+            <div class="cmhc-info">
+                <span id="cmhc-amount" class="cmhc-amount"></span>
+            </div>
+            <div id="cmhc-eligibility" class="cmhc-eligibility" style="display:none">
+                <label class="checkbox-label"><input type="checkbox" id="first-time-buyer"> First-time home buyer</label>
+                <label class="checkbox-label"><input type="checkbox" id="new-build"> New build</label>
+            </div>
+            <div id="cmhc-warnings" class="cmhc-warnings"></div>
+        </div>
+
         <div id="terms-list" class="terms-list"></div>
         <button id="add-term" class="btn-link">+ Add another term</button>
     </div>
 
-    <!-- Expandable: scenarios -->
+    <!-- Scenarios -->
     <div class="section collapsible">
         <button class="section-toggle" id="toggle-scenarios">
             <span class="section-title">Scenarios</span>
             <span class="toggle-arrow" id="arrow-scenarios"></span>
         </button>
         <div class="section-body collapsed" id="body-scenarios">
-            <p class="scenario-hint">Adjust term rates by a fixed offset to model optimistic (rates fall) or pessimistic (rates rise) outcomes.</p>
-            <div class="input-row">
-                <div class="field">
-                    <label for="rate-optimistic">Optimistic</label>
-                    <div class="input-wrap">
-                        <input type="number" id="rate-optimistic" value="-1" min="-10" max="0" step="0.25">
-                        <span class="suffix">%</span>
-                    </div>
-                </div>
-                <div class="field">
-                    <label for="rate-pessimistic">Pessimistic</label>
-                    <div class="input-wrap">
-                        <input type="number" id="rate-pessimistic" value="2" min="0" max="10" step="0.25">
-                        <span class="suffix">%</span>
-                    </div>
-                </div>
-            </div>
+            <div id="scenario-chips" class="scenario-chips"></div>
+            <button id="add-scenario" class="btn-link">+ Add Scenario</button>
+            <div id="scenario-editor" class="scenario-editor"></div>
         </div>
     </div>
 
-    <!-- Expandable: prepayments -->
+    <!-- Prepayments -->
     <div class="section collapsible">
         <button class="section-toggle" id="toggle-prepay">
             <span class="section-title">Prepayments</span>
@@ -135,50 +147,7 @@
         </div>
     </div>
 
-    <!-- Expandable: recurring costs -->
-    <div class="section collapsible">
-        <button class="section-toggle" id="toggle-costs">
-            <span class="section-title">Recurring Costs</span>
-            <span class="toggle-arrow" id="arrow-costs"></span>
-        </button>
-        <div class="section-body collapsed" id="body-costs">
-            <div class="input-row">
-                <div class="field">
-                    <label for="property-tax" id="property-tax-label">Property Tax / Year</label>
-                    <div class="input-wrap">
-                        <span class="prefix">$</span>
-                        <input type="number" id="property-tax" value="3500" min="0" step="100">
-                    </div>
-                </div>
-                <div class="field">
-                    <label for="home-insurance">Home Insurance / Year</label>
-                    <div class="input-wrap">
-                        <span class="prefix">$</span>
-                        <input type="number" id="home-insurance" value="1200" min="0" step="100">
-                    </div>
-                </div>
-                <div class="field">
-                    <label for="hoa" id="hoa-label">HOA / Month</label>
-                    <div class="input-wrap">
-                        <span class="prefix">$</span>
-                        <input type="number" id="hoa" value="0" min="0" step="25">
-                    </div>
-                </div>
-            </div>
-            <div class="pmi-row" id="pmi-row" style="display:none;">
-                <div class="field">
-                    <label for="pmi" id="pmi-label">Mortgage Insurance</label>
-                    <div class="input-wrap">
-                        <input type="number" id="pmi" value="0" min="0" step="0.01">
-                        <span class="suffix">%/yr</span>
-                    </div>
-                </div>
-            </div>
-            <div class="hint" id="pmi-hint"></div>
-        </div>
-    </div>
-
-    <!-- Expandable: start date -->
+    <!-- Start Date -->
     <div class="section collapsible">
         <button class="section-toggle" id="toggle-date">
             <span class="section-title">Start Date</span>
@@ -208,15 +177,37 @@
     <!-- Results -->
     <div id="results" class="section results-section"></div>
 
-    <!-- Charts -->
-    <div id="chart-section" class="section chart-section">
-        <h2 class="section-title">Interest Paid Per Term</h2>
-        <canvas id="interestChart"></canvas>
-    </div>
+    <!-- Savings cards -->
+    <div id="savings-cards" class="section savings-section"></div>
 
-    <div id="pie-section" class="section chart-section">
-        <h2 class="section-title">Total Cost Breakdown</h2>
-        <canvas id="pieChart"></canvas>
+    <!-- Charts -->
+    <div id="charts-container" class="section charts-container" style="display:none">
+        <div class="chart-tabs">
+            <button class="chart-tab active" data-chart="balance">Balance Over Time</button>
+            <button class="chart-tab" data-chart="cumulative">Cumulative Interest</button>
+            <button class="chart-tab" data-chart="payment">Payment Over Time</button>
+            <button class="chart-tab" data-chart="ip">Interest vs Principal</button>
+        </div>
+        <div class="chart-panel visible" id="panel-balance">
+            <canvas id="balanceChart"></canvas>
+        </div>
+        <div class="chart-panel" id="panel-cumulative">
+            <canvas id="cumulativeInterestChart"></canvas>
+        </div>
+        <div class="chart-panel" id="panel-payment">
+            <canvas id="paymentChart"></canvas>
+        </div>
+        <div class="chart-panel" id="panel-ip">
+            <div class="ip-header">
+                <select id="ip-scenario-select"></select>
+            </div>
+            <canvas id="ipSplitChart"></canvas>
+        </div>
+
+        <!-- Interest per term bar chart -->
+        <div class="chart-panel" id="panel-interest-bar">
+            <canvas id="interestBarChart"></canvas>
+        </div>
     </div>
 
     <!-- Amortization schedule -->
@@ -224,7 +215,7 @@
         <h2 class="section-title">
             Amortization Schedule
             <div class="schedule-toggle">
-                <button id="btn-monthly" class="toggle-btn">Monthly</button>
+                <button id="btn-detail" class="toggle-btn">Detail</button>
                 <button id="btn-annual" class="toggle-btn active">Annual</button>
             </div>
         </h2>
@@ -234,6 +225,12 @@
                 <tbody></tbody>
             </table>
         </div>
+    </div>
+
+    <!-- Export/Share -->
+    <div id="export-section" class="section export-section" style="display:none">
+        <button id="btn-share" class="export-btn">Copy shareable link</button>
+        <button id="btn-csv" class="export-btn">Export CSV</button>
     </div>
 
     <footer class="tool-footer">
@@ -264,6 +261,8 @@
             });
         })();
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3/dist/chartjs-plugin-annotation.min.js"></script>
     <script src="./script.js"></script>
 </body>
 </html>
