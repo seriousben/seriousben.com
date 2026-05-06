@@ -735,9 +735,11 @@
             var termInterest = 0;
 
             for (var p = 0; p < termPeriods && balance > 0.01; p++) {
-                if (p > 0 && p % ppy === 0) {
+                paymentsThisYear++;
+
+                // Year boundary: after ppy payments, emit snapshot and apply increase
+                if (paymentsThisYear === ppy) {
                     payment += annualIncrease;
-                    // Emit annual snapshot at year boundary
                     currentPaymentYear++;
                     annualSnapshots.push({
                         year: currentPaymentYear,
@@ -750,6 +752,7 @@
                     });
                     yearPrincipal = 0;
                     yearInterest = 0;
+                    paymentsThisYear = 0;
                 }
 
                 var interestPortion = balance * r;
@@ -762,7 +765,6 @@
                 cumulativeInterest += interestPortion;
                 yearPrincipal += principalPortion;
                 yearInterest += interestPortion;
-                paymentsThisYear++;
 
                 var periodInYear = globalPeriod % ppy;
                 var yearFromStart = Math.floor(globalPeriod / ppy);
@@ -785,7 +787,11 @@
 
                 globalPeriod++;
 
-                if (lumpAnnual > 0 && paymentsThisYear === ppy && balance > 0.01) {
+                // Lump sum: apply after the last payment of each year
+                // (paymentsThisYear was already reset at year boundary, so
+                // this checks if we just hit ppy by checking before the reset)
+                if (lumpAnnual > 0 && paymentsThisYear === 0 && p > 0 && balance > 0.01) {
+                    // paymentsThisYear === 0 means we just reset at year boundary
                     var lumpApply = Math.min(lumpAnnual, balance);
                     balance -= lumpApply;
                     termPrincipal += lumpApply;
@@ -803,11 +809,25 @@
             remainingAmort -= term.years;
             if (remainingAmort < 1) remainingAmort = 1;
 
+            // Compute remaining time in years + months from remaining amortization
             var remainingYears = 0;
             var remainingMonths = 0;
             if (balance > 0.01) {
-                remainingYears = Math.max(0, remainingAmort);
-                remainingMonths = 0;
+                // remainingAmort is in whole years (truncated). Use the original
+                // amortization minus elapsed years to get a more precise fraction.
+                var elapsedYears = 0;
+                for (var ei = 0; ei <= ti; ei++) {
+                    elapsedYears += termDefs[ei].years;
+                }
+                var totalRemaining = amortYears - elapsedYears;
+                if (totalRemaining > 0) {
+                    remainingYears = Math.floor(totalRemaining);
+                    remainingMonths = Math.round((totalRemaining - remainingYears) * 12);
+                    if (remainingMonths >= 12) {
+                        remainingYears++;
+                        remainingMonths -= 12;
+                    }
+                }
             }
 
             termResults.push({
