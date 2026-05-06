@@ -218,13 +218,6 @@
         return val.toFixed(1) + "%";
     }
 
-    function fmtShort(val) {
-        if (Math.abs(val) >= 1000000) {
-            return "$" + (val / 1000000).toFixed(1) + "M";
-        }
-        return fmt(val);
-    }
-
     // --- Local storage ---
 
     function saveState() {
