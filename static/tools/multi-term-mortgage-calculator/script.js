@@ -64,6 +64,29 @@
 
     var scenarioPresetColors = ["#2ecc71", "#e74c3c", "#f39c12", "#9b59b6", "#1abc9c"];
     var baseColor = "#4f86c6";
+
+    // Sanitize untrusted state (localStorage, shareable URLs). Labels become plain
+    // text and colors are restricted to the known palette so they can never inject
+    // markup through the innerHTML render paths below.
+    function sanitizeScenario(s) {
+        var label = String(s && s.label != null ? s.label : "Scenario");
+        var color = scenarioPresetColors.indexOf(s && s.color) !== -1 ? s.color : getNextColor();
+        var mode = (s && s.mode === "custom") ? "custom" : "offset";
+        var out = { label: label, color: color, mode: mode, offset: Number(s && s.offset) || 0, visible: true };
+        if (s && s.id === "base") out.id = "base";
+        if (mode === "custom") {
+            out.termRates = (Array.isArray(s.termRates) ? s.termRates : []).map(function (r) { return Number(r) || 0; });
+        } else {
+            delete out.termRates;
+        }
+        return out;
+    }
+
+    function esc(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+    }
     var termColorsLight = ["#111", "#4a4a4a", "#7a7a7a", "#a5a5a5", "#c5c5c5", "#333", "#5a5a5a", "#8a8a8a"];
     var termColorsDark  = ["#e0e0e0", "#b0b0b0", "#888888", "#666666", "#444444", "#ccc", "#999", "#777"];
 
@@ -314,10 +337,10 @@
         var optOffset = parseFloat(old.rateOptimistic) || 0;
         var pessOffset = parseFloat(old.ratePessimistic) || 0;
         if (optOffset !== 0) {
-            s.scenarios.push({ id: "s1", label: "Optimistic", mode: "offset", offset: optOffset, color: "#2ecc71", visible: true });
+            s.scenarios.push(sanitizeScenario({ id: "s1", label: "Optimistic", mode: "offset", offset: optOffset, color: "#2ecc71" }));
         }
         if (pessOffset !== 0) {
-            s.scenarios.push({ id: "s2", label: "Pessimistic", mode: "offset", offset: pessOffset, color: "#e74c3c", visible: true });
+            s.scenarios.push(sanitizeScenario({ id: "s1", label: "Pessimistic", mode: "offset", offset: pessOffset, color: "#e74c3c" }));
         }
         return s;
     }
@@ -529,7 +552,7 @@
             chip.dataset.id = sc.id;
             chip.innerHTML =
                 '<span class="chip-dot" style="background:' + sc.color + '"></span>' +
-                sc.label +
+                esc(sc.label) +
                 (!sc.locked ?
                     ' <button class="chip-edit" data-id="' + sc.id + '" title="Edit">&#9998;</button>' +
                     ' <button class="chip-delete" data-id="' + sc.id + '" title="Delete">&times;</button>'
@@ -572,7 +595,7 @@
 
         var html =
             '<div class="input-row">' +
-            '<div class="field"><label>Label</label><div class="input-wrap"><input type="text" id="sc-label-input" value="' + label + '"></div></div>' +
+            '<div class="field"><label>Label</label><div class="input-wrap"><input type="text" id="sc-label-input" value="' + esc(label) + '"></div></div>' +
             '<div class="field"><label>Color</label><div class="color-swatches" id="sc-color-swatches">' +
             scenarioPresetColors.map(function (c) {
                 return '<button class="color-swatch' + (c === color ? " selected" : "") + '" style="background:' + c + '" data-color="' + c + '"></button>';
@@ -973,7 +996,7 @@
             html += '<div class="scenario-compare"><table class="scenario-table"><thead><tr><th></th>';
             html += '<th><span class="scenario-label"><span class="chip-dot" style="background:' + baseColor + '"></span>Base</span></th>';
             visibleScenarios.forEach(function (sc) {
-                html += '<th><span class="scenario-label"><span class="chip-dot" style="background:' + sc.color + '"></span>' + sc.label + '</span></th>';
+                html += '<th><span class="scenario-label"><span class="chip-dot" style="background:' + sc.color + '"></span>' + esc(sc.label) + '</span></th>';
             });
             html += '</tr></thead><tbody>';
 
@@ -1085,7 +1108,7 @@
 
             html +=
                 '<div class="savings-card">' +
-                '<div class="savings-card-header"><span class="chip-dot" style="background:' + sc.color + '"></span>' + sc.label + '</div>' +
+                '<div class="savings-card-header"><span class="chip-dot" style="background:' + sc.color + '"></span>' + esc(sc.label) + '</div>' +
                 '<div class="savings-card-row"><span>Total interest</span><span class="delta ' + interestClass + '">' + (interestDelta >= 0 ? "+" : "") + fmt(interestDelta) + '</span></div>' +
                 '<div class="savings-card-row"><span>Paid off</span><span class="delta ' + (monthDelta <= 0 ? "negative" : "positive") + '">' + paidOffText + '</span></div>' +
                 '<div class="savings-card-row"><span>Balance at first renewal</span><span class="delta ' + balanceClass + '">' + (balanceDelta >= 0 ? "+" : "") + fmt(balanceDelta) + '</span></div>' +
@@ -1688,10 +1711,7 @@
                 newBuild: !!state.nb,
                 terms: state.t || [],
                 scenarios: [{ id: "base", label: "Base", locked: true, color: baseColor, visible: true }].concat(
-                    (state.sc || []).map(function (s, i) {
-                        s.visible = true;
-                        return s;
-                    })
+                    (state.sc || []).map(sanitizeScenario)
                 ),
             };
         } catch (e) { return null; }
@@ -1752,6 +1772,9 @@
     if (!scenarios.find(function (s) { return s.id === "base"; })) {
         scenarios.unshift({ id: "base", label: "Base", locked: true, color: baseColor, visible: true });
     }
+
+    // Untrusted state (share link / old localStorage) is sanitized before any render
+    scenarios = scenarios.map(sanitizeScenario);
 
     $("payment-frequency").value = paymentFrequency;
     $("first-time-buyer").checked = firstTimeBuyer;
