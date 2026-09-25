@@ -11,6 +11,6 @@ comment = "Side project turned separate startup of Manifold. This is great with 
 Side project turned separate startup of Manifold. This is great with so many caring people working on it.
 
 
-HN thread: <a href="https://news.ycombinator.com/item?id=19980535">https://news.ycombinator.com/item?id=19980535</a>
+HN thread: [https://news.ycombinator.com/item?id=19980535](https://news.ycombinator.com/item?id=19980535)
 
 [Read more](https://valence.net/)

@@ -10,6 +10,6 @@ comment = "HN link has awesome comments about how people use kubernetes.\n\n<a h
 
 HN link has awesome comments about how people use kubernetes.
 
-<a href="https://news.ycombinator.com/item?id=16697450">https://news.ycombinator.com/item?id=16697450</a>
+[https://news.ycombinator.com/item?id=16697450](https://news.ycombinator.com/item?id=16697450)
 
 [Read more](http://blog.kubernetes.io/2018/03/kubernetes-1.10-stabilizing-storage-security-networking.html)

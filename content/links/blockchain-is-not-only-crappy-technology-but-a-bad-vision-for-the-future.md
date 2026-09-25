@@ -8,7 +8,7 @@ comment = "<a href=\"https://news.ycombinator.com/item?id=16774293\">https://new
 
 ### TLDR
 
-<a href="https://news.ycombinator.com/item?id=16774293">https://news.ycombinator.com/item?id=16774293</a>
+[https://news.ycombinator.com/item?id=16774293](https://news.ycombinator.com/item?id=16774293)
 
 > The problem that proof-of-work blockchain solves is widely misunderstood. It uses proof-of-work to establish consensus over points in time which are universally unique. Prior to the publication of Satoshi's paper we did not have a solution to this problem and for that reason it is a significant advance in technology.
 

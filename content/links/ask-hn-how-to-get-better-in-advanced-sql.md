@@ -10,7 +10,7 @@ comment = "Some solid links in there:\n\n* <a href=\"https://use-the-index-luke.
 
 Some solid links in there:
 
-* <a href="https://use-the-index-luke.com/">https://use-the-index-luke.com/</a>
-* <a href="https://news.ycombinator.com/item?id=13417326">https://news.ycombinator.com/item?id=13417326</a>
+* [https://use-the-index-luke.com/](https://use-the-index-luke.com/)
+* [https://news.ycombinator.com/item?id=13417326](https://news.ycombinator.com/item?id=13417326)
 
 [Read more](https://news.ycombinator.com/item?id=19150561)

@@ -8,6 +8,6 @@ comment = "Good news. The MDN docs being so great it is amazing that more compan
 
 ### TLDR
 
-Good news. The MDN docs being so great it is amazing that more companies start making it better. And Microsoft doing at that is wow. Also <a href="https://devdocs.io/">https://devdocs.io/</a> looks pretty cool.
+Good news. The MDN docs being so great it is amazing that more companies start making it better. And Microsoft doing at that is wow. Also [https://devdocs.io/](https://devdocs.io/) looks pretty cool.
 
 [Read more](https://blogs.windows.com/msedgedev/2017/10/18/documenting-web-together-mdn-web-docs)

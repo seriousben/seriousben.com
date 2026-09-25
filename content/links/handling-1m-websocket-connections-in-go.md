@@ -8,7 +8,7 @@ comment = "The epoll tweak is pretty amazing <a href=\"https://github.com/eranya
 
 ### TLDR
 
-The epoll tweak is pretty amazing <a href="https://github.com/eranyanay/1m-go-websockets/blob/master/3_optimize_ws_goroutines/epoll.go">https://github.com/eranyanay/1m-go-websockets/blob/master/3_optimize_ws_goroutines/epoll.go</a>
+The epoll tweak is pretty amazing [https://github.com/eranyanay/1m-go-websockets/blob/master/3_optimize_ws_goroutines/epoll.go](https://github.com/eranyanay/1m-go-websockets/blob/master/3_optimize_ws_goroutines/epoll.go)
 I also like the reflection done to get fd of the private net.Conn of gorillas websocket.Conn.
 
 [Read more](https://github.com/eranyanay/1m-go-websockets)

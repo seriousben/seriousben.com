@@ -9,7 +9,7 @@ comment = "The HN comments (<a href=\"https://news.ycombinator.com/item?id=28397
 
 ### Comment
 
-The HN comments (<a href="https://news.ycombinator.com/item?id=28397885">https://news.ycombinator.com/item?id=28397885</a>) are informative and interesting. Communication is difficult!
+The HN comments ([https://news.ycombinator.com/item?id=28397885](https://news.ycombinator.com/item?id=28397885)) are informative and interesting. Communication is difficult!
 
 
 

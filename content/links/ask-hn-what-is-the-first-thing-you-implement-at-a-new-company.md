@@ -8,6 +8,6 @@ comment = "A real mine of information. From <a href=\"https://github.com/99desig
 
 ### TLDR
 
-A real mine of information. From <a href="https://github.com/99designs/aws-vault">https://github.com/99designs/aws-vault</a> for aws credentials to best practices to how to drive change in an organization.
+A real mine of information. From [https://github.com/99designs/aws-vault](https://github.com/99designs/aws-vault) for aws credentials to best practices to how to drive change in an organization.
 
 [Read more](https://news.ycombinator.com/item?id=17353854)

@@ -9,7 +9,7 @@ comment = "Amazing troubleshooting done right in Hacker News - <a href=\"https:/
 
 ### Comment
 
-Amazing troubleshooting done right in Hacker News - <a href="https://news.ycombinator.com/item?id=22028581">https://news.ycombinator.com/item?id=22028581</a>
+Amazing troubleshooting done right in Hacker News - [https://news.ycombinator.com/item?id=22028581](https://news.ycombinator.com/item?id=22028581)
 
 
 Wow :)

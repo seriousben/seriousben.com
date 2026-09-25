@@ -12,6 +12,6 @@ Good article to pause, take a break and reflect.
 
 Accept who you are or make a change.
 
-The HN thread has very good and very bad comments, linking for the good ones the ones with people the same as us the ones like you: <a href="https://news.ycombinator.com/item?id=20314333">https://news.ycombinator.com/item?id=20314333</a>
+The HN thread has very good and very bad comments, linking for the good ones the ones with people the same as us the ones like you: [https://news.ycombinator.com/item?id=20314333](https://news.ycombinator.com/item?id=20314333)
 
 [Read more](https://www.nytimes.com/2019/06/29/opinion/sunday/ive-picked-my-job-over-my-kids.html)

@@ -11,6 +11,6 @@ comment = "Interesting list of gotchas that are surprising and feel like a possi
 
 Interesting list of gotchas that are surprising and feel like a possible barrier of entry.
 
-Some more discussion in <a href="https://news.ycombinator.com/item?id=26220693">https://news.ycombinator.com/item?id=26220693</a>
+Some more discussion in [https://news.ycombinator.com/item?id=26220693](https://news.ycombinator.com/item?id=26220693)
 
 [Read more](https://www.arp242.net/go-easy.html)

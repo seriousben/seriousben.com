@@ -10,6 +10,6 @@ comment = "> we fail to create environment and work conditions in which people c
 
 > we fail to create environment and work conditions in which people can grow professionally, develop good habits and become rock-stars
 
-The HN thead has also some good insights <a href="https://news.ycombinator.com/item?id=19642722">https://news.ycombinator.com/item?id=19642722</a>
+The HN thead has also some good insights [https://news.ycombinator.com/item?id=19642722](https://news.ycombinator.com/item?id=19642722)
 
 [Read more](https://sizovs.net/2019/04/10/the-best-developers-are-raised-not-hired/)

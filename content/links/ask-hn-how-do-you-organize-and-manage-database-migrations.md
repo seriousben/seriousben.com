@@ -10,6 +10,6 @@ comment = "Amazing list of links.\n\nMy favorite link is the gitlab migration gu
 
 Amazing list of links.
 
-My favorite link is the gitlab migration guide that has lots of information on what operations requires/causes downtime: <a href="https://docs.gitlab.com/ee/development/migration_style_guide.html">https://docs.gitlab.com/ee/development/migration_style_guide.html</a>
+My favorite link is the gitlab migration guide that has lots of information on what operations requires/causes downtime: [https://docs.gitlab.com/ee/development/migration_style_guide.html](https://docs.gitlab.com/ee/development/migration_style_guide.html)
 
 [Read more](https://news.ycombinator.com/item?id=21405501)

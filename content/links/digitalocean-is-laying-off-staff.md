@@ -9,6 +9,6 @@ comment = "Amazing to the point explanation of the situation by a co-founder on 
 
 ### Comment
 
-Amazing to the point explanation of the situation by a co-founder on HN: <a href="https://news.ycombinator.com/item?id=22076212">https://news.ycombinator.com/item?id=22076212</a>
+Amazing to the point explanation of the situation by a co-founder on HN: [https://news.ycombinator.com/item?id=22076212](https://news.ycombinator.com/item?id=22076212)
 
 [Read more](https://techcrunch.com/2020/01/17/digitalocean-layoffs/)

@@ -8,9 +8,9 @@ comment = "Lots of good links in the hacker news comments: <a href=\"https://new
 
 ### TLDR
 
-Lots of good links in the hacker news comments: <a href="https://news.ycombinator.com/item?id=17946333">https://news.ycombinator.com/item?id=17946333</a>
+Lots of good links in the hacker news comments: [https://news.ycombinator.com/item?id=17946333](https://news.ycombinator.com/item?id=17946333)
 
 
-<a href="https://github.com/shoreditch-ops/artillery">https://github.com/shoreditch-ops/artillery</a> looks very promising
+[https://github.com/shoreditch-ops/artillery](https://github.com/shoreditch-ops/artillery) looks very promising
 
 [Read more](https://github.com/eykhagen/strest)

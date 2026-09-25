@@ -12,9 +12,9 @@ comment = "Amazing discussion.\n\nConcepts worth looking at:\n- <a href=\"https:
 Amazing discussion.
 
 Concepts worth looking at:
-- <a href="https://paseto.io/">https://paseto.io/</a>
-- <a href="https://branca.io/">https://branca.io/</a>
-- <a href="https://ai.google/research/pubs/pub41892">https://ai.google/research/pubs/pub41892</a>
-- <a href="https://github.com/CleverCloud/biscuit/blob/master/README.md">https://github.com/CleverCloud/biscuit/blob/master/README.md</a>
+- [https://paseto.io/](https://paseto.io/)
+- [https://branca.io/](https://branca.io/)
+- [https://ai.google/research/pubs/pub41892](https://ai.google/research/pubs/pub41892)
+- [https://github.com/CleverCloud/biscuit/blob/master/README.md](https://github.com/CleverCloud/biscuit/blob/master/README.md)
 
 [Read more](https://news.ycombinator.com/item?id=21783303)

@@ -9,6 +9,6 @@ comment = "And the really good accompanying HN comments <a href=\"https://news.y
 
 ### Comment
 
-And the really good accompanying HN comments <a href="https://news.ycombinator.com/item?id=24915497">https://news.ycombinator.com/item?id=24915497</a>.
+And the really good accompanying HN comments [https://news.ycombinator.com/item?id=24915497](https://news.ycombinator.com/item?id=24915497).
 
 [Read more](https://danuker.go.ro/the-grand-unified-theory-of-software-architecture.html)

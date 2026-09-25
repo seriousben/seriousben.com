@@ -8,6 +8,6 @@ comment = "Exciting updates on redis streams + really good comments in HN <a hre
 
 ### TLDR
 
-Exciting updates on redis streams + really good comments in HN <a href="https://news.ycombinator.com/item?id=16232946">https://news.ycombinator.com/item?id=16232946</a>
+Exciting updates on redis streams + really good comments in HN [https://news.ycombinator.com/item?id=16232946](https://news.ycombinator.com/item?id=16232946)
 
 [Read more](http://antirez.com/news/116)

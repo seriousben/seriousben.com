@@ -11,6 +11,6 @@ comment = "Pattern to bridge event driven architectures with transactional safet
 
 Pattern to bridge event driven architectures with transactional safety.
 
-More complete example at <a href="https://debezium.io/blog/2019/02/19/reliable-microservices-data-exchange-with-the-outbox-pattern/">https://debezium.io/blog/2019/02/19/reliable-microservices-data-exchange-with-the-outbox-pattern/</a>
+More complete example at [https://debezium.io/blog/2019/02/19/reliable-microservices-data-exchange-with-the-outbox-pattern/](https://debezium.io/blog/2019/02/19/reliable-microservices-data-exchange-with-the-outbox-pattern/)
 
 [Read more](https://www.cockroachlabs.com/blog/why-use-change-data-capture/)

@@ -8,6 +8,6 @@ comment = "My sailing app of choice, and some info on hn - <a href=\"https://new
 
 ### TLDR
 
-My sailing app of choice, and some info on hn - <a href="https://news.ycombinator.com/item?id=15094639">https://news.ycombinator.com/item?id=15094639</a>
+My sailing app of choice, and some info on hn - [https://news.ycombinator.com/item?id=15094639](https://news.ycombinator.com/item?id=15094639)
 
 [Read more](https://www.windy.com/)

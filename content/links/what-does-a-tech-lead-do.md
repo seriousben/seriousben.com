@@ -10,7 +10,7 @@ comment = "Amazing post. I really enjoy reading everything.\n\nOne element I rea
 
 Amazing post. I really enjoy reading everything.
 
-One element I really liked was the DACI framework from atlassian to help decision making. <a href="https://www.atlassian.com/team-playbook/plays/daci">https://www.atlassian.com/team-playbook/plays/daci</a>
+One element I really liked was the DACI framework from atlassian to help decision making. [https://www.atlassian.com/team-playbook/plays/daci](https://www.atlassian.com/team-playbook/plays/daci)
 
 
 I also liked the link between leadership and being able to do individual contributions.

@@ -11,6 +11,6 @@ comment = "Amazing and pragmatic guide to SOC2. Very useful data in there about 
 
 Amazing and pragmatic guide to SOC2. Very useful data in there about the gotchas and how to comply without wasting money.
 
-Good HN thread with good comments: <a href="https://news.ycombinator.com/item?id=22559786">https://news.ycombinator.com/item?id=22559786</a>
+Good HN thread with good comments: [https://news.ycombinator.com/item?id=22559786](https://news.ycombinator.com/item?id=22559786)
 
 [Read more](https://latacora.singles/2020/03/12/the-soc-starting.html)

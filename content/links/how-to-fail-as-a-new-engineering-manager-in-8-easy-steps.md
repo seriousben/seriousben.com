@@ -8,6 +8,6 @@ comment = "Good advice. The hn thread has links to more resources <a href=\"http
 
 ### TLDR
 
-Good advice. The hn thread has links to more resources <a href="https://news.ycombinator.com/item?id=18011381">https://news.ycombinator.com/item?id=18011381</a>
+Good advice. The hn thread has links to more resources [https://news.ycombinator.com/item?id=18011381](https://news.ycombinator.com/item?id=18011381)
 
 [Read more](https://blog.usejournal.com/how-to-fail-as-a-new-engineering-manager-30b5fb617a)
