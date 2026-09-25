@@ -11,6 +11,6 @@ comment = "Very inspiring. I am also a lot into active reading and this is a gre
 
 Very inspiring. I am also a lot into active reading and this is a great list of tools.
 
-More on active reading: <a href="https://help.open.ac.uk/active-reading">https://help.open.ac.uk/active-reading</a>
+More on active reading: [https://help.open.ac.uk/active-reading](https://help.open.ac.uk/active-reading)
 
 [Read more](https://beepb00p.xyz/annotating.html)

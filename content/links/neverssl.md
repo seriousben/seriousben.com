@@ -8,10 +8,10 @@ comment = "I always have a problem getting to the wifi login page at hotels. Thi
 
 ### TLDR
 
-I always have a problem getting to the wifi login page at hotels. This seems like a good alternative to <a href="http://example.com">http://example.com</a>
+I always have a problem getting to the wifi login page at hotels. This seems like a good alternative to [http://example.com](http://example.com)
 
 
 
-The HN comments have lots of other examples and some good SSL/TLS resources <a href="https://news.ycombinator.com/item?id=21430157">https://news.ycombinator.com/item?id=21430157</a>
+The HN comments have lots of other examples and some good SSL/TLS resources [https://news.ycombinator.com/item?id=21430157](https://news.ycombinator.com/item?id=21430157)
 
 [Read more](http://fdbhclmrkstnvwxz.neverssl.com/online)

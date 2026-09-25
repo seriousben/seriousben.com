@@ -8,6 +8,6 @@ comment = "Super good Q&A with the CTO <a href=\"https://news.ycombinator.com/it
 
 ### TLDR
 
-Super good Q&A with the CTO <a href="https://news.ycombinator.com/item?id=15614231">https://news.ycombinator.com/item?id=15614231</a>
+Super good Q&A with the CTO [https://news.ycombinator.com/item?id=15614231](https://news.ycombinator.com/item?id=15614231)
 
 [Read more](https://github.com/bigchaindb/bigchaindb)

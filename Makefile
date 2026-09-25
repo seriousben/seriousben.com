@@ -1,4 +1,4 @@
-HUGO_VERSION := 0.155.2
+HUGO_VERSION := 0.165.0
 DOCKER_IMAGE := hugomods/hugo:$(HUGO_VERSION)
 DOCKER_RUN := docker run --rm -v "$(PWD):/src" -w /src
 

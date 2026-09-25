@@ -8,7 +8,7 @@ comment = "Great comments in <a href=\"https://news.ycombinator.com/item?id=1669
 
 ### TLDR
 
-Great comments in <a href="https://news.ycombinator.com/item?id=16699219">https://news.ycombinator.com/item?id=16699219</a>
+Great comments in [https://news.ycombinator.com/item?id=16699219](https://news.ycombinator.com/item?id=16699219)
 
 Lots of content taken from the book "the manager's path"
 

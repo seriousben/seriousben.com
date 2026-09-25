@@ -9,6 +9,6 @@ comment = "Linking for the HN comments with some interesting temporal.io discuss
 
 ### Comment
 
-Linking for the HN comments with some interesting temporal.io discussions: <a href="https://news.ycombinator.com/item?id=23844177">https://news.ycombinator.com/item?id=23844177</a>
+Linking for the HN comments with some interesting temporal.io discussions: [https://news.ycombinator.com/item?id=23844177](https://news.ycombinator.com/item?id=23844177)
 
 [Read more](https://ncona.com/2020/07/introduction-to-aws-simple-workflow-service/)

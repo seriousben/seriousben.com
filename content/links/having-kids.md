@@ -12,7 +12,7 @@ comment = "Great essay and great comments on HN.\n\n\nFrom a comment on HN (<a h
 Great essay and great comments on HN.
 
 
-From a comment on HN (<a href="https://news.ycombinator.com/item?id=21790396">https://news.ycombinator.com/item?id=21790396</a>)
+From a comment on HN ([https://news.ycombinator.com/item?id=21790396](https://news.ycombinator.com/item?id=21790396))
 
 
 > who cares if we end up financially poorer because of it - our lives are infinitely richer with this time we have as a family together.

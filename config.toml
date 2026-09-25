@@ -1,11 +1,10 @@
 #baseURL = "http://localhost:8080/"
 baseURL = "https://seriousben.com/"
-debug = true
-verbose = true
 title = "Benjamin Boudreau"
-copyright = "Copyright © Benjamin Boudreau 2017-2020"
+copyright = "Copyright © Benjamin Boudreau 2017-2026"
 theme = "seriousben"
 rssLimit = 100
+enableRobotsTXT = true
 enableGitInfo = true
 enableEmoji = true
 [author]
@@ -15,7 +14,7 @@ enableEmoji = true
   tag = "tags"
 
 [params]
-copyright = "Copyright © Benjamin Boudreau 2017-2020"
+copyright = "Copyright © Benjamin Boudreau 2017-2026"
 copyrightUrl = "https://seriousben.com/"
 twitter = "seriousben"
 github = "seriousben"

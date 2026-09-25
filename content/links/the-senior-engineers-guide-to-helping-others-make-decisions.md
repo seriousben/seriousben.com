@@ -8,6 +8,6 @@ comment = "A must read and a problem every developer faces <a href=\"https://new
 
 ### TLDR
 
-A must read and a problem every developer faces <a href="https://news.ycombinator.com/item?id=15679853">https://news.ycombinator.com/item?id=15679853</a>
+A must read and a problem every developer faces [https://news.ycombinator.com/item?id=15679853](https://news.ycombinator.com/item?id=15679853)
 
 [Read more](http://silverwraith.com/blog/2017/10/the-senior-engineers-guide-to-helping-others-make-decisions/)

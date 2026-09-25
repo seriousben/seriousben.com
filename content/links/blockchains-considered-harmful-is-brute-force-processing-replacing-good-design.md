@@ -8,6 +8,6 @@ comment = "Interesting discussion on HN regarding the impact a PoS would have ov
 
 ### TLDR
 
-Interesting discussion on HN regarding the impact a PoS would have over the current PoW <a href="https://news.ycombinator.com/item?id=15605753">https://news.ycombinator.com/item?id=15605753</a>
+Interesting discussion on HN regarding the impact a PoS would have over the current PoW [https://news.ycombinator.com/item?id=15605753](https://news.ycombinator.com/item?id=15605753)
 
 [Read more](https://www.sigarch.org/blockchains-considered-harmful-is-brute-force-processing-replacing-good-design/)

@@ -9,6 +9,6 @@ comment = "Great article and great HN comments: <a href=\"https://news.ycombinat
 
 ### Comment
 
-Great article and great HN comments: <a href="https://news.ycombinator.com/item?id=28257197">https://news.ycombinator.com/item?id=28257197</a>
+Great article and great HN comments: [https://news.ycombinator.com/item?id=28257197](https://news.ycombinator.com/item?id=28257197)
 
 [Read more](https://www.sciencemag.org/careers/2021/08/thoughts-work-invaded-my-life-until-i-learned-how-unplug)

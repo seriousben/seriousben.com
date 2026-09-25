@@ -10,6 +10,6 @@ comment = "I have also seen this clear separation of programmers. But I think th
 
 I have also seen this clear separation of programmers. But I think the middle ground between the two is called pragmatism.
 
-Some good discussion on hn: <a href="https://news.ycombinator.com/item?id=14477794">https://news.ycombinator.com/item?id=14477794</a>
+Some good discussion on hn: [https://news.ycombinator.com/item?id=14477794](https://news.ycombinator.com/item?id=14477794)
 
 [Read more](https://peter.bourgon.org/blog/2015/08/25/nihilist-optimist.html)

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Validate that every tool content file with toolUrl has a matching static folder
-# and that every static/tool/ folder has a matching content file.
+# and that every static/tools/ folder has a matching content file.
 
 ERRORS=0
 
@@ -26,7 +26,7 @@ for md in content/tools/*.md; do
     fi
 done
 
-for dir in static/tool/*/; do
+for dir in static/tools/*/; do
     [ -d "$dir" ] || continue
     SLUG="$(basename "$dir")"
     if [ ! -f "content/tools/${SLUG}.md" ]; then

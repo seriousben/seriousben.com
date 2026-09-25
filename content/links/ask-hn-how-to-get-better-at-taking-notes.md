@@ -8,6 +8,6 @@ comment = "Lots of good note taking advice. Like the Corner note-taking system <
 
 ### TLDR
 
-Lots of good note taking advice. Like the Corner note-taking system <a href="http://lsc.cornell.edu/notes.html">http://lsc.cornell.edu/notes.html</a>
+Lots of good note taking advice. Like the Corner note-taking system [http://lsc.cornell.edu/notes.html](http://lsc.cornell.edu/notes.html)
 
 [Read more](https://news.ycombinator.com/item?id=21419478)

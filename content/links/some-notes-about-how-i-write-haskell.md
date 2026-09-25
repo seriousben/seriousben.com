@@ -8,6 +8,6 @@ comment = "Good insights in some opinionated best practices when writing Haskell
 
 ### TLDR
 
-Good insights in some opinionated best practices when writing Haskell code. HN thread also contains lots of useful comments. <a href="https://news.ycombinator.com/item?id=16428686">https://news.ycombinator.com/item?id=16428686</a>
+Good insights in some opinionated best practices when writing Haskell code. HN thread also contains lots of useful comments. [https://news.ycombinator.com/item?id=16428686](https://news.ycombinator.com/item?id=16428686)
 
 [Read more](https://blog.infinitenegativeutility.com/2017/12/some-notes-about-how-i-write-haskell)

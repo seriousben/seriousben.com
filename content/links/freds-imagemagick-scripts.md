@@ -32,7 +32,7 @@ comment = "* tshirt- Transforms an image to place it in a region of a tshirt ima
 
 * RANDOMCLIPART - Randomly distributes clip art over the image.
 
-From a comment on [HN](<a href="https://news.ycombinator.com/item?id=16669004">https://news.ycombinator.com/item?id=16669004</a>):
+From a comment on [HN]([https://news.ycombinator.com/item?id=16669004](https://news.ycombinator.com/item?id=16669004)):
 
 * SKETCH - Applies a sketch effect to an image. SMARTCROP - Automatically crops an image to a given size around the hightest detail region.
 

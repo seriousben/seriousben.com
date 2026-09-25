@@ -10,6 +10,6 @@ comment = "Great news. A very important piece of kubernetes now officially given
 
 Great news. A very important piece of kubernetes now officially given to cncf.
 
-The HN thread is interesting. Creators of etcd gave their view of things and explain the origin of etcd/raft: <a href="https://news.ycombinator.com/item?id=18683602">https://news.ycombinator.com/item?id=18683602</a>
+The HN thread is interesting. Creators of etcd gave their view of things and explain the origin of etcd/raft: [https://news.ycombinator.com/item?id=18683602](https://news.ycombinator.com/item?id=18683602)
 
 [Read more](https://www.redhat.com/en/blog/red-hat-contributes-etcd-cornerstone-kubernetes-cloud-native-computing-foundation)

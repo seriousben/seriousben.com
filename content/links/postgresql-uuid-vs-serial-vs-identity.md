@@ -11,6 +11,6 @@ comment = "Super interesting look the different way to generate a primary key in
 
 Super interesting look the different way to generate a primary key in Postgres.
 
-The HN post has good comments about more benchmarks and ways not covered by the article. <a href="https://news.ycombinator.com/item?id=27345837">https://news.ycombinator.com/item?id=27345837</a>
+The HN post has good comments about more benchmarks and ways not covered by the article. [https://news.ycombinator.com/item?id=27345837](https://news.ycombinator.com/item?id=27345837)
 
 [Read more](https://www.cybertec-postgresql.com/en/uuid-serial-or-identity-columns-for-postgresql-auto-generated-primary-keys/)

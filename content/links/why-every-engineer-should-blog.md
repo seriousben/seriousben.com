@@ -8,6 +8,6 @@ comment = "This and <a href=\"https://news.ycombinator.com/item?id=13733624\">ht
 
 ### TLDR
 
-This and <a href="https://news.ycombinator.com/item?id=13733624">https://news.ycombinator.com/item?id=13733624</a> contain very good reasons why I want to get started blogging.
+This and [https://news.ycombinator.com/item?id=13733624](https://news.ycombinator.com/item?id=13733624) contain very good reasons why I want to get started blogging.
 
 [Read more](https://insights.excitingrole.com/why-engineers-should-blog-88ecf97d2628#.olwjketnr)

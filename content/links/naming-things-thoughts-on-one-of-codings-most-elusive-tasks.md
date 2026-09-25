@@ -9,9 +9,9 @@ comment = "Naming is hard. The book referred in this post looks at naming in var
 
 ### Comment
 
-Naming is hard. The book referred in this post looks at naming in various ways <a href="https://namingthings.donedone.com/">https://namingthings.donedone.com/</a>
+Naming is hard. The book referred in this post looks at naming in various ways [https://namingthings.donedone.com/](https://namingthings.donedone.com/)
 
 
-On a similar topic, I find <a href="https://www.goodreads.com/en/book/show/39996759-a-philosophy-of-software-design">https://www.goodreads.com/en/book/show/39996759-a-philosophy-of-software-design</a> exploring naming and commenting in a useful way.
+On a similar topic, I find [https://www.goodreads.com/en/book/show/39996759-a-philosophy-of-software-design](https://www.goodreads.com/en/book/show/39996759-a-philosophy-of-software-design) exploring naming and commenting in a useful way.
 
 [Read more](https://dev.to/developerscode/a-short-book-on-naming-things-47l0)

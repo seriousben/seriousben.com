@@ -8,6 +8,6 @@ comment = "Good comparison of aws and GCP. More at <a href=\"https://news.ycombi
 
 ### TLDR
 
-Good comparison of aws and GCP. More at <a href="https://news.ycombinator.com/item?id=15067424">https://news.ycombinator.com/item?id=15067424</a>
+Good comparison of aws and GCP. More at [https://news.ycombinator.com/item?id=15067424](https://news.ycombinator.com/item?id=15067424)
 
 [Read more](https://metamarkets.com/2017/big-cloud-data-aws-and-gcp/)

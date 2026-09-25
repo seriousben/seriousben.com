@@ -10,6 +10,6 @@ comment = "Some interesting arguments against decriminalization of prostitution.
 
 Some interesting arguments against decriminalization of prostitution.
 
-Mandatory hn post: <a href="https://news.ycombinator.com/item?id=15381749">https://news.ycombinator.com/item?id=15381749</a>
+Mandatory hn post: [https://news.ycombinator.com/item?id=15381749](https://news.ycombinator.com/item?id=15381749)
 
 [Read more](http://www.bbc.co.uk/news/magazine-41349301)

@@ -10,6 +10,6 @@ comment = "Gitlab's remote Manifesto \n\nThe HN thread is interesting as well <a
 
 Gitlab's remote Manifesto
 
-The HN thread is interesting as well <a href="https://news.ycombinator.com/item?id=19785262">https://news.ycombinator.com/item?id=19785262</a>
+The HN thread is interesting as well [https://news.ycombinator.com/item?id=19785262](https://news.ycombinator.com/item?id=19785262)
 
 [Read more](https://about.gitlab.com/company/culture/all-remote/)

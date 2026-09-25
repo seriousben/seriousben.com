@@ -11,6 +11,6 @@ comment = "Amazing post. Great real life examples of how great DB features tend 
 
 Amazing post. Great real life examples of how great DB features tend to be problematic on large datasets.
 
-<a href="https://news.ycombinator.com/item?id=25270107">https://news.ycombinator.com/item?id=25270107</a>
+[https://news.ycombinator.com/item?id=25270107](https://news.ycombinator.com/item?id=25270107)
 
 [Read more](https://brandur.org/large-database-casualties)

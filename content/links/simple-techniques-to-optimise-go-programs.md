@@ -8,6 +8,6 @@ comment = "Very good collection of tips. I wasn't aware of <a href=\"https://git
 
 ### TLDR
 
-Very good collection of tips. I wasn't aware of <a href="https://github.com/mailru/easyjson">https://github.com/mailru/easyjson</a> which generates a `MarshalJSON` function for your structs automatically to have fast serialization without reflection.
+Very good collection of tips. I wasn't aware of [https://github.com/mailru/easyjson](https://github.com/mailru/easyjson) which generates a `MarshalJSON` function for your structs automatically to have fast serialization without reflection.
 
 [Read more](https://stephen.sh/posts/quick-go-performance-improvements)

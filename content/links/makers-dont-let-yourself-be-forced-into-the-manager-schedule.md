@@ -9,6 +9,6 @@ comment = "HN comments have great stories <a href=\"https://news.ycombinator.com
 
 ### Comment
 
-HN comments have great stories <a href="https://news.ycombinator.com/item?id=21504672">https://news.ycombinator.com/item?id=21504672</a>
+HN comments have great stories [https://news.ycombinator.com/item?id=21504672](https://news.ycombinator.com/item?id=21504672)
 
 [Read more](https://blog.nuclino.com/makers-don-t-let-yourself-be-forced-into-the-manager-schedule)
